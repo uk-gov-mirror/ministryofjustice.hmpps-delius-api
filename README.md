@@ -1,32 +1,64 @@
-# hmpps-template-kotlin
+# HMPPS Delius API Service
 
-This is a skeleton project from which to create new kotlin projects from.
+## Overview
 
-# Instructions
+Service providing specific API services for the nDelius application. Developed
+as a collaboration between MoJ Digital and Unilink.
 
-If this is a Digital Prison Services project then the project will be created as part of bootstrapping - 
-see https://github.com/ministryofjustice/dps-project-bootstrap.
+Please raise any questions in the #delius-api Slack channel
 
-## Renaming from HMPPS Template Kotlin - github Actions
+## Purpose of the API Service 
 
-Once the new repository is deployed. Navigate to the repository in github, and select the `Actions` tab.
-Click the link to `Enable Actions on this repository`.
+The API service is intended to work as a entry-point for integration with
+nDelius where it is important to apply nDelius application logic to API
+operations. The API is closely tied to the nDelius data model and exposes some
+internal implementation details. Some endpoints may require some
+nDelius-specific knowledge to use such as entity identifiers (i.e. reference codes
+where these exist but possibly ids where codes are not available). For this
+reason we expect the API to be used as a backend service in combination with
+other, higher-level, API services such as [Community API](https://github.com/ministryofjustice/community-api) 
+where the endpoints provided by this service can be combined with others to
+create more probation domain-specific APIs. 
 
-Find the Action workflow named: `rename-project-create-pr` and click `Run workflow`.  This workflow will will
-execute the `rename-project.bash` and create Pull Request for you to review.  Review the PR and merge.
+Read-access to nDelius is currently provided by [Community API](https://github.com/ministryofjustice/community-api) 
+and we will not look to replace these services as a priority, although that
+may be added to the product roadmap as it develops.
 
-Note: ideally this workflow would run automatically however due to a recent change github Actions are not
-enabled by default on newly created repos. There is no way to enable Actions other then to click the button in the UI.
-If this situation changes we will update this project so that the workflow is triggered during the bootstrap project.
-Further reading: <https://github.community/t/workflow-isnt-enabled-in-repos-generated-from-template/136421>
+### High-Level Architecture
 
-## Manually renaming from HMPPS Template Kotlin
+![nDelius API](./doc/img/nDelius-API.png?raw=true)
 
-Run the `rename-project.bash` and create a PR.
+## Initial Use-Cases 
 
-The `rename-project.bash` script takes a single argument - the name of the project and calculates from it:
-* The main class name (project name converted to pascal case) 
-* The project description (class name with spaces between the words)
-* The main package name (project name with hyphens removed)
+### Writing Simple nDelius Contacts 
 
-It then performs a search and replace and directory renames so the project is ready to be used.
+Writing data to the nDelius contact log, applying the nDelius application
+logic for all associated actions triggered by adding the contact entry.
+
+### Writing nDelius NSIs 
+
+Writing NSIs of specific types to ensure contacts can be created and linked to
+the correct container entities in nDelius 
+
+## Key Technical Points
+
+- Spring Boot service built mainly in Kotlin
+- Intention is to reuse the logic in the nDelius Java application tier as far
+  as possible 
+- User and client authentication via HMPPS-Auth
+- Requires access to the nDelius Oracle database 
+- Deployed in the nDelius AWS environment
+
+## Infrastructure 
+
+### Deployment Environments 
+
+### Deployment Pipelines 
+
+## Building and Testing Locally 
+
+## Development Setup
+
+
+
+

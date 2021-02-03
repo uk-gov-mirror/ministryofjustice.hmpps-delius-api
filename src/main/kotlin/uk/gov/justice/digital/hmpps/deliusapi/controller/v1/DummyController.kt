@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.deliusapi.controller.secure
+package uk.gov.justice.digital.hmpps.deliusapi.controller.v1
 
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.GetMapping
@@ -8,11 +8,11 @@ import org.springframework.web.bind.annotation.RestController
 class Dummy(val message: String)
 
 @RestController
-@RequestMapping(value = ["secure"], produces = [MediaType.APPLICATION_JSON_VALUE])
+@RequestMapping(value = ["v1/dummy"], produces = [MediaType.APPLICATION_JSON_VALUE])
 class DummyController {
 
-  @GetMapping(value = ["/dummy"])
-  fun dummy(): Dummy {
+  @GetMapping
+  fun get(): Dummy {
     return Dummy("hello world")
   }
 }

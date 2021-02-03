@@ -13,12 +13,10 @@ class ResourceServerConfiguration : WebSecurityConfigurerAdapter() {
 
   override fun configure(http: HttpSecurity) {
     http
-      .antMatcher("/secure/**")
-      .authorizeRequests { auth ->
-        auth.antMatchers(
-          "/secure/**"
-        ).authenticated()
+      .oauth2ResourceServer { it.jwt().jwtAuthenticationConverter(AuthAwareTokenConverter()) }
+      .authorizeRequests {
+        it.antMatchers("/info", "/health/**").permitAll()
+          .anyRequest().authenticated()
       }
-      .oauth2ResourceServer().jwt().jwtAuthenticationConverter(AuthAwareTokenConverter())
   }
 }

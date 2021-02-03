@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-class Dummy(val message: String)
+data class Dummy(val message: String)
 
 @RestController
 @RequestMapping(value = ["v1/dummy"], produces = [MediaType.APPLICATION_JSON_VALUE])

@@ -9,7 +9,7 @@ class AuthAwareTokenConverterTest {
   private val subject = AuthAwareTokenConverter()
 
   @Test
-  fun `converting client credentials token`() {
+  fun `Converting client credentials token`() {
     val observed = whenConverting(aToken(true))
 
     shouldConvertToAuthAwareAuthenticationToken(observed)
@@ -18,7 +18,7 @@ class AuthAwareTokenConverterTest {
   }
 
   @Test
-  fun `converting subject token`() {
+  fun `Converting subject token`() {
     val observed = whenConverting(aToken())
 
     shouldConvertToAuthAwareAuthenticationToken(observed)

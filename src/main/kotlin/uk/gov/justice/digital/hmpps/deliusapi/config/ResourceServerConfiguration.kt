@@ -9,11 +9,16 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, proxyTargetClass = true)
-class ResourceServerConfiguration : WebSecurityConfigurerAdapter() {
+class ResourceServerConfiguration(
+  private val tokenVerifyingAuthManager: TokenVerifyingAuthManager
+) : WebSecurityConfigurerAdapter() {
 
   override fun configure(http: HttpSecurity) {
     http
-      .oauth2ResourceServer { it.jwt().jwtAuthenticationConverter(AuthAwareTokenConverter()) }
+      .oauth2ResourceServer {
+        it.jwt().jwtAuthenticationConverter(AuthAwareTokenConverter())
+          .authenticationManager(tokenVerifyingAuthManager)
+      }
       .authorizeRequests {
         it.antMatchers("/info", "/health/**").permitAll()
           .anyRequest().authenticated()

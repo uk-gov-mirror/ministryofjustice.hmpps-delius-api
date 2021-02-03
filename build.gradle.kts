@@ -10,4 +10,6 @@ configurations {
 dependencies {
   implementation("org.springframework.boot:spring-boot-starter-webflux")
   implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
+
+  testImplementation("io.jsonwebtoken:jjwt:0.9.1")
 }

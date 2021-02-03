@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.hmppsdeliusapi.health
+package uk.gov.justice.digital.hmpps.deliusapi.health
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test

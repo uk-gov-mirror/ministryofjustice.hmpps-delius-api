@@ -9,4 +9,5 @@ configurations {
 
 dependencies {
   implementation("org.springframework.boot:spring-boot-starter-webflux")
+  implementation("io.springfox:springfox-boot-starter:3.0.0")
 }

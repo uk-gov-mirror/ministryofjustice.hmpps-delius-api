@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.hmppsdeliusapi.config
+package uk.gov.justice.digital.hmpps.deliusapi.config
 
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus

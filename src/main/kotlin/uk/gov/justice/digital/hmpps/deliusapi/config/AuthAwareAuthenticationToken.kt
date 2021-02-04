@@ -8,6 +8,4 @@ class AuthAwareAuthenticationToken(jwt: Jwt, authorities: Collection<GrantedAuth
   JwtAuthenticationToken(jwt, authorities) {
 
   val subject = jwt.subject
-  val clientOnly = jwt.subject == jwt.claims[ClaimNames.CLIENT_ID]
-  val databaseUsername = jwt.claims[ClaimNames.DATABASE_USERNAME]?.toString()
 }

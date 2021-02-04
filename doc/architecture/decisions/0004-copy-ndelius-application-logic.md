@@ -10,22 +10,26 @@ Accepted
 
 nDelius is currently the foundational system for the National Probation
 Service, holding most of the information about the activities of the service
-and it's users. As new digital services, with a more focused scope, are
-created there is often a need to exchange data with nDelius. New services must
-read data from nDelius to determine the current state of an activity and write
-data to nDelius to reflect activity that has occured outside of the
-application boundary. It is currently possible to interact with the nDelius
-database directly using Community API, however, this method bypasses the
-nDelius application tier. Bypassing the application logic for read operations
-results in actions such as audit log writes and data access restrictions not
-being applied. Bypassing the application logic for write operations means
-complex data validations are not run and any associated processing is not
-executed. Consequently writing data to nDelius via Community API requires a
-deep knowledge of the internals of the foundational application and
-re-implementation of any essential logic in Community API code. In addition,
-due to the potential impact on the main nDelius application of changes
-Community API, write operations also require extensive testing to be scheduled
-and actioned by the NDST team before release beyond development environments.
+and its users. As new digital services, with a more focused scope, are created
+there is often a need to exchange data with nDelius. New services must read
+data from nDelius to determine the current state of an activity and write data
+to nDelius to reflect activity that has occured outside of the application
+boundary. It is currently possible to interact with the nDelius database
+directly using Community API, however, this method bypasses the nDelius
+application tier. Bypassing the application logic for read operations results
+in actions such as audit log writes and data access restrictions needing to be
+applied as a secondary concern. While this is possible it relies on the
+consumer understanding the necessary actions and executing the correct steps
+as part of their service logic. Bypassing the application logic for write
+operations means complex data validations are not run and any associated
+processing, such as linked appointments being created as part of a specific
+Contact creation, is not executed. Consequently writing data to nDelius via
+Community API requires a deep knowledge of the internals of the foundational
+application and re-implementation of any essential logic in Community API
+code. In addition, due to the potential impact on the main nDelius application
+of changes Community API, write operations also require extensive testing to
+be scheduled and actioned by the NDST team before release beyond development
+environments.
 
 The intention of Delius API is to provide endpoints that encapsulate and
 expose the nDelius application logic to the new digital services. This reduces 
@@ -69,7 +73,7 @@ Take small, specific elements of the nDelius application logic and copy this
 into a service layer of the API application. This would introduce duplication
 of the logic across the two systems which would need to be managed as part of
 the development flow of nDelius, the nDelius PDM and the nDelius API. The main
-advantage of this method are that we would be able to move quickly to create
+advantage of this method is that we would be able to move quickly to create
 an MVP API application targeted at supporting the Day 1 activities without the
 need for complex infrastructure work on nDelius. It also means the technical
 choices of the API application are unconstrained and the Digital Studio
@@ -94,10 +98,15 @@ initially only support a small subset of the nDelius application logic this
 may not be a problem. However, the decision may place constraints on the type
 and number of endpoints the API can provide. 
 
+The major impact of the decision is on the NDST team, as the ultimate managers
+of both nDelius and the Delius API. It is expected that the acceptance
+criteria of the new API will explicitly include an acceptance of this extra
+overhead. The Delius API team expects to help with planning and input on how
+best to manage the parallel development of the two system going forward. 
+
 To mitigate the duplication of logic it is possible that the API application
 could become the single, canonical source of truth for the logic over time.
 This would involve the main nDelius application making calls to the API
 application as needed. Although this is technically feasible it would require
 explicit effort and prioritisation from NDST and whether this is possible and
-on what timescale it could happen is currently unknown. 
-
+on what timescale it could happen is currently unknown.

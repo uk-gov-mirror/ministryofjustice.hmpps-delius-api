@@ -3,6 +3,8 @@ version: 2.1
 orbs:
   owasp: entur/owasp@0.0.10
   hmpps: ministryofjustice/hmpps@2.2
+  aws-ecr: circleci/aws-ecr@6.7.0
+  aws-code-deploy: circleci/aws-code-deploy@1.0.1
 
 jobs:
   validate:
@@ -32,23 +34,32 @@ workflows:
           filters:
             tags:
               ignore: /.*/
-      - hmpps/build_docker:
-          name: build_docker
-          filters:
-            branches:
-              only:
-                - main
-      - hmpps/deploy_env:
-          name: deploy_dev
-          env: "dev"
-          context: hmpps-common-vars
-          filters:
-            branches:
-              only:
-                - main
-          requires:
-            - validate
-            - build_docker
+#      - aws-ecr/build-and-push-image:
+#          name: build_docker
+#          account-url: AWS_ECR_ACCOUNT_URL
+#          aws-access-key-id: AWS_ACCESS_KEY_ID
+#          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+#          create-repo: true
+#          dockerfile: Dockerfile
+#          path: .
+#          region: AWS_REGION
+#          repo: circleci-ecr-orb-demo
+#          tag: "$CIRCLE_SHA1"
+#          filters:
+#            branches:
+#              only:
+#                - main
+#      - hmpps/deploy_env:
+#          name: deploy_dev
+#          env: "dev"
+#          context: hmpps-common-vars
+#          filters:
+#            branches:
+#              only:
+#                - main
+#          requires:
+#            - validate
+#            - build_docker
 #      - request-preprod-approval:
 #          type: approval
 #          requires:

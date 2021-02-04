@@ -28,8 +28,7 @@ class AuthAwareTokenConverterTest {
   }
 
   private fun shouldConvertToAuthAwareAuthenticationToken(observed: AuthAwareAuthenticationToken?) {
-    Assertions.assertThat(observed).isNotNull
-    Assertions.assertThat(observed).isInstanceOf(AuthAwareAuthenticationToken::class.java)
+    Assertions.assertThat(observed).isNotNull.isInstanceOf(AuthAwareAuthenticationToken::class.java)
     Assertions.assertThat(observed?.authorities?.map { it.authority }).containsOnly("auth1", "auth2")
     Assertions.assertThat(observed?.subject).isEqualTo("some-subject-id")
   }

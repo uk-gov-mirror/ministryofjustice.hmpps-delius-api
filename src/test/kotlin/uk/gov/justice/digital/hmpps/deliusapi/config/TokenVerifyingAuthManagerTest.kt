@@ -1,8 +1,10 @@
 package uk.gov.justice.digital.hmpps.deliusapi.config
 
-import com.github.tomakehurst.wiremock.client.WireMock.*
-import wiremock.org.eclipse.jetty.http.HttpHeader
-import com.nhaarman.mockitokotlin2.*
+import com.github.tomakehurst.wiremock.client.WireMock.equalTo
+import com.github.tomakehurst.wiremock.client.WireMock.exactly
+import com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor
+import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
+import com.nhaarman.mockitokotlin2.whenever
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -20,6 +22,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import uk.gov.justice.digital.hmpps.deliusapi.config.wiremock.TokenVerificationExtension
 import uk.gov.justice.digital.hmpps.deliusapi.config.wiremock.TokenVerificationExtension.Companion.tokenVerificationApi
 import uk.gov.justice.digital.hmpps.deliusapi.config.wiremock.TokenVerificationMockServer
+import wiremock.org.eclipse.jetty.http.HttpHeader
 
 @ExtendWith(MockitoExtension::class, TokenVerificationExtension::class)
 class TokenVerifyingAuthManagerTest {
@@ -31,7 +34,7 @@ class TokenVerifyingAuthManagerTest {
   @BeforeEach
   fun beforeEach() {
     token = Jwt.withTokenValue("dummy-token-value")
-      .claim(JwtClaimNames.SUB,"some-subject-id")
+      .claim(JwtClaimNames.SUB, "some-subject-id")
       .header("dummy-header", "dummy-header-value")
       .build()
     client = WebClient.create(TokenVerificationMockServer.URL)

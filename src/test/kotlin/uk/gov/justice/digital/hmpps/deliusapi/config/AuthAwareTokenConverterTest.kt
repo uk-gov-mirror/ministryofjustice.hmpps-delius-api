@@ -20,7 +20,7 @@ class AuthAwareTokenConverterTest {
 
   private fun aToken(): Jwt {
     return Jwt.withTokenValue("dummy-token-value")
-      .claim(JwtClaimNames.SUB,"some-subject-id")
+      .claim(JwtClaimNames.SUB, "some-subject-id")
       .claim(ClaimNames.CLIENT_ID, "some-client-id")
       .claim(ClaimNames.AUTHORITIES, listOf("auth1", "auth2"))
       .header("dummy-header", "dummy-header-value")

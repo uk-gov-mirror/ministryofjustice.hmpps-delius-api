@@ -8,6 +8,11 @@ spring:
   codec:
     max-in-memory-size: 10MB
 
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      leak-detection-threshold: 20000
+
   jackson:
     date-format: "yyyy-MM-dd HH:mm:ss"
     serialization:
@@ -17,6 +22,20 @@ spring:
     group:
       test:
         - "stdout"
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+
+  h2:
+    console:
+      enabled: false
+
+  flyway:
+    enabled: false
+
+  lifecycle:
+    timeout-per-shutdown-phase: 10s
 
 server:
   port: 8080
@@ -49,3 +68,12 @@ management:
     info:
       cache:
         time-to-live: 2000ms
+
+logging:
+  level:
+    org.springframework: INFO
+    org.springframework.security: INFO
+    uk.gov.justice.hmpps: DEBUG
+  uris:
+    exclude:
+      regex: .*/health|*/info|*/ping|.*/swagger.*|/webjars/.*|

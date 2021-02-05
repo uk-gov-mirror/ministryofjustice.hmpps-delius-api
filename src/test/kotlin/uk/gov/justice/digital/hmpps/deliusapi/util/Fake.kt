@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.deliusapi.util
 
 import com.github.javafaker.Faker
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.Contact
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.ContactDto
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewContact
 import java.time.LocalDate
 import java.time.LocalTime
@@ -17,7 +17,7 @@ object Fake {
   fun localTime(): LocalTime = faker.date().past(10, TimeUnit.DAYS).toInstant().atZone(ZoneId.systemDefault()).toLocalTime()
 
   inline fun <reified Partial : Any> newContact(partial: Partial?) = NewContact(
-    offenderId = faker.number().numberBetween(1, 100),
+    offenderId = faker.number().randomNumber(),
     contactType = faker.lorem().characters(1, 10),
     contactOutcome = faker.lorem().characters(1, 10),
     provider = faker.lorem().characters(3),
@@ -28,16 +28,16 @@ object Fake {
     contactStartTime = localTime(),
     contactEndTime = localTime(),
     alert = faker.bool().bool(),
-    sensitiveContact = faker.bool().bool(),
+    sensitive = faker.bool().bool(),
     notes = faker.lorem().paragraph(),
     contactShortDescription = faker.company().bs(),
   ).merge(partial)
 
   fun newContact() = newContact(null)
 
-  inline fun <reified Partial : Any> contact(partial: Partial?) = Contact(
-    id = faker.number().numberBetween(1, 100),
-    offenderId = faker.number().numberBetween(1, 100),
+  inline fun <reified Partial : Any> contactDto(partial: Partial?) = ContactDto(
+    id = faker.number().randomNumber(),
+    offenderId = faker.number().randomNumber(),
     contactType = faker.lorem().characters(1, 10),
     contactOutcome = faker.lorem().characters(1, 10),
     provider = faker.lorem().characters(3),
@@ -48,12 +48,12 @@ object Fake {
     contactStartTime = localTime(),
     contactEndTime = localTime(),
     alert = faker.bool().bool(),
-    sensitiveContact = faker.bool().bool(),
+    sensitive = faker.bool().bool(),
     notes = faker.lorem().paragraph(),
     contactShortDescription = faker.company().bs(),
-  ).merge(partial)
+  ).merge(newContact()).merge(partial)
 
-  fun contact() = contact(null)
+  fun contactDto() = contactDto(null)
 
   /**
    * Merge all properties of partial into target.

@@ -3,9 +3,55 @@ version: 2.1
 orbs:
   owasp: entur/owasp@0.0.10
   hmpps: ministryofjustice/hmpps@2.2
-  aws-ecr: circleci/aws-ecr@6.7.0
-  aws-code-deploy: circleci/aws-code-deploy@1.0.1
-
+  aws-ecs: circleci/aws-ecs@0.0.10
+  aws-cli: circleci/aws-cli@1.3.2
+commands:
+  configure_profile:
+    parameters:
+      profile-name:
+        type: string
+      role-arn:
+        type: string
+    steps:
+      - run:
+          name: Configure credentials profile
+          command: |
+            aws configure set role_arn "<<parameters.role-arn>>" --profile <<parameters.profile-name>>
+            aws configure set source_profile default --profile <<parameters.profile-name>>
+  assume_role:
+    parameters:
+      role-arn:
+        type: string
+    steps:
+      - run:
+          name: Assume IAM role
+          command: |
+            temp_role=$(aws sts assume-role --role-arn <<parameters.role-arn>> --role-session-name "role_session")
+            echo "export AWS_ACCESS_KEY_ID=$(echo $temp_role | jq .Credentials.AccessKeyId | xargs)" >> $BASH_ENV; source $BASH_ENV;
+            echo "export AWS_SECRET_ACCESS_KEY=$(echo $temp_role | jq .Credentials.SecretAccessKey | xargs)" >> $BASH_ENV; source $BASH_ENV;
+            echo "export AWS_SESSION_TOKEN=$(echo $temp_role | jq .Credentials.SessionToken | xargs)" >> $BASH_ENV; source $BASH_ENV;
+  deploy_to_env:
+    parameters:
+      role-arn:
+        type: string
+      family:
+        type: string
+      cluster-name:
+        type: string
+      service-name:
+        type: string
+      container-image-name-updates:
+        type: string
+    steps:
+      - aws-cli/setup
+      - assume_role:
+          role-arn: <<parameters.role-arn>>
+      - aws-ecs/update-service:
+          family: <<parameters.family>>
+          cluster-name: <<parameters.cluster-name>>
+          service-name: <<parameters.service-name>>
+          container-image-name-updates: <<parameters.container-image-name-updates>>
+          verify-revision-is-deployed: true
 jobs:
   validate:
     executor: hmpps/java
@@ -25,6 +71,34 @@ jobs:
           path: build/test-results
       - store_artifacts:
           path: build/reports/tests
+  build_docker:
+    docker:
+       - image: circleci/python
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - aws-cli/setup:
+          profile-name: default
+      - configure_profile:
+          profile-name: engineering_dev
+          role-arn: $ROLE_ARN_PUSH_DOCKER_IMAGE
+      - run:
+          name: Docker Image
+          command: |
+            aws ecr-public get-login-password --region us-east-1 --profile engineering_dev| docker login --username AWS --password-stdin $AWS_ECS_ACCOUNT_URL
+            docker build -t $AWS_ECS_ACCOUNT_URL/delius-api:$CIRCLE_SHA1 .
+            docker push $AWS_ECS_ACCOUNT_URL/delius-api:$CIRCLE_SHA1
+  deploy-dev:
+    docker:
+      - image: circleci/python
+    steps:
+      - deploy_to_env:
+          role-arn: $ROLE_ARN_DEPLOY_DEV
+          family: dlc-dev-delius-api-task-definition
+          cluster-name: dlc-dlc-dev-ecscluster-private-ecs
+          service-name: dlc-dev-delius-api-service
+          container-image-name-updates: container=delius-api,tag=${CIRCLE_SHA1}
 
 workflows:
   version: 2
@@ -34,57 +108,19 @@ workflows:
           filters:
             tags:
               ignore: /.*/
-#      - aws-ecr/build-and-push-image:
-#          name: build_docker
-#          account-url: AWS_ECR_ACCOUNT_URL
-#          aws-access-key-id: AWS_ACCESS_KEY_ID
-#          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
-#          create-repo: true
-#          dockerfile: Dockerfile
-#          path: .
-#          region: AWS_REGION
-#          repo: circleci-ecr-orb-demo
-#          tag: "$CIRCLE_SHA1"
-#          filters:
-#            branches:
-#              only:
-#                - main
-#      - hmpps/deploy_env:
-#          name: deploy_dev
-#          env: "dev"
-#          context: hmpps-common-vars
-#          filters:
-#            branches:
-#              only:
-#                - main
-#          requires:
-#            - validate
-#            - build_docker
-#      - request-preprod-approval:
-#          type: approval
-#          requires:
-#            - deploy_dev
-#      - hmpps/deploy_env:
-#          name: deploy_preprod
-#          env: "preprod"
-#          context:
-#            - hmpps-common-vars
-#            - hmpps-delius-api-preprod
-#          requires:
-#            - request-preprod-approval
-#      - request-prod-approval:
-#          type: approval
-#          requires:
-#            - deploy_preprod
-#      - hmpps/deploy_env:
-#          name: deploy_prod
-#          env: "prod"
-#          slack_notification: true
-#          context:
-#            - hmpps-common-vars
-#            - hmpps-delius-api-prod
-#          requires:
-#            - request-prod-approval
+      - build_docker:
+          filters:
+            branches:
+              only:
+                - main
+      - deploy-dev:
+          filters:
+            branches:
+              only:
+                - main
+          requires:
+          - validate
+          - build_docker
 
   scheduled:
     triggers:

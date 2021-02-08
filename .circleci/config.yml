@@ -18,6 +18,8 @@ commands:
           command: |
             aws configure set role_arn "<<parameters.role-arn>>" --profile <<parameters.profile-name>>
             aws configure set source_profile default --profile <<parameters.profile-name>>
+  # This is a workaround for the aws-ecs/update-service CircleCI command not taking a profile parameter, and the underlying aws cli command not honouring the AWS_PROFILE env var.
+  # See https://github.com/CircleCI-Public/aws-ecs-orb/issues/41 for further details
   assume_role:
     parameters:
       role-arn:
@@ -83,6 +85,7 @@ jobs:
       - configure_profile:
           profile-name: engineering_dev
           role-arn: $ROLE_ARN_PUSH_DOCKER_IMAGE
+      # Currently the aws-ecr orb does not support logging in/ pushing to public repos
       - run:
           name: Docker Image
           command: |

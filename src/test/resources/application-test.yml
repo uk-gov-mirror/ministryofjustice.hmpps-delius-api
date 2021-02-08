@@ -1,7 +1,7 @@
 spring:
   flyway:
     enabled: true
-    locations: classpath:/db/schema
+    locations: classpath:/db/schema,classpath:/db/data
 
   datasource:
     driver-class-name: org.h2.Driver

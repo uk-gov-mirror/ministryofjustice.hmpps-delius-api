@@ -27,9 +27,6 @@ data class Contact(
   @Column(name = "CONTACT_ID", nullable = false)
   var id: Long = 0,
 
-  // @Column(name = "LINKED_CONTACT_ID")
-  // var linkedContactId: Long? = null,
-
   @Column(name = "CONTACT_DATE", nullable = false)
   var contactDate: LocalDate? = null,
 
@@ -43,27 +40,8 @@ data class Contact(
   @Column(name = "CONTACT_END_TIME")
   var contactEndTime: LocalTime? = null,
 
-  // @Column(name = "RQMNT_ID")
-  // var requirementId: Long? = null,
-
-  // @Column(name = "LIC_CONDITION_ID")
-  // var licenceConditionId: Long? = null,
-
-  // @Column(name = "PROVIDER_LOCATION_ID")
-  // var providerLocationId: Long? = null,
-
-  // @Column(name = "PROVIDER_EMPLOYEE_ID")
-  // var providerEmployeeId: Long? = null,
-
-  // @Column(name = "HOURS_CREDITED")
-  // var hoursCredited: Double? = null,
-
   @Column(name = "NOTES")
   var notes: String? = null,
-
-  // @Column(name = "VISOR_CONTACT")
-  // @Type(type = "yes_no")
-  // var visorContact: Boolean? = false,
 
   @JoinColumn(name = "STAFF_ID")
   @ManyToOne
@@ -75,10 +53,6 @@ data class Contact(
 
   @Column(name = "SOFT_DELETED", columnDefinition = "NUMBER", nullable = false)
   var softDeleted: Boolean = false,
-
-  // @Column(name = "VISOR_EXPORTED")
-  // @Type(type = "yes_no")
-  // var visorExported: Boolean? = false,
 
   @Column(name = "PARTITION_AREA_ID", nullable = false)
   var partitionAreaId: Long = 0,
@@ -94,17 +68,9 @@ data class Contact(
   @Type(type = "yes_no")
   var alert: Boolean = false,
 
-  // @Column(name = "ATTENDED")
-  // @Type(type = "yes_no")
-  // var attended: Boolean = false,
-
   @Column(name = "CREATED_DATETIME", nullable = false)
   @CreatedDate
   var createdDateTime: LocalDateTime? = null,
-
-  // @Column(name = "COMPLIED")
-  // @Type(type = "yes_no")
-  // var complied: Boolean = false,
 
   @Column(name = "SENSITIVE")
   @Type(type = "yes_no")
@@ -114,15 +80,9 @@ data class Contact(
   @LastModifiedDate
   var lastUpdatedDateTime: LocalDateTime? = null,
 
-  // @Column(name = "EVENT_ID")
-  // var eventId: Long? = null,
-
   @JoinColumn(name = "CONTACT_TYPE_ID")
   @ManyToOne
   var contactType: ContactType? = null,
-
-  // @Column(name = "PROVIDER_TEAM_ID")
-  // var providerTeamId: Long? = null,
 
   @JoinColumn(name = "CONTACT_OUTCOME_TYPE_ID")
   @ManyToOne
@@ -131,9 +91,6 @@ data class Contact(
   @Column(name = "CREATED_BY_USER_ID", nullable = false)
   @CreatedBy
   var createdByUserId: Long = 0,
-
-  // @Column(name = "EXPLANATION_ID")
-  // var explanationId: Long? = null,
 
   @Column(name = "LAST_UPDATED_USER_ID", nullable = false)
   @LastModifiedBy
@@ -154,18 +111,4 @@ data class Contact(
 
   @Column(name = "TRUST_PROVIDER_TEAM_ID", nullable = false)
   var teamProviderId: Long = 0,
-
-  // @Column(name = "ENFORCEMENT")
-  // var enforcement: Long? = null,
-
-  // @Column(name = "DOCUMENT_LINKED")
-  // @Type(type = "yes_no")
-  // var documentLinked: Boolean? = null,
-
-  // @Column(name = "UPLOAD_LINKED")
-  // @Type(type = "yes_no")
-  // var uploadLinked: Boolean? = null,
-
-  // @Column(name = "NSI_ID")
-  // var nsiId: Long? = null,
 )

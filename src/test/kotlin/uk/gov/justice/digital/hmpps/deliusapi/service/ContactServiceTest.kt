@@ -24,9 +24,12 @@ class ContactServiceTest {
   @Test
   fun `Creating contact`() {
     val newContact = Fake.newContact()
-    whenever(repository.saveAndFlush(any())).thenReturn(null)
+    val contact = Fake.contact()
+    whenever(repository.saveAndFlush(any())).thenReturn(contact)
 
     val observed = subject.createContact(newContact)
-    Assertions.assertThat(observed).isInstanceOf(ContactDto::class.java)
+    Assertions.assertThat(observed)
+      .isInstanceOf(ContactDto::class.java)
+      .hasFieldOrPropertyWithValue("id", contact.id)
   }
 }

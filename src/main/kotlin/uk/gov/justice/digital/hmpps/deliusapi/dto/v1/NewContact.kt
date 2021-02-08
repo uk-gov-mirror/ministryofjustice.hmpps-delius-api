@@ -8,7 +8,7 @@ import javax.validation.constraints.Size
 
 data class NewContact(
   @field:Positive
-  val offenderId: Int,
+  val offenderId: Long,
 
   @field:NotBlank
   @field:Size(min = 1, max = 10)
@@ -42,7 +42,7 @@ data class NewContact(
 
   val alert: Boolean = false,
 
-  val sensitiveContact: Boolean = false,
+  val sensitive: Boolean = false,
 
   @field:Size(min = 0, max = 4096)
   val notes: String?,

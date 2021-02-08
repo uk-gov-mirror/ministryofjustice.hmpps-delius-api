@@ -21,7 +21,7 @@ class ContactControllerTest {
   @Test
   fun `Creating contact`() {
     val request = Fake.newContact()
-    val contact = Fake.contact()
+    val contact = Fake.contactDto()
 
     whenever(service.createContact(request)).thenReturn(contact)
 

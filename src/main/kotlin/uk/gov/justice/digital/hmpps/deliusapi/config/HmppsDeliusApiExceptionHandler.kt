@@ -32,7 +32,7 @@ class HmppsDeliusApiExceptionHandler {
 
   @ResponseStatus(BAD_REQUEST)
   @ExceptionHandler(MethodArgumentNotValidException::class)
-  fun handleValidationException(e: MethodArgumentNotValidException): ErrorResponse = ErrorResponse(
+  fun handleValidationException(e: MethodArgumentNotValidException) = ErrorResponse(
     status = BAD_REQUEST,
     userMessage = e.bindingResult.allErrors.mapNotNull {
       if (it is FieldError) {
@@ -42,18 +42,13 @@ class HmppsDeliusApiExceptionHandler {
     developerMessage = e.message
   )
 
+  @ResponseStatus(BAD_REQUEST)
   @ExceptionHandler(HttpMediaTypeNotSupportedException::class, HttpMessageNotReadableException::class)
-  fun handleGenericBadRequest(e: Exception): ResponseEntity<ErrorResponse> {
-    return ResponseEntity
-      .status(BAD_REQUEST)
-      .body(
-        ErrorResponse(
-          status = BAD_REQUEST,
-          userMessage = e.message,
-          developerMessage = e.message
-        )
-      )
-  }
+  fun handleGenericBadRequest(e: Exception) = ErrorResponse(
+    status = BAD_REQUEST,
+    userMessage = e.message,
+    developerMessage = e.message
+  )
 
   @ExceptionHandler(java.lang.Exception::class)
   fun handleException(e: java.lang.Exception): ResponseEntity<ErrorResponse?>? {

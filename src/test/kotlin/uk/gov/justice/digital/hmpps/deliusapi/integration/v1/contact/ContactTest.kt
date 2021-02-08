@@ -37,7 +37,7 @@ class ContactTest : IntegrationTestBase() {
   @Test
   fun `Creating contact`() {
     val token = jwtAuthHelper.createJwt("bob")
-    val newContact = Fake.newContact()
+    val newContact = Fake.newContact(object { val offenderId = 11 })
     webTestClient.post()
       .uri("/v1/contact")
       .header("Authorization", "Bearer $token")

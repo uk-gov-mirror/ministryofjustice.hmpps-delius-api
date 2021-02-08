@@ -8,16 +8,6 @@ import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 class ContactMapperTest {
 
   @Test
-  fun `Mapping from request to dto`() {
-    val source = Fake.newContact()
-    val observed = ContactMapper.INSTANCE.toDto(source)
-
-    Assertions.assertThat(observed)
-      .isInstanceOf(ContactDto::class.java)
-      .usingRecursiveComparison().ignoringFields("id").isEqualTo(source)
-  }
-
-  @Test
   fun `Mapping from entity to dto`() {
     val source = Fake.contact()
     val observed = ContactMapper.INSTANCE.toDto(source)

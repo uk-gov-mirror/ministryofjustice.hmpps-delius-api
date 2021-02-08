@@ -96,9 +96,6 @@ data class Contact(
   @LastModifiedBy
   var lastUpdatedUserId: Long = 0,
 
-  // @Column(name = "TRAINING_SESSION_ID")
-  // var trainingSessionId: Long? = null,
-
   @Column(name = "TRUST_PROVIDER_FLAG", nullable = false)
   var trustProviderFlag: Long = 0,
 

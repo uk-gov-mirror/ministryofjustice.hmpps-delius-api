@@ -16,7 +16,16 @@ class ResourceServerConfiguration(
 ) : WebSecurityConfigurerAdapter() {
 
   override fun configure(http: HttpSecurity) {
-    val permitted = mutableListOf("/info", "/health/**")
+    val permitted = mutableListOf(
+      "/info",
+      "/health/**",
+      "/v2/api-docs",
+      "/swagger-ui/**",
+      "/swagger-resources",
+      "/swagger-resources/configuration/ui",
+      "/swagger-resources/configuration/security"
+    )
+
     if (environment.activeProfiles.contains("dev")) {
       permitted.add("/h2-console/**")
       permitted.add("/")

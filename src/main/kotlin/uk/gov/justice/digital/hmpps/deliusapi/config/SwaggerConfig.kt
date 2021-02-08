@@ -23,7 +23,7 @@ class SwaggerConfig {
         PathSelectors.regex("(\\/info.*)")
           .or(
             PathSelectors.regex("(\\/health)")
-              .or(PathSelectors.regex("(\\/V1.*)"))
+              .or(PathSelectors.regex("(\\/v1.*)"))
           )
       )
       .build()

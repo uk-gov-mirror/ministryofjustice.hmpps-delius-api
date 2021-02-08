@@ -20,7 +20,15 @@ class ResourceServerConfiguration(
           .authenticationManager(tokenVerifyingAuthManager)
       }
       .authorizeRequests {
-        it.antMatchers("/info", "/health/**").permitAll()
+        it.antMatchers(
+          "/info",
+          "/health/**",
+          "/v2/api-docs",
+          "/swagger-ui/**",
+          "/swagger-resources",
+          "/swagger-resources/configuration/ui",
+          "/swagger-resources/configuration/security"
+        ).permitAll()
           .anyRequest().authenticated()
       }
   }

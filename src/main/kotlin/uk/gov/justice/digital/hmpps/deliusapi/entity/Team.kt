@@ -10,8 +10,8 @@ import javax.persistence.Table
 data class Team(
   @Id
   @Column(name = "TEAM_ID")
-  var id: Long = 0,
+  var id: Long,
 
   @Column(name = "CODE")
-  var code: String? = null,
+  var code: String,
 )

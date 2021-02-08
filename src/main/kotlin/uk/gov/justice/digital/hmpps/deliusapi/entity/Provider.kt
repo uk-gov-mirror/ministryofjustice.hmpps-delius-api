@@ -10,8 +10,8 @@ import javax.persistence.Table
 data class Provider(
   @Id
   @Column(name = "PROBATION_AREA_ID")
-  var id: Long? = null,
+  var id: Long,
 
   @Column(name = "CODE")
-  val code: String? = null,
+  val code: String,
 )

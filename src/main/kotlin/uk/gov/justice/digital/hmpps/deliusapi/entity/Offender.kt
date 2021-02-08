@@ -10,5 +10,5 @@ import javax.persistence.Table
 data class Offender(
   @Id
   @Column(name = "OFFENDER_ID")
-  var id: Long = 0,
+  var id: Long,
 )

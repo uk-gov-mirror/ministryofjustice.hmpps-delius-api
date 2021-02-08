@@ -9,8 +9,8 @@ import javax.persistence.Table
 @Table(name = "OFFICE_LOCATION")
 data class OfficeLocation(
   @Id @Column(name = "OFFICE_LOCATION_ID")
-  var id: Long = 0,
+  var id: Long,
 
   @Column(name = "CODE")
-  val code: String? = null
+  val code: String
 )

@@ -28,11 +28,11 @@ data class Contact(
   var id: Long = 0,
 
   @Column(name = "CONTACT_DATE", nullable = false)
-  var contactDate: LocalDate? = null,
+  var contactDate: LocalDate,
 
   @JoinColumn(name = "OFFENDER_ID", nullable = false)
   @ManyToOne
-  val offender: Offender? = null,
+  val offender: Offender,
 
   @Column(name = "CONTACT_START_TIME")
   var contactStartTime: LocalTime? = null,
@@ -70,7 +70,7 @@ data class Contact(
 
   @Column(name = "CREATED_DATETIME", nullable = false)
   @CreatedDate
-  var createdDateTime: LocalDateTime? = null,
+  var createdDateTime: LocalDateTime,
 
   @Column(name = "SENSITIVE")
   @Type(type = "yes_no")
@@ -78,7 +78,7 @@ data class Contact(
 
   @Column(name = "LAST_UPDATED_DATETIME", nullable = false)
   @LastModifiedDate
-  var lastUpdatedDateTime: LocalDateTime? = null,
+  var lastUpdatedDateTime: LocalDateTime,
 
   @JoinColumn(name = "CONTACT_TYPE_ID")
   @ManyToOne

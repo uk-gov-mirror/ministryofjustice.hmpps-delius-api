@@ -4,10 +4,7 @@ spring:
     locations: classpath:/db/schema,classpath:/db/data
 
   datasource:
-    driver-class-name: org.h2.Driver
     url: 'jdbc:h2:mem:testdb;Mode=Oracle'
-    username: sa
-    password: password
 
 server:
   shutdown: immediate

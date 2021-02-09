@@ -4,16 +4,43 @@ Scripts for building and publishing a dev/test instance of an Oracle 18c XE data
 This is intended for use in integration tests where core Delius functionality (e.g. triggers) must be exercised.
 
 ## Building Locally
-TODO...
+First, agree to the license and download the Oracle RPM file from here: https://www.oracle.com/database/technologies/xe-downloads.html
+
+Then, build the base image (`oracle/database:18.4.0-xe`):
+```shell
+# 1. Clone the Oracle docker-images repo
+git clone https://github.com/oracle/docker-images.git
+cd docker-images/OracleDatabase/SingleInstance/dockerfiles
+
+# 2. Copy the Oracle RPM file into place
+cp path/to/downloaded/oracle-database-xe-18c-1.0-1.x86_64.rpm 18.4.0
+
+# 3. Remove volume configuration from the Dockerfile
+sed -i '/volume/d' Dockerfile.xe
+
+# 4. Build the base image
+./buildDockerImage.sh -v 18.4.0 -x
+```
+
+Finally, build the Delius image:
+```shell
+# 1. Copy the datapump file into place - TODO decide how/if we should distribute this
+cd hmpps-delius-api/oracledb
+cp /path/to/import.dmp .
+
+# 2. Build
+docker build -t hmpps/delius-test-db .
+```
 
 ## Running From ECR
 A pre-built image is available from a private Delius ECR repository:
 ```
 895523100917.dkr.ecr.eu-west-2.amazonaws.com/hmpps/delius-test-db
 ```
-Access to this repository can be requested in the [#delius_infra_support](https://mojdt.slack.com/archives/CNXK9893K) Slack channel.
+Access can be requested in the [#delius_infra_support](https://mojdt.slack.com/archives/CNXK9893K) Slack channel.
 
-Once you have IAM access to the repository, follow these instructions to pull the image. 
+
+Follow these instructions to pull the image: 
 1. Configure the AWS CLI to assume a role with access to ECR in the Delius Engineering account. 
    Below is a sample `~/.aws/credentials` file for assuming the `MoJDevelopers` role with support for MFA.
 <pre>
@@ -25,7 +52,6 @@ source_profile = default
 mfa_serial = arn:aws:iam::570551521311:mfa/<b>IAM_USERNAME</b>
 role_arn = arn:aws:iam::895523100917:role/MoJDevelopers
 </pre>
-
 2. Login to ECR:
 ```shell
 aws ecr get-login-password --profile eng-dev | docker login --username AWS --password-stdin 895523100917.dkr.ecr.eu-west-2.amazonaws.com
@@ -47,5 +73,5 @@ All accounts have the same password: `NDelius1`, and the service name should be 
 docker run -d -p 1521:1521 895523100917.dkr.ecr.eu-west-2.amazonaws.com/hmpps/delius-test-db:latest 
 sqlplus delius_app_schema/NDelius1@XEPDB1
 > SELECT COUNT(*) FROM OFFENDER;
-1234
+10838
 ```

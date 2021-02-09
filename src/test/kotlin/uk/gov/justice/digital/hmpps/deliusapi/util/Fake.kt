@@ -27,10 +27,11 @@ object Fake {
   fun localDateTime(): LocalDateTime = zonedDateTime().toLocalDateTime()
   fun localDate(): LocalDate = zonedDateTime().toLocalDate()
   fun localTime(): LocalTime = zonedDateTime().toLocalTime()
+  fun crn() = "${faker.lorem().fixedString(1)}${faker.number().randomNumber(6, true)}"
 
-  inline fun <reified Partial : Any> contact(partial: Partial?) = Contact(
+  inline fun <reified Partial : Any> contact(partial: Partial?): Contact = Contact(
     id = faker.number().randomNumber(),
-    offender = Offender(id = faker.number().randomNumber()),
+    offender = Offender(id = faker.number().randomNumber(), crn = crn()),
     contactType = ContactType(id = faker.number().randomNumber(), code = faker.lorem().characters(1, 10)),
     contactOutcomeType = ContactOutcomeType(id = faker.number().randomNumber(), code = faker.lorem().characters(1, 10)),
     provider = Provider(id = faker.number().randomNumber(), code = faker.lorem().characters(3)),
@@ -50,6 +51,7 @@ object Fake {
     teamProviderId = faker.number().randomNumber(),
     createdDateTime = localDateTime(),
     lastUpdatedDateTime = localDateTime(),
+    description = faker.company().bs(),
   ).merge(partial)
 
   fun contact() = contact(null)

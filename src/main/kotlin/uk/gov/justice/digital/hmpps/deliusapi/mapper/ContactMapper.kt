@@ -13,7 +13,7 @@ interface ContactMapper {
   fun toNew(src: ContactDto): NewContact
 
   @Mappings(
-    Mapping(source = "offender.id", target = "offenderId"),
+    Mapping(source = "offender.crn", target = "offenderCrn"),
     Mapping(source = "contactType.code", target = "contactType"),
     Mapping(source = "contactOutcomeType.code", target = "contactOutcome"),
     Mapping(source = "provider.code", target = "provider"),

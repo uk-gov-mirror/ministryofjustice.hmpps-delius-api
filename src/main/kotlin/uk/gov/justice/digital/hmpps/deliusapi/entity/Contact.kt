@@ -5,11 +5,13 @@ import org.springframework.data.annotation.CreatedBy
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedBy
 import org.springframework.data.annotation.LastModifiedDate
+import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import javax.persistence.Column
 import javax.persistence.Entity
+import javax.persistence.EntityListeners
 import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
@@ -17,8 +19,10 @@ import javax.persistence.JoinColumn
 import javax.persistence.ManyToOne
 import javax.persistence.SequenceGenerator
 import javax.persistence.Table
+import javax.persistence.Version
 
 @Entity
+@EntityListeners(AuditingEntityListener::class)
 @Table(name = "CONTACT")
 data class Contact(
   @Id
@@ -62,7 +66,8 @@ data class Contact(
   var officeLocation: OfficeLocation? = null,
 
   @Column(name = "ROW_VERSION", nullable = false)
-  var rowVersion: Long = 0,
+  @Version
+  var rowVersion: Long = 1,
 
   @Column(name = "ALERT_ACTIVE")
   @Type(type = "yes_no")
@@ -70,7 +75,7 @@ data class Contact(
 
   @Column(name = "CREATED_DATETIME", nullable = false)
   @CreatedDate
-  var createdDateTime: LocalDateTime,
+  var createdDateTime: LocalDateTime? = null,
 
   @Column(name = "SENSITIVE")
   @Type(type = "yes_no")
@@ -78,7 +83,7 @@ data class Contact(
 
   @Column(name = "LAST_UPDATED_DATETIME", nullable = false)
   @LastModifiedDate
-  var lastUpdatedDateTime: LocalDateTime,
+  var lastUpdatedDateTime: LocalDateTime? = null,
 
   @JoinColumn(name = "CONTACT_TYPE_ID")
   @ManyToOne
@@ -108,4 +113,7 @@ data class Contact(
 
   @Column(name = "TRUST_PROVIDER_TEAM_ID", nullable = false)
   var teamProviderId: Long = 0,
+
+  @Column(name = "DESCRIPTION")
+  var description: String? = null,
 )

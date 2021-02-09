@@ -19,7 +19,7 @@ class NewContactValidationTest {
   fun `Invalid new contact`() {
     val subject = Fake.newContact(
       object {
-        val offenderId = 0
+        val offenderCrn = "bacon"
         val contactType = ""
         val contactOutcome = ""
         val provider = "AA"
@@ -35,7 +35,7 @@ class NewContactValidationTest {
       "contactType",
       "contactOutcome",
       "team",
-      "offenderId",
+      "offenderCrn",
       "officeLocation",
       "staff"
     )

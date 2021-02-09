@@ -5,7 +5,7 @@ import java.time.LocalTime
 
 data class ContactDto(
   val id: Long,
-  val offenderId: Long,
+  val offenderCrn: String,
   val contactType: String,
   val contactOutcome: String,
   val provider: String,
@@ -18,5 +18,5 @@ data class ContactDto(
   val alert: Boolean,
   val sensitive: Boolean,
   val notes: String?,
-  val contactShortDescription: String?
+  val description: String?
 )

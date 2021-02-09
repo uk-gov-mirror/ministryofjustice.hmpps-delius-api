@@ -3,12 +3,13 @@ package uk.gov.justice.digital.hmpps.deliusapi.dto.v1
 import java.time.LocalDate
 import java.time.LocalTime
 import javax.validation.constraints.NotBlank
-import javax.validation.constraints.Positive
+import javax.validation.constraints.Pattern
 import javax.validation.constraints.Size
 
 data class NewContact(
-  @field:Positive
-  val offenderId: Long,
+  @field:NotBlank
+  @field:Pattern(regexp = "^[a-zA-Z][0-9]{6}\$", message = "must be a valid CRN")
+  val offenderCrn: String,
 
   @field:NotBlank
   @field:Size(min = 1, max = 10)
@@ -48,5 +49,5 @@ data class NewContact(
   val notes: String?,
 
   @field:Size(min = 0, max = 200)
-  val contactShortDescription: String?
+  val description: String?
 )

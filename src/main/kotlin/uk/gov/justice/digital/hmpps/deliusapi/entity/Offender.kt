@@ -11,4 +11,7 @@ data class Offender(
   @Id
   @Column(name = "OFFENDER_ID")
   var id: Long,
+
+  @Column(name = "CRN")
+  var crn: String,
 )

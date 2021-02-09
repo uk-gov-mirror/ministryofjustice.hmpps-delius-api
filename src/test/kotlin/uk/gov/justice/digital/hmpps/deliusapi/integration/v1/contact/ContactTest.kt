@@ -29,7 +29,7 @@ class ContactTest : IntegrationTestBase() {
   @Test
   fun `Attempting to create invalid contact`() {
     val token = jwtAuthHelper.createJwt("bob")
-    val newContact = Fake.newContact(object { val offenderId = 0 })
+    val newContact = Fake.newContact(object { val offenderCrn = "bacon" })
     webTestClient.post()
       .uri("/v1/contact")
       .header("Authorization", "Bearer $token")
@@ -42,7 +42,7 @@ class ContactTest : IntegrationTestBase() {
   @Test
   fun `Creating contact`() {
     val token = jwtAuthHelper.createJwt("bob")
-    val newContact = Fake.newContact(object { val offenderId = 11L })
+    val newContact = Fake.newContact(object { val offenderCrn = "X320811" })
     var id = 0L
     webTestClient.post()
       .uri("/v1/contact")
@@ -61,6 +61,6 @@ class ContactTest : IntegrationTestBase() {
     Assertions.assertThat(entity).describedAs("should save contact").isNotNull
       .extracting { it?.offender?.id }
       .describedAs("should save expected offender")
-      .isEqualTo(newContact.offenderId)
+      .isEqualTo(2600343964L)
   }
 }

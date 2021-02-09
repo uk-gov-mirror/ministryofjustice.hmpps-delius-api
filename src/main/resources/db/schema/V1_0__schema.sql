@@ -5950,6 +5950,7 @@ create table CONTACT
     LINKED_DOCUMENT_CONTACT_ID   NUMBER
         constraint R_1225
             references CONTACT,
+    DESCRIPTION VARCHAR2(200),
     constraint R_1718
         foreign key (TRUST_PROVIDER_FLAG, STAFF_EMPLOYEE_ID) references OFFICER,
     foreign key (TRUST_PROVIDER_FLAG, TRUST_PROVIDER_TEAM_ID) references ALL_TEAM,

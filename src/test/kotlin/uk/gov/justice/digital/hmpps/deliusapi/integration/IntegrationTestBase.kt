@@ -12,5 +12,8 @@ abstract class IntegrationTestBase {
 
   @Suppress("SpringJavaInjectionPointsAutowiringInspection")
   @Autowired
-  lateinit var webTestClient: WebTestClient
+  protected lateinit var webTestClient: WebTestClient
+
+  @Autowired
+  protected lateinit var jwtAuthHelper: JwtAuthHelper
 }

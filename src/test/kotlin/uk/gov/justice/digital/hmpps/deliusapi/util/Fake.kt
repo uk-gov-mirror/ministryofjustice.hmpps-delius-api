@@ -14,6 +14,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.primaryConstructor
@@ -22,9 +23,10 @@ object Fake {
   val faker = Faker()
   val mapper = ContactMapper.INSTANCE
 
-  fun localDateTime(): LocalDateTime = faker.date().past(10, TimeUnit.DAYS).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
-  fun localDate(): LocalDate = faker.date().past(10, TimeUnit.DAYS).toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
-  fun localTime(): LocalTime = faker.date().past(10, TimeUnit.DAYS).toInstant().atZone(ZoneId.systemDefault()).toLocalTime()
+  fun zonedDateTime(): ZonedDateTime = faker.date().past(10, TimeUnit.DAYS).toInstant().atZone(ZoneId.systemDefault())
+  fun localDateTime(): LocalDateTime = zonedDateTime().toLocalDateTime()
+  fun localDate(): LocalDate = zonedDateTime().toLocalDate()
+  fun localTime(): LocalTime = zonedDateTime().toLocalTime()
 
   inline fun <reified Partial : Any> contact(partial: Partial?) = Contact(
     id = faker.number().randomNumber(),
@@ -52,16 +54,16 @@ object Fake {
 
   fun contact() = contact(null)
 
-  inline fun <reified Partial : Any> newContact(partial: Partial?) = mapper.toNew(contactDto()).merge(partial)
-
-  fun newContact() = newContact(null)
-
   inline fun <reified Partial : Any> contactDto(partial: Partial?) = mapper.toDto(contact()).merge(partial)
 
   fun contactDto() = contactDto(null)
 
+  inline fun <reified Partial : Any> newContact(partial: Partial?) = mapper.toNew(contactDto()).merge(partial)
+
+  fun newContact() = newContact(null)
+
   /**
-   * Merge all properties of partial into target.
+   * Merge all properties of partial into a shallow copy of target.
    */
   inline fun <reified T : Any, reified Partial : Any> T.merge(partial: Partial?): T {
     if (partial == null) {

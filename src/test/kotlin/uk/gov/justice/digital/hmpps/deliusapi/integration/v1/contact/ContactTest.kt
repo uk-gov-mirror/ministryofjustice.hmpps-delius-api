@@ -3,16 +3,15 @@ package uk.gov.justice.digital.hmpps.deliusapi.integration.v1.contact
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.MediaType
+import org.springframework.test.context.ActiveProfiles
 import uk.gov.justice.digital.hmpps.deliusapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.deliusapi.integration.JwtAuthHelper
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 
+@ActiveProfiles("test-h2")
 class ContactTest : IntegrationTestBase() {
-  @Autowired
-  private lateinit var jwtAuthHelper: JwtAuthHelper
-
   @Autowired
   private lateinit var repository: ContactRepository
 
@@ -43,7 +42,8 @@ class ContactTest : IntegrationTestBase() {
   @Test
   fun `Creating contact`() {
     val token = jwtAuthHelper.createJwt("bob")
-    val newContact = Fake.newContact(object { val offenderId = 11 })
+    val newContact = Fake.newContact(object { val offenderId = 11L })
+    var id = 0L
     webTestClient.post()
       .uri("/v1/contact")
       .header("Authorization", "Bearer $token")
@@ -54,9 +54,13 @@ class ContactTest : IntegrationTestBase() {
       .expectStatus()
       .isOk
       .expectBody()
-      .jsonPath("$.id").value<Long> {
-        Assertions.assertThat(it).isPositive
-        Assertions.assertThat(repository.existsById(it)).describedAs("should save contact").isTrue
-      }
+      .jsonPath("$.id").value<Long> { id = it }
+
+    Assertions.assertThat(id).describedAs("should return contact id").isPositive
+    val entity = repository.findByIdOrNull(id)
+    Assertions.assertThat(entity).describedAs("should save contact").isNotNull
+      .extracting { it?.offender?.id }
+      .describedAs("should save expected offender")
+      .isEqualTo(newContact.offenderId)
   }
 }

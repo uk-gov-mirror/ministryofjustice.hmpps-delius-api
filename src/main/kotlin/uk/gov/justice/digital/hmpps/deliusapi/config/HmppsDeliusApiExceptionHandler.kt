@@ -12,6 +12,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import javax.validation.ValidationException
 
 @RestControllerAdvice
@@ -43,7 +44,7 @@ class HmppsDeliusApiExceptionHandler {
   )
 
   @ResponseStatus(BAD_REQUEST)
-  @ExceptionHandler(HttpMediaTypeNotSupportedException::class, HttpMessageNotReadableException::class)
+  @ExceptionHandler(HttpMediaTypeNotSupportedException::class, HttpMessageNotReadableException::class, BadRequestException::class)
   fun handleGenericBadRequest(e: Exception) = ErrorResponse(
     status = BAD_REQUEST,
     userMessage = e.message,

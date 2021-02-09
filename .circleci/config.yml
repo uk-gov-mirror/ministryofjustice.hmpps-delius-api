@@ -3,8 +3,10 @@ version: 2.1
 orbs:
   owasp: entur/owasp@0.0.10
   hmpps: ministryofjustice/hmpps@2.2
+  mem: circleci/rememborb@0.0.1
   aws-ecs: circleci/aws-ecs@0.0.10
   aws-cli: circleci/aws-cli@1.3.2
+  queue: eddiewebb/queue@1.5.0
 commands:
   configure_profile:
     parameters:
@@ -32,6 +34,16 @@ commands:
             echo "export AWS_ACCESS_KEY_ID=$(echo $temp_role | jq .Credentials.AccessKeyId | xargs)" >> $BASH_ENV; source $BASH_ENV;
             echo "export AWS_SECRET_ACCESS_KEY=$(echo $temp_role | jq .Credentials.SecretAccessKey | xargs)" >> $BASH_ENV; source $BASH_ENV;
             echo "export AWS_SESSION_TOKEN=$(echo $temp_role | jq .Credentials.SessionToken | xargs)" >> $BASH_ENV; source $BASH_ENV;
+  set_parameter_value:
+    parameters:
+      param-name:
+        type: string
+      param-value:
+        type: string
+    steps:
+      - run:
+          name: Set SSM parameter
+          command: aws ssm put-parameter --name <<parameters.param-name>> --value <<parameters.param-value>> --overwrite
   deploy_to_env:
     parameters:
       role-arn:
@@ -42,17 +54,22 @@ commands:
         type: string
       service-name:
         type: string
-      container-image-name-updates:
+      env-name:
+        type: string
+      version:
         type: string
     steps:
       - aws-cli/setup
       - assume_role:
           role-arn: <<parameters.role-arn>>
+      - set_parameter_value:
+          param-name: /versions/delius-core/ecs/delius-api/<<parameters.env-name>>
+          param-value: <<parameters.version>>
       - aws-ecs/update-service:
           family: <<parameters.family>>
           cluster-name: <<parameters.cluster-name>>
           service-name: <<parameters.service-name>>
-          container-image-name-updates: <<parameters.container-image-name-updates>>
+          container-image-name-updates: container=delius-api,tag=<<parameters.version>>
           verify-revision-is-deployed: true
 jobs:
   validate:
@@ -78,6 +95,7 @@ jobs:
        - image: circleci/python
     steps:
       - checkout
+      - hmpps/create_app_version
       - setup_remote_docker:
           docker_layer_caching: true
       - aws-cli/setup:
@@ -90,18 +108,37 @@ jobs:
           name: Docker Image
           command: |
             aws ecr-public get-login-password --region us-east-1 --profile engineering_dev| docker login --username AWS --password-stdin $AWS_ECS_ACCOUNT_URL
-            docker build -t $AWS_ECS_ACCOUNT_URL/delius-api:$CIRCLE_SHA1 .
-            docker push $AWS_ECS_ACCOUNT_URL/delius-api:$CIRCLE_SHA1
+            docker build --tag $AWS_ECS_ACCOUNT_URL/delius-api:$APP_VERSION \
+              --label "app.version=${APP_VERSION}" \
+              --label "build.version=${APP_VERSION}" \
+              --label "build.number=${CIRCLE_BUILD_NUM}" \
+              --label "build.url=${CIRCLE_BUILD_URL}" \
+              --label "build.gitref=${CIRCLE_SHA1}" .
+            docker push $AWS_ECS_ACCOUNT_URL/delius-api:$APP_VERSION
+      - when:
+          condition:
+            equal: [ main, << pipeline.git.branch >> ]
+          steps:
+            - run:
+                name: Tag latest
+                command: |
+                  docker tag "$AWS_ECS_ACCOUNT_URL/delius-api:$APP_VERSION" "$AWS_ECS_ACCOUNT_URL/delius-api:latest"
+                  docker push $AWS_ECS_ACCOUNT_URL/delius-api:latest
   deploy-dev:
     docker:
       - image: circleci/python
     steps:
+      - queue/until_front_of_line:
+          time: '10'
+      - mem/recall:
+          env_var: APP_VERSION
       - deploy_to_env:
           role-arn: $ROLE_ARN_DEPLOY_DEV
           family: dlc-dev-delius-api-task-definition
           cluster-name: dlc-dlc-dev-ecscluster-private-ecs
           service-name: dlc-dev-delius-api-service
-          container-image-name-updates: container=delius-api,tag=${CIRCLE_SHA1}
+          env-name: delius-core-dev
+          version: $APP_VERSION
 
 workflows:
   version: 2
@@ -111,16 +148,8 @@ workflows:
           filters:
             tags:
               ignore: /.*/
-      - build_docker:
-          filters:
-            branches:
-              only:
-                - main
+      - build_docker
       - deploy-dev:
-          filters:
-            branches:
-              only:
-                - main
           requires:
           - validate
           - build_docker

@@ -27,6 +27,12 @@ particularly alongside the user-facing nDelius application.
 
 ## Production Pipeline Environments 
 
+The production pipeline is a single flow through Test, Pre-Prod and Production
+environments. This means that hot-fixing and feature re-prioritisation is
+difficult. To mitigate this it is important that the `main` branch is always
+kept in a releasable state. Feature flags should be used for major feature PRs
+to ensure this is the case. 
+
 ### Test 
 
 The Delius API application is deployed the this environment on merge to the

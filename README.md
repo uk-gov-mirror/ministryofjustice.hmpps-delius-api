@@ -80,7 +80,7 @@ the correct container entities in nDelius
 
 ``` sh
 # Install dependencies 
-# JDK v?
+# JDK v11
 
 # Check out the application code 
 git clone git@github.com:ministryofjustice/hmpps-delius-api.git

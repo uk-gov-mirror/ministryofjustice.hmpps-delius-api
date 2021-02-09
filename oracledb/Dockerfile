@@ -19,11 +19,11 @@ COPY scripts/setup.sql scripts/post-import.sql /scripts/
 COPY import.dmp /datapump/import.dmp
 RUN chmod +x /scripts/*.sh && \
     chown oracle:oinstall /datapump && \
-    su - oracle -c "/scripts/startup.sh" && \
-    su - oracle -c "export ORACLE_SID=XE; ORAENV_ASK=NO . oraenv; sqlplus system/${ORACLE_PWD}@xepdb1 @/scripts/setup.sql" && \
-    su - oracle -c "export ORACLE_SID=XE; ORAENV_ASK=NO . oraenv; impdp system/${ORACLE_PWD}@xepdb1 full=Y directory=IMPORT_DIR dumpfile=import.dmp logfile=import.log" && \
-    su - oracle -c "export ORACLE_SID=XE; ORAENV_ASK=NO . oraenv; sqlplus system/${ORACLE_PWD}@xepdb1 @/scripts/post-import.sql ${ORACLE_PWD}" && \
-    su - oracle -c "/scripts/shutdown.sh" && \
+    su - oracle -c "/scripts/startup.sh"; \
+    su - oracle -c "export ORACLE_SID=XE; ORAENV_ASK=NO . oraenv; sqlplus system/${ORACLE_PWD}@xepdb1 @/scripts/setup.sql"; \
+    su - oracle -c "export ORACLE_SID=XE; ORAENV_ASK=NO . oraenv; impdp system/${ORACLE_PWD}@xepdb1 full=Y directory=IMPORT_DIR dumpfile=import.dmp logfile=import.log"; \
+    su - oracle -c "export ORACLE_SID=XE; ORAENV_ASK=NO . oraenv; sqlplus system/${ORACLE_PWD}@xepdb1 @/scripts/post-import.sql ${ORACLE_PWD}"; \
+    su - oracle -c "/scripts/shutdown.sh"; \
     rm /datapump/import.dmp
 
 # Uplift PDM version

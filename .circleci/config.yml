@@ -56,20 +56,20 @@ commands:
         type: string
       env-name:
         type: string
-      version:
-        type: string
     steps:
+      - mem/recall:
+          env_var: APP_VERSION
       - aws-cli/setup
       - assume_role:
           role-arn: <<parameters.role-arn>>
       - set_parameter_value:
           param-name: /versions/delius-core/ecs/delius-api/<<parameters.env-name>>
-          param-value: <<parameters.version>>
+          param-value: $APP_VERSION
       - aws-ecs/update-service:
           family: <<parameters.family>>
           cluster-name: <<parameters.cluster-name>>
           service-name: <<parameters.service-name>>
-          container-image-name-updates: container=delius-api,tag=<<parameters.version>>
+          container-image-name-updates: container=delius-api,tag=$APP_VERSION
           verify-revision-is-deployed: true
 jobs:
   validate:
@@ -132,16 +132,32 @@ jobs:
     steps:
       - queue/until_front_of_line:
           time: '10'
-      - mem/recall:
-          env_var: APP_VERSION
       - deploy_to_env:
           role-arn: $ROLE_ARN_DEPLOY_DEV
           family: dlc-dev-delius-api-task-definition
           cluster-name: dlc-dlc-dev-ecscluster-private-ecs
           service-name: dlc-dev-delius-api-service
           env-name: delius-core-dev
-          version: $APP_VERSION
-
+  deploy-test:
+    docker:
+      - image: circleci/python
+    steps:
+      - deploy_to_env:
+          role-arn: $ROLE_ARN_DEPLOY_TEST
+          family: del-test-delius-api-task-definition
+          cluster-name: del-delius-ecscluster-private-ecs
+          service-name: del-test-delius-api-service
+          env-name: delius-test
+  deploy-stage:
+    docker:
+      - image: circleci/python
+    steps:
+      - deploy_to_env:
+          role-arn: $ROLE_ARN_DEPLOY_STAGE
+          family: del-stage-delius-api-task-definition
+          cluster-name: del-delius-ecscluster-private-ecs
+          service-name: del-stage-delius-api-service
+          env-name: delius-stage
 workflows:
   version: 2
   build-test-and-deploy:
@@ -150,12 +166,28 @@ workflows:
           filters:
             tags:
               ignore: /.*/
-      - build_docker
+      - build_docker:
+          requires:
+            - validate
       - deploy-dev:
           requires:
           - validate
           - build_docker
-
+      - deploy-test:
+          filters:
+            branches:
+              only:
+                - main
+          requires:
+            - validate
+            - build_docker
+      - request-stage-approval:
+          type: approval
+          requires:
+            - deploy-test
+      - deploy-stage:
+          requires:
+            - request-stage-approval
   scheduled:
     triggers:
       - schedule:

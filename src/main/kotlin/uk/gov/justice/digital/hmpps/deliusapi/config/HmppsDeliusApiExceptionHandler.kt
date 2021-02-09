@@ -5,8 +5,14 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
+import org.springframework.validation.FieldError
+import org.springframework.web.HttpMediaTypeNotSupportedException
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import javax.validation.ValidationException
 
 @RestControllerAdvice
@@ -24,6 +30,26 @@ class HmppsDeliusApiExceptionHandler {
         )
       )
   }
+
+  @ResponseStatus(BAD_REQUEST)
+  @ExceptionHandler(MethodArgumentNotValidException::class)
+  fun handleValidationException(e: MethodArgumentNotValidException) = ErrorResponse(
+    status = BAD_REQUEST,
+    userMessage = e.bindingResult.allErrors.mapNotNull {
+      if (it is FieldError) {
+        "${it.field} ${it.defaultMessage}"
+      } else null
+    }.joinToString(),
+    developerMessage = e.message
+  )
+
+  @ResponseStatus(BAD_REQUEST)
+  @ExceptionHandler(HttpMediaTypeNotSupportedException::class, HttpMessageNotReadableException::class, BadRequestException::class)
+  fun handleGenericBadRequest(e: Exception) = ErrorResponse(
+    status = BAD_REQUEST,
+    userMessage = e.message,
+    developerMessage = e.message
+  )
 
   @ExceptionHandler(java.lang.Exception::class)
   fun handleException(e: java.lang.Exception): ResponseEntity<ErrorResponse?>? {

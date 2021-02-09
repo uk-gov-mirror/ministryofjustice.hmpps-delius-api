@@ -10,7 +10,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, proxyTargetClass = true)
 class ResourceServerConfiguration(
-  private val tokenVerifyingAuthManager: TokenVerifyingAuthManager
+  private val tokenVerifyingAuthManager: TokenVerifyingAuthManager,
 ) : WebSecurityConfigurerAdapter() {
 
   override fun configure(http: HttpSecurity) {
@@ -27,9 +27,11 @@ class ResourceServerConfiguration(
           "/swagger-ui/**",
           "/swagger-resources",
           "/swagger-resources/configuration/ui",
-          "/swagger-resources/configuration/security"
+          "/swagger-resources/configuration/security",
+          "/h2-console/**"
         ).permitAll()
           .anyRequest().authenticated()
       }
+      .csrf().disable()
   }
 }

@@ -1,9 +1,31 @@
 spring:
+  flyway:
+    enabled: true
+    locations: classpath:/db/schema,classpath:/db/data
+
+  datasource:
+    url: 'jdbc:h2:file:/tmp/hmpps-delius-api-dev;Mode=Oracle'
+    # url: 'jdbc:h2:mem:testdb;Mode=Oracle'
+    username: sa
+    password: password
+
+  jpa:
+    properties:
+      hibernate:
+        show_sql: true
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
   security:
     oauth2:
       resourceserver:
         jwt:
           public-key-location: classpath:local-public-key.pub
+
+logging.level.org.hibernate.SQL: DEBUG
 
 tokenverification:
   api.base.url: http://localhost:9090/auth

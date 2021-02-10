@@ -24,14 +24,6 @@ Read-access to nDelius is currently provided by [Community API](https://github.c
 and we will not look to replace these services as a priority, although that
 may be added to the product roadmap as it develops.
 
-## Development
-
-H2 Web console - <http://localhost:8080/h2-console>
-
-* JDBC URL: `jdbc:h2:file:/tmp/hmpps-delius-api-dev;Mode=Oracle`
-* USER: `sa`
-* PASSWORD: `password`
-
 ### High-Level Architecture
 
 ![nDelius API](./doc/img/nDelius-API.png?raw=true)
@@ -111,5 +103,16 @@ curl -v http://localhost:8081/health/ping --header "Authorization: Bearer $AUTH_
 
 ```
 
+### H2 Database
+
+H2 Web console - <http://localhost:8080/h2-console>
+
+* JDBC URL: `jdbc:h2:file:/tmp/hmpps-delius-api-dev;Mode=Oracle`
+* USER: `sa`
+* PASSWORD: `password`
+
+You can also connect to H2 remotely, useful for Intellij database tools & using the extra code sense it adds to JPA.
+
+`jdbc:h2:tcp://localhost:9092/file:/tmp/hmpps-delius-api-dev;Mode=Oracle`
 
 

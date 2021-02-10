@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.deliusapi.entity
 
+import org.hibernate.annotations.Where
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.Id
@@ -7,6 +8,7 @@ import javax.persistence.Table
 
 @Entity
 @Table(name = "OFFENDER")
+@Where(clause = "SOFT_DELETED = 0")
 data class Offender(
   @Id
   @Column(name = "OFFENDER_ID")
@@ -14,4 +16,7 @@ data class Offender(
 
   @Column(name = "CRN")
   var crn: String,
+
+  @Column(name = "SOFT_DELETED", columnDefinition = "NUMBER", nullable = false)
+  var softDeleted: Boolean = false,
 )

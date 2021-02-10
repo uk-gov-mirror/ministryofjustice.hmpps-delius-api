@@ -42,7 +42,17 @@ class ContactTest : IntegrationTestBase() {
   @Test
   fun `Creating contact`() {
     val token = jwtAuthHelper.createJwt("bob")
-    val newContact = Fake.newContact(object { val offenderCrn = "X320811" })
+    val newContact = Fake.newContact(
+      object {
+        val offenderCrn = "X320811"
+        val contactType = "C130"
+        val contactOutcome = "RD01"
+        val provider = "ESX"
+        val team = "A00N07"
+        val staff = "TESUATU"
+        val officeLocation = "DRSTURN"
+      }
+    )
     var id = 0L
     webTestClient.post()
       .uri("/v1/contact")

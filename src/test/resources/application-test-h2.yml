@@ -5,3 +5,5 @@ spring:
 
   datasource:
     url: 'jdbc:h2:mem:testdb;Mode=Oracle'
+
+logging.level.org.hibernate.SQL: DEBUG

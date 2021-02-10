@@ -19,6 +19,7 @@ dependencies {
   implementation("org.flywaydb:flyway-core:7.5.2")
   implementation("com.zaxxer:HikariCP:4.0.1")
   implementation("com.h2database:h2")
+  implementation("com.oracle.database.jdbc:ojdbc10:19.9.0.0")
 
   implementation("org.mapstruct:mapstruct:1.4.2.Final")
   kapt("org.mapstruct:mapstruct-processor:1.4.2.Final")

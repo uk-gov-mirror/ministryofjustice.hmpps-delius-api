@@ -1,4 +1,5 @@
 version: "3"
+
 services:
   oauth:
     image: quay.io/hmpps/hmpps-auth:latest
@@ -26,13 +27,6 @@ services:
     environment:
       - SERVER_PORT=8080
       - SPRING_PROFILES_ACTIVE=dev
-
-  oracle:
-    image: 895523100917.dkr.ecr.eu-west-2.amazonaws.com/hmpps/delius-test-db:latest
-    networks:
-      - hmpps
-    ports:
-      - "1521:1521"
 
 networks:
   hmpps:

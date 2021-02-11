@@ -1,0 +1,12 @@
+.idea/
+.gradle/
+.circleci/
+*.iml
+build/
+oracledb/
+doc/
+Dockerfile
+docker-compose.*
+LICENSE
+README.md
+dps-gradle-spring-boot-suppressions.xml

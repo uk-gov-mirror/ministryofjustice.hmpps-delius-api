@@ -24,14 +24,6 @@ Read-access to nDelius is currently provided by [Community API](https://github.c
 and we will not look to replace these services as a priority, although that
 may be added to the product roadmap as it develops.
 
-## Development
-
-H2 Web console - <http://localhost:8080/h2-console>
-
-* JDBC URL: `jdbc:h2:file:/tmp/hmpps-delius-api-dev;Mode=Oracle`
-* USER: `sa`
-* PASSWORD: `password`
-
 ### High-Level Architecture
 
 ![nDelius API](./doc/img/nDelius-API.png?raw=true)
@@ -93,8 +85,8 @@ the correct container entities in nDelius
 # Check out the application code 
 git clone git@github.com:ministryofjustice/hmpps-delius-api.git
 
-# Run the application from the latest docker containers
-docker-compose up
+# Build & run the application & dependencies in docker
+docker-compose up --build --force-recreate
 
 # Obtain an oauth token from the local HMPPS-Auth
 AUTH_TOKEN=$( \
@@ -111,6 +103,29 @@ curl -v http://localhost:8081/health/ping --header "Authorization: Bearer $AUTH_
 
 ```
 
+### H2 Database
+
+H2 Web console - <http://localhost:8080/h2-console>
+
+* JDBC URL: `jdbc:h2:file:/tmp/hmpps-delius-api-dev;Mode=Oracle`
+* USER: `sa`
+* PASSWORD: `password`
+
+You can also connect to H2 remotely, useful for Intellij database tools & using the extra code sense it adds to JPA.
+
+`jdbc:h2:tcp://localhost:9092/file:/tmp/hmpps-delius-api-dev;Mode=Oracle`
+
+### Oracle Database
+
+You can optionally run with an Oracle database.
+
+```
+docker-compose -f docker-compose.yml -f docker-compose.oracle.yml up --build --force-recreate
+```
+
+You will need access to the [pre-built Oracle image](oracledb/README.md) for this to work.
+
+> The Oracle docker image is gigantic... to prevent stopped containers from filling up your disc make sure you run `docker-compose -f docker-compose.yml -f docker-compose.oracle.yml down --remove-orphans`. Or just stop everything and run `docker container prune`.
 
 ## Integration Testing
 

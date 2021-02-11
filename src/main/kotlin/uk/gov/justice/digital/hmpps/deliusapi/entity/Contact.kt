@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.deliusapi.entity
 
 import org.hibernate.annotations.Type
+import org.hibernate.annotations.Where
 import org.springframework.data.annotation.CreatedBy
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedBy
@@ -16,6 +17,7 @@ import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
 import javax.persistence.JoinColumn
+import javax.persistence.Lob
 import javax.persistence.ManyToOne
 import javax.persistence.SequenceGenerator
 import javax.persistence.Table
@@ -24,6 +26,7 @@ import javax.persistence.Version
 @Entity
 @EntityListeners(AuditingEntityListener::class)
 @Table(name = "CONTACT")
+@Where(clause = "SOFT_DELETED = 0")
 data class Contact(
   @Id
   @SequenceGenerator(name = "CONTACT_ID_GENERATOR", sequenceName = "CONTACT_ID_SEQ", allocationSize = 1)
@@ -45,6 +48,7 @@ data class Contact(
   var contactEndTime: LocalTime? = null,
 
   @Column(name = "NOTES")
+  @Lob
   var notes: String? = null,
 
   @JoinColumn(name = "STAFF_ID")

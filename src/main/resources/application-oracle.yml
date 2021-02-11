@@ -1,0 +1,12 @@
+spring:
+  flyway:
+    enabled: false
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+  datasource:
+    url: 'jdbc:oracle:thin:@//localhost:1521/XEPDB1'
+    username: delius_app_schema
+    password: NDelius1

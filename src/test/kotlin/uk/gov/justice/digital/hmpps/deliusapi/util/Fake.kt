@@ -29,15 +29,25 @@ object Fake {
   fun localTime(): LocalTime = zonedDateTime().toLocalTime()
   fun crn() = "${faker.lorem().fixedString(1)}${faker.number().randomNumber(6, true)}"
 
+  fun offender() = Offender(id = faker.number().randomNumber(), crn = crn())
+  fun contactType() = ContactType(id = faker.number().randomNumber(), code = faker.lorem().characters(1, 10), contactAlertFlag = true)
+  fun contactOutcomeType() = ContactOutcomeType(id = faker.number().randomNumber(), code = faker.lorem().characters(1, 10))
+  fun provider(code: String? = null, officeLocations: List<OfficeLocation>? = null) =
+    Provider(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(3), officeLocations = officeLocations)
+  fun officeLocation(code: String? = null, teams: List<Team>? = null) =
+    OfficeLocation(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(7), teams = teams)
+  fun team(code: String? = null, staff: List<Staff>? = null) = Team(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(6), staff = staff)
+  fun staff(code: String? = null) = Staff(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(7))
+
   inline fun <reified Partial : Any> contact(partial: Partial?): Contact = Contact(
     id = faker.number().randomNumber(),
-    offender = Offender(id = faker.number().randomNumber(), crn = crn()),
-    contactType = ContactType(id = faker.number().randomNumber(), code = faker.lorem().characters(1, 10)),
-    contactOutcomeType = ContactOutcomeType(id = faker.number().randomNumber(), code = faker.lorem().characters(1, 10)),
-    provider = Provider(id = faker.number().randomNumber(), code = faker.lorem().characters(3)),
-    team = Team(id = faker.number().randomNumber(), code = faker.lorem().characters(6)),
-    staff = Staff(id = faker.number().randomNumber(), code = faker.lorem().characters(7)),
-    officeLocation = OfficeLocation(id = faker.number().randomNumber(), code = faker.lorem().characters(7)),
+    offender = offender(),
+    contactType = contactType(),
+    contactOutcomeType = contactOutcomeType(),
+    provider = provider(),
+    team = team(),
+    staff = staff(),
+    officeLocation = officeLocation(),
     contactDate = localDate(),
     contactStartTime = localTime(),
     contactEndTime = localTime(),

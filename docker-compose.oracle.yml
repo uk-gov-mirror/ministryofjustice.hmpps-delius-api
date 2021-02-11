@@ -1,0 +1,17 @@
+version: "3"
+
+services:
+  oracle:
+    image: 895523100917.dkr.ecr.eu-west-2.amazonaws.com/hmpps/delius-test-db:latest
+    networks:
+      - hmpps
+    ports:
+      - "1521:1521"
+
+  hmpps-delius-api:
+    restart: unless-stopped # need this to wait for oracle...
+    depends_on:
+      - oracle
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev,oracle
+      - SPRING_DATASOURCE_URL=jdbc:oracle:thin:@//oracle:1521/XEPDB1

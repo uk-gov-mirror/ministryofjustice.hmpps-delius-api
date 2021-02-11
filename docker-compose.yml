@@ -1,4 +1,5 @@
 version: "3"
+
 services:
   oauth:
     image: quay.io/hmpps/hmpps-auth:latest
@@ -16,10 +17,11 @@ services:
   hmpps-delius-api:
     build:
       context: .
-    network_mode: "host"
     container_name: hmpps-delius-api
+    networks:
+      - hmpps
     ports:
-      - "8081:8080"
+      - "8080:8080"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health/ping"]
     environment:

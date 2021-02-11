@@ -115,4 +115,14 @@ You can also connect to H2 remotely, useful for Intellij database tools & using 
 
 `jdbc:h2:tcp://localhost:9092/file:/tmp/hmpps-delius-api-dev;Mode=Oracle`
 
+## Integration Testing
+
+The National Delius application uses an Oracle database, containing complex PL/SQL code and triggers that can't be fully replicated by a H2 database during dev/testing.
+
+A docker image is available in a private ECR repository with a snapshot of a test Delius database, here:
+```
+895523100917.dkr.ecr.eu-west-2.amazonaws.com/hmpps/delius-test-db
+```
+
+See [oracledb/README.md](oracledb/README.md) for more details on accessing this image, or building your own.
 

@@ -1,0 +1,6 @@
+ALTER SESSION SET CONTAINER = XEPDB1;
+
+-- Uplift PDM version
+-- ...
+
+EXIT;

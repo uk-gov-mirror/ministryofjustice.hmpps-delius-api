@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.deliusapi.service
 
 import com.nhaarman.mockitokotlin2.any
+import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -23,6 +24,8 @@ import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactTypeRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.OffenderRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ProviderRepository
+import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditService
+import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditableInteraction
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 
 @ExtendWith(MockitoExtension::class)
@@ -43,6 +46,9 @@ class ContactServiceTest {
 
   @Mock
   private lateinit var providerRepository: ProviderRepository
+
+  @Mock
+  private lateinit var auditService: AuditService
 
   @InjectMocks
   private lateinit var subject: ContactService
@@ -71,6 +77,18 @@ class ContactServiceTest {
     Assertions.assertThat(observed)
       .isInstanceOf(ContactDto::class.java)
       .hasFieldOrPropertyWithValue("id", savedContact.id)
+
+    verify(auditService).successfulInteraction(1, offender.id, AuditableInteraction.ADD_CONTACT)
+  }
+
+  @Test
+  fun `Error saving contact`() {
+    havingDependentEntities()
+    whenever(contactRepository.saveAndFlush(any())).thenThrow(RuntimeException::class.java)
+
+    assertThrows<RuntimeException> { subject.createContact(newContact) }
+
+    verify(auditService).failedInteraction(1, offender.id, AuditableInteraction.ADD_CONTACT)
   }
 
   @Test
@@ -141,5 +159,7 @@ class ContactServiceTest {
     whenever(providerRepository.findByCode(newContact.provider)).thenReturn(provider)
   }
 
-  fun shouldThrowBadRequest() = assertThrows<BadRequestException> { subject.createContact(newContact) }
+  fun shouldThrowBadRequest() = assertThrows<BadRequestException> {
+    subject.createContact(newContact)
+  }
 }

@@ -11,6 +11,8 @@ import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactTypeRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.OffenderRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ProviderRepository
+import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditService
+import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditableInteraction
 
 @Service
 class ContactService(
@@ -19,6 +21,7 @@ class ContactService(
   private val contactTypeRepository: ContactTypeRepository,
   private val contactOutcomeTypeRepository: ContactOutcomeTypeRepository,
   private val providerRepository: ProviderRepository,
+  private val auditService: AuditService
 ) {
 
   fun createContact(request: NewContact): ContactDto {
@@ -47,6 +50,8 @@ class ContactService(
     val outcome = contactOutcomeTypeRepository.findByCode(request.contactOutcome)
       ?: throw BadRequestException("Contact outcome with code '${request.contactOutcome}' does not exist")
 
+    val staffEmployeeId = 1L
+
     val contact = Contact(
       offender = offender,
       contactType = type,
@@ -65,12 +70,17 @@ class ContactService(
 
       // TODO need to set to something from configuration
       partitionAreaId = 0,
-      staffEmployeeId = 1,
+      staffEmployeeId = staffEmployeeId,
       teamProviderId = 1,
     )
 
-    val entity = contactRepository.saveAndFlush(contact)
-
-    return ContactMapper.INSTANCE.toDto(entity)
+    return try {
+      val entity = contactRepository.saveAndFlush(contact)
+      auditService.successfulInteraction(staffEmployeeId, offender.id, AuditableInteraction.ADD_CONTACT)
+      ContactMapper.INSTANCE.toDto(entity)
+    } catch (e: RuntimeException) {
+      auditService.failedInteraction(staffEmployeeId, offender.id, AuditableInteraction.ADD_CONTACT)
+      throw e
+    }
   }
 }

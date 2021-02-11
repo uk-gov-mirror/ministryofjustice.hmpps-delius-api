@@ -9,6 +9,10 @@ configurations {
   testImplementation { exclude(group = "org.junit.vintage") }
 }
 
+dependencyCheck {
+  skipConfigurations.add("_classStructurekaptTestKotlin")
+}
+
 dependencies {
   implementation("org.springframework.boot:spring-boot-starter-webflux")
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")

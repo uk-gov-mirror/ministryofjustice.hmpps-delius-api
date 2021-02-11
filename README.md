@@ -52,9 +52,8 @@ the correct container entities in nDelius
 ## Infrastructure 
 
 ### Code Repositories 
-- Application Code and Build Pipeline Definitions: https://github.com/ministryofjustice/hmpps-delius-api
-- ECS Cluster Definition : https://github.com/ministryofjustice/hmpps-delius-network-terraform/tree/master/ecs-cluster
-- Deployment Pipeline Definition: https://github.com/ministryofjustice/hmpps-delius-pipelines/tree/master/engineering/builds
+- Application build and deployment pipeline definitions: https://github.com/ministryofjustice/hmpps-delius-api
+- ECS cluster definition : https://github.com/ministryofjustice/hmpps-delius-network-terraform/tree/master/ecs-cluster
 
 ### Deployment Pipelines 
 
@@ -144,20 +143,11 @@ You will need access to the [pre-built Oracle image](oracledb/README.md) for thi
 
 > :warning: The Oracle docker image is gigantic... 
 
-to prevent stopped containers from filling up your disc make sure you run:
+to prevent stopped containers from filling up your disc make sure you run: 
 
-`docker-compose -f docker-compose.yml -f docker-compose.oracle.yml down --remove-orphans`. 
+`docker-compose -f docker-compose.yml -f docker-compose.oracle.yml down --remove-orphans`
 
-Or just stop everything and run:
-
-`docker container prune`. 
+Or just stop everything and run: `docker container prune`
 
 See [oracledb/README.md](oracledb/README.md) for more details on accessing
 this image, or building your own.  
-
-
-
-
-
-
-

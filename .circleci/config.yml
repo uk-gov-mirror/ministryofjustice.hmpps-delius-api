@@ -35,16 +35,6 @@ commands:
             echo "export AWS_ACCESS_KEY_ID=$(echo $temp_role | jq .Credentials.AccessKeyId | xargs)" >> $BASH_ENV; source $BASH_ENV;
             echo "export AWS_SECRET_ACCESS_KEY=$(echo $temp_role | jq .Credentials.SecretAccessKey | xargs)" >> $BASH_ENV; source $BASH_ENV;
             echo "export AWS_SESSION_TOKEN=$(echo $temp_role | jq .Credentials.SessionToken | xargs)" >> $BASH_ENV; source $BASH_ENV;
-  set_parameter_value:
-    parameters:
-      param-name:
-        type: string
-      param-value:
-        type: string
-    steps:
-      - run:
-          name: Set SSM parameter
-          command: aws ssm put-parameter --name <<parameters.param-name>> --value <<parameters.param-value>> --overwrite
   deploy_to_env:
     parameters:
       role-arn:
@@ -63,9 +53,6 @@ commands:
       - aws-cli/setup
       - assume_role:
           role-arn: <<parameters.role-arn>>
-      - set_parameter_value:
-          param-name: /versions/delius-core/ecs/delius-api/<<parameters.env-name>>
-          param-value: $APP_VERSION
       - aws-ecs/update-service:
           family: <<parameters.family>>
           cluster-name: <<parameters.cluster-name>>

@@ -10,16 +10,16 @@ import javax.persistence.Table
 
 @Entity
 @Table(name = "PROBATION_AREA")
-@Where(clause = "END_DATE IS NULL OR END_DATE > CURRENT_DATE()")
+@Where(clause = "SELECTABLE = 'Y'")
 data class Provider(
   @Id
   @Column(name = "PROBATION_AREA_ID")
   var id: Long,
 
-  @Column(name = "CODE")
+  @Column(name = "CODE", columnDefinition = "CHAR(3)")
   val code: String,
 
   @OneToMany
   @JoinColumn(name = "PROBATION_AREA_ID")
-  val officeLocations: List<OfficeLocation>? = null
+  val officeLocations: List<OfficeLocation>? = null,
 )

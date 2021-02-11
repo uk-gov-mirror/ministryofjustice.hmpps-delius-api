@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.deliusapi.config
 
+import com.fasterxml.jackson.module.kotlin.MissingKotlinParameterException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatus.BAD_REQUEST
@@ -33,23 +34,43 @@ class HmppsDeliusApiExceptionHandler {
 
   @ResponseStatus(BAD_REQUEST)
   @ExceptionHandler(MethodArgumentNotValidException::class)
-  fun handleValidationException(e: MethodArgumentNotValidException) = ErrorResponse(
-    status = BAD_REQUEST,
-    userMessage = e.bindingResult.allErrors.mapNotNull {
+  fun handleValidationException(e: MethodArgumentNotValidException): ErrorResponse {
+    val errors = e.bindingResult.allErrors.mapNotNull {
       if (it is FieldError) {
         "${it.field} ${it.defaultMessage}"
       } else null
-    }.joinToString(),
-    developerMessage = e.message
-  )
+    }.joinToString()
+    return ErrorResponse(
+      status = BAD_REQUEST,
+      userMessage = "Validation failure: $errors",
+      developerMessage = e.message
+    )
+  }
 
   @ResponseStatus(BAD_REQUEST)
-  @ExceptionHandler(HttpMediaTypeNotSupportedException::class, HttpMessageNotReadableException::class, BadRequestException::class)
-  fun handleGenericBadRequest(e: Exception) = ErrorResponse(
+  @ExceptionHandler(HttpMediaTypeNotSupportedException::class, BadRequestException::class)
+  fun handleGenericBadRequest(e: Exception): ErrorResponse = ErrorResponse(
     status = BAD_REQUEST,
     userMessage = e.message,
     developerMessage = e.message
   )
+
+  @ResponseStatus(BAD_REQUEST)
+  @ExceptionHandler(HttpMessageNotReadableException::class)
+  fun handleJsonParseException(e: HttpMessageNotReadableException): ErrorResponse {
+    val message = when (val cause = e.cause) {
+      is MissingKotlinParameterException -> {
+        val messages = cause.path.joinToString(", ") { "$it is required" }
+        "Validation failure: $messages"
+      }
+      else -> e.message
+    }
+    return ErrorResponse(
+      status = BAD_REQUEST,
+      userMessage = message,
+      developerMessage = e.message
+    )
+  }
 
   @ExceptionHandler(java.lang.Exception::class)
   fun handleException(e: java.lang.Exception): ResponseEntity<ErrorResponse?>? {

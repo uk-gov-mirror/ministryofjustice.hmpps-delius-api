@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.deliusapi.dto.v1
 import java.time.LocalDate
 import java.time.LocalTime
 import javax.validation.constraints.NotBlank
+import javax.validation.constraints.NotNull
 import javax.validation.constraints.Pattern
 import javax.validation.constraints.Size
 
@@ -35,17 +36,20 @@ data class NewContact(
   @field:Size(min = 7, max = 7, message = "size must be {min}")
   val officeLocation: String,
 
+  @field:NotNull
   val contactDate: LocalDate,
 
+  @field:NotNull
   val contactStartTime: LocalTime,
 
+  @field:NotNull
   val contactEndTime: LocalTime,
 
   val alert: Boolean = false,
 
   val sensitive: Boolean = false,
 
-  @field:Size(min = 0, max = 4096)
+  @field:Size(min = 0, max = 4000)
   val notes: String?,
 
   @field:Size(min = 0, max = 200)

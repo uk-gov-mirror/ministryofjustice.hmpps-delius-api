@@ -22,6 +22,13 @@ class ContactService(
 ) {
 
   fun createContact(request: NewContact): ContactDto {
+    val type = contactTypeRepository.findByCode(request.contactType)
+      ?: throw BadRequestException("Contact type with code '${request.contactType}' does not exist")
+
+    if (request.alert && !type.contactAlertFlag) {
+      throw BadRequestException("Contact type '${type.code}' is not support alert")
+    }
+
     val offender = offenderRepository.findByCrn(request.offenderCrn)
       ?: throw BadRequestException("Offender with code '${request.offenderCrn}' does not exist")
 
@@ -37,8 +44,6 @@ class ContactService(
     val staff = team.staff?.find { it.code == request.staff }
       ?: throw BadRequestException("Staff with officer code '${request.staff}' does not exist in team '${request.team}'")
 
-    val type = contactTypeRepository.findByCode(request.contactType)
-      ?: throw BadRequestException("Contact type with code '${request.contactType}' does not exist")
     val outcome = contactOutcomeTypeRepository.findByCode(request.contactOutcome)
       ?: throw BadRequestException("Contact outcome with code '${request.contactOutcome}' does not exist")
 

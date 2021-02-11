@@ -17,7 +17,7 @@ data class OfficeLocation(
   @Column(name = "OFFICE_LOCATION_ID")
   var id: Long,
 
-  @Column(name = "CODE")
+  @Column(name = "CODE", columnDefinition = "CHAR(7)")
   val code: String,
 
   @ManyToMany

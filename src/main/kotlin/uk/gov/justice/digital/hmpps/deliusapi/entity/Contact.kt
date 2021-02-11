@@ -17,6 +17,7 @@ import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
 import javax.persistence.JoinColumn
+import javax.persistence.Lob
 import javax.persistence.ManyToOne
 import javax.persistence.SequenceGenerator
 import javax.persistence.Table
@@ -47,6 +48,7 @@ data class Contact(
   var contactEndTime: LocalTime? = null,
 
   @Column(name = "NOTES")
+  @Lob
   var notes: String? = null,
 
   @JoinColumn(name = "STAFF_ID")

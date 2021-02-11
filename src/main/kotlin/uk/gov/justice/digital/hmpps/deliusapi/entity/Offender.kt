@@ -14,7 +14,7 @@ data class Offender(
   @Column(name = "OFFENDER_ID")
   var id: Long,
 
-  @Column(name = "CRN")
+  @Column(name = "CRN", columnDefinition = "CHAR(7)")
   var crn: String,
 
   @Column(name = "SOFT_DELETED", columnDefinition = "NUMBER", nullable = false)

@@ -2,13 +2,18 @@ package uk.gov.justice.digital.hmpps.deliusapi.integration.v1.contact
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewContact
 import uk.gov.justice.digital.hmpps.deliusapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
+import java.util.stream.Stream
 
 @ActiveProfiles("test-h2")
 class ContactTest : IntegrationTestBase() {
@@ -26,10 +31,30 @@ class ContactTest : IntegrationTestBase() {
       .isUnauthorized
   }
 
-  @Test
-  fun `Attempting to create invalid contact`() {
+  companion object {
+    @JvmStatic
+    fun invalidContactTestCases(): Stream<Arguments> =
+      Stream.of(
+        Arguments.of(Fake.newContact(object { val offenderCrn = "" }), "offenderCrn"),
+        Arguments.of(Fake.newContact(object { val offenderCrn = "1234567" }), "offenderCrn"),
+        Arguments.of(Fake.newContact(object { val contactType = "" }), "contactType"),
+        Arguments.of(Fake.newContact(object { val contactType = "12345678910" }), "contactType"),
+        Arguments.of(Fake.newContact(object { val provider = "12" }), "provider"),
+        Arguments.of(Fake.newContact(object { val provider = "1234" }), "provider"),
+        Arguments.of(Fake.newContact(object { val team = "12345" }), "team"),
+        Arguments.of(Fake.newContact(object { val team = "1234567" }), "team"),
+        Arguments.of(Fake.newContact(object { val staff = "123456" }), "staff"),
+        Arguments.of(Fake.newContact(object { val staff = "12345678" }), "staff"),
+        Arguments.of(Fake.newContact(object { val officeLocation = "123456" }), "officeLocation"),
+        Arguments.of(Fake.newContact(object { val officeLocation = "12345678" }), "officeLocation"),
+      )
+  }
+
+  @ParameterizedTest
+  @MethodSource("invalidContactTestCases")
+  fun `Attempting to create invalid contact`(newContact: NewContact, name: String) {
     val token = jwtAuthHelper.createJwt("bob")
-    val newContact = Fake.newContact(object { val offenderCrn = "bacon" })
+    var userMessage = ""
     webTestClient.post()
       .uri("/v1/contact")
       .header("Authorization", "Bearer $token")
@@ -37,6 +62,28 @@ class ContactTest : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isBadRequest
+      .expectBody()
+      .jsonPath("$.userMessage").value<String> { userMessage = it }
+
+    Assertions.assertThat(userMessage).startsWith("Validation failure: ").contains(name)
+  }
+
+  @Test
+  fun `Attempting to create contact with malformed json`() {
+    val token = jwtAuthHelper.createJwt("bob")
+    var userMessage = ""
+    webTestClient.post()
+      .uri("/v1/contact")
+      .header("Authorization", "Bearer $token")
+      .contentType(MediaType.APPLICATION_JSON)
+      .bodyValue("{,}")
+      .exchange()
+      .expectStatus()
+      .isBadRequest
+      .expectBody()
+      .jsonPath("$.userMessage").value<String> { userMessage = it }
+
+    Assertions.assertThat(userMessage).startsWith("JSON parse error: ")
   }
 
   @Test

@@ -14,6 +14,6 @@ data class Staff(
   @Column(name = "STAFF_ID")
   var id: Long,
 
-  @Column(name = "OFFICER_CODE")
+  @Column(name = "OFFICER_CODE", columnDefinition = "CHAR(7)")
   val code: String,
 )

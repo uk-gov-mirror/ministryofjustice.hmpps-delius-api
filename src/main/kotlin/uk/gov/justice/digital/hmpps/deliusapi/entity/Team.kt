@@ -17,7 +17,7 @@ data class Team(
   @Column(name = "TEAM_ID")
   var id: Long,
 
-  @Column(name = "CODE")
+  @Column(name = "CODE", columnDefinition = "CHAR(6)")
   var code: String,
 
   @ManyToMany

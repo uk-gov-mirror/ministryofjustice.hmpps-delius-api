@@ -16,15 +16,23 @@ services:
   hmpps-delius-api:
     build:
       context: .
-    network_mode: "host"
     container_name: hmpps-delius-api
+    networks:
+      - hmpps
     ports:
-      - "8081:8080"
+      - "8080:8080"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health/ping"]
     environment:
       - SERVER_PORT=8080
       - SPRING_PROFILES_ACTIVE=dev
+
+  oracle:
+    image: 895523100917.dkr.ecr.eu-west-2.amazonaws.com/hmpps/delius-test-db:latest
+    networks:
+      - hmpps
+    ports:
+      - "1521:1521"
 
 networks:
   hmpps:

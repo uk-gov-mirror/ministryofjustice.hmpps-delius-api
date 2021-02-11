@@ -26,7 +26,7 @@ class ContactService(
       ?: throw BadRequestException("Contact type with code '${request.contactType}' does not exist")
 
     if (request.alert && !type.contactAlertFlag) {
-      throw BadRequestException("Contact type '${type.code}' is not support alert")
+      throw BadRequestException("Contact type '${type.code}' does not support alert")
     }
 
     val offender = offenderRepository.findByCrn(request.offenderCrn)

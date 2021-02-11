@@ -92,12 +92,13 @@ class ContactTest : IntegrationTestBase() {
     val newContact = Fake.newContact(
       object {
         val offenderCrn = "X320811"
-        val contactType = "C130"
-        val contactOutcome = "RD01"
-        val provider = "ESX"
-        val team = "A00N07"
-        val staff = "TESUATU"
-        val officeLocation = "DRSTURN"
+        val contactType = "C376"
+        val contactOutcome = "BI01"
+        val provider = "C00"
+        val team = "C00T01"
+        val staff = "C00T01U"
+        val officeLocation = "C00OFFA"
+        val alert = false
       }
     )
     var id = 0L

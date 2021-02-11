@@ -30,7 +30,7 @@ object Fake {
   fun crn() = "${faker.lorem().fixedString(1)}${faker.number().randomNumber(6, true)}"
 
   fun offender() = Offender(id = faker.number().randomNumber(), crn = crn())
-  fun contactType() = ContactType(id = faker.number().randomNumber(), code = faker.lorem().characters(1, 10))
+  fun contactType() = ContactType(id = faker.number().randomNumber(), code = faker.lorem().characters(1, 10), contactAlertFlag = true)
   fun contactOutcomeType() = ContactOutcomeType(id = faker.number().randomNumber(), code = faker.lorem().characters(1, 10))
   fun provider(code: String? = null, officeLocations: List<OfficeLocation>? = null) =
     Provider(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(3), officeLocations = officeLocations)

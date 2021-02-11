@@ -80,37 +80,37 @@ class ContactServiceTest {
   }
 
   @Test
-  fun `Attempting to create contact with type`() {
+  fun `Attempting to create contact with missing type`() {
     havingDependentEntities(havingType = false)
     shouldThrowBadRequest()
   }
 
   @Test
-  fun `Attempting to create contact with outcome`() {
+  fun `Attempting to create contact with missing outcome`() {
     havingDependentEntities(havingOutcome = false)
     shouldThrowBadRequest()
   }
 
   @Test
-  fun `Attempting to create contact with provider`() {
+  fun `Attempting to create contact with missing provider`() {
     havingDependentEntities(havingProvider = false)
     shouldThrowBadRequest()
   }
 
   @Test
-  fun `Attempting to create contact with team`() {
+  fun `Attempting to create contact with missing team`() {
     havingDependentEntities(havingTeam = false)
     shouldThrowBadRequest()
   }
 
   @Test
-  fun `Attempting to create contact with staff`() {
+  fun `Attempting to create contact with missing staff`() {
     havingDependentEntities(havingStaff = false)
     shouldThrowBadRequest()
   }
 
   @Test
-  fun `Attempting to create contact with office location`() {
+  fun `Attempting to create contact with missing office location`() {
     havingDependentEntities(havingOfficeLocation = false)
     shouldThrowBadRequest()
   }

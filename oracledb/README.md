@@ -70,8 +70,13 @@ All accounts have the same password: `NDelius1`, and the service name should be 
 
 *Example:*
 ```shell
+# Pull and run the latest database image 
 docker run -d -p 1521:1521 895523100917.dkr.ecr.eu-west-2.amazonaws.com/hmpps/delius-test-db:latest 
-sqlplus delius_app_schema/NDelius1@XEPDB1
+ 
+# Connect to the database via Oracle SQL*Plus
+docker exec -it <<container-id>> sqlplus delius_app_schema/NDelius1@XEPDB1
+
+# Test the database contains data
 > SELECT COUNT(*) FROM OFFENDER;
 10838
 ```

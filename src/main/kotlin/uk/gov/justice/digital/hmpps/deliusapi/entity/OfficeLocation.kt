@@ -11,7 +11,7 @@ import javax.persistence.Table
 
 @Entity
 @Table(name = "OFFICE_LOCATION")
-@Where(clause = "END_DATE IS NULL OR END_DATE > CURRENT_DATE()")
+@Where(clause = "END_DATE IS NULL OR END_DATE > CURRENT_DATE")
 data class OfficeLocation(
   @Id
   @Column(name = "OFFICE_LOCATION_ID")

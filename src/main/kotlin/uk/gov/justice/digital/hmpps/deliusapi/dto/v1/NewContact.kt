@@ -1,5 +1,8 @@
 package uk.gov.justice.digital.hmpps.deliusapi.dto.v1
 
+import uk.gov.justice.digital.hmpps.deliusapi.validation.EndTime
+import uk.gov.justice.digital.hmpps.deliusapi.validation.StartTime
+import uk.gov.justice.digital.hmpps.deliusapi.validation.TimeRange
 import java.time.LocalDate
 import java.time.LocalTime
 import javax.validation.constraints.NotBlank
@@ -7,6 +10,7 @@ import javax.validation.constraints.NotNull
 import javax.validation.constraints.Pattern
 import javax.validation.constraints.Size
 
+@TimeRange(message = "contact start and end times must form a valid range")
 data class NewContact(
   @field:NotBlank
   @field:Pattern(regexp = "^[a-zA-Z][0-9]{6}\$", message = "must be a valid CRN")
@@ -40,9 +44,11 @@ data class NewContact(
   val contactDate: LocalDate,
 
   @field:NotNull
+  @field:StartTime
   val contactStartTime: LocalTime,
 
   @field:NotNull
+  @field:EndTime
   val contactEndTime: LocalTime,
 
   val alert: Boolean = false,

@@ -78,7 +78,7 @@ class ContactServiceTest {
       .isInstanceOf(ContactDto::class.java)
       .hasFieldOrPropertyWithValue("id", savedContact.id)
 
-    verify(auditService).successfulInteraction(1, offender.id, AuditableInteraction.ADD_CONTACT)
+    verify(auditService).successfulInteraction(1, AuditableInteraction.ADD_CONTACT, offender.id)
   }
 
   @Test
@@ -88,7 +88,7 @@ class ContactServiceTest {
 
     assertThrows<RuntimeException> { subject.createContact(newContact) }
 
-    verify(auditService).failedInteraction(1, offender.id, AuditableInteraction.ADD_CONTACT)
+    verify(auditService).failedInteraction(1, AuditableInteraction.ADD_CONTACT, offender.id)
   }
 
   @Test

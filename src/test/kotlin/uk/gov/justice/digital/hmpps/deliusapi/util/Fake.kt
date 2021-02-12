@@ -87,7 +87,7 @@ object Fake {
 
   inline fun <reified Partial : Any> auditedInteraction(partial: Partial?) = AuditedInteraction(
     dateTime = randomLocalDateTime(),
-    outcome = faker.lorem().characters(),
+    success = faker.bool().bool(),
     parameters = faker.lorem().characters(),
     businessInteraction = businessInteraction(),
     userID = faker.number().randomNumber(),

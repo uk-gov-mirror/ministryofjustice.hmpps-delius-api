@@ -13,23 +13,30 @@ class AuditService(
   private val businessInteractionRepository: BusinessInteractionRepository
 ) {
 
-  fun successfulInteraction(userId: Long, offenderId: Long, interaction: AuditableInteraction) =
-    createAuditedInteraction(
-      LocalDateTime.now(),
-      userId,
-      interaction,
-      mapOf(AuditParameter.OFFENDER_ID to offenderId.toString()),
-      true
-    )
+  fun successfulInteraction(userId: Long, interaction: AuditableInteraction, offenderId: Long = -1, nsiId: Long = -1) =
+    createAuditedInteraction(userId, interaction, true, offenderId, nsiId)
 
-  fun failedInteraction(userId: Long, offenderId: Long, interaction: AuditableInteraction) =
+  fun failedInteraction(userId: Long, interaction: AuditableInteraction, offenderId: Long = -1, nsiId: Long = -1) =
+    createAuditedInteraction(userId, interaction, false, offenderId, nsiId)
+
+  fun createAuditedInteraction(
+    userId: Long,
+    interaction: AuditableInteraction,
+    success: Boolean,
+    offenderId: Long,
+    nsiId: Long
+  ) {
+    val parameterMap =
+      mapOf(AuditParameter.OFFENDER_ID to offenderId, AuditParameter.NSI_ID to nsiId).filter { e -> e.value > 0 }
+
     createAuditedInteraction(
       LocalDateTime.now(),
       userId,
       interaction,
-      mapOf(AuditParameter.OFFENDER_ID to offenderId.toString()),
-      false
+      parameterMap.mapValues { it.value.toString() },
+      success
     )
+  }
 
   fun createAuditedInteraction(
     dateTime: LocalDateTime = LocalDateTime.now(),
@@ -38,6 +45,11 @@ class AuditService(
     parameters: Map<AuditParameter, String>,
     success: Boolean
   ) {
+
+    if (parameters.isEmpty()) {
+      throw BadRequestException("No audit parameters provided")
+    }
+
     val businessInteraction = businessInteractionRepository.findByCode(interaction.code)
       ?: throw BadRequestException("Business Interaction with code ${interaction.code} does not exist")
 
@@ -47,10 +59,7 @@ class AuditService(
 
     val auditedInteraction = AuditedInteraction(
       dateTime,
-      when {
-        success -> INTERACTION_SUCCEEDED
-        else -> INTERACTION_FAILED
-      },
+      success,
       formatInteractionParameters(parameters),
       businessInteraction,
       userID
@@ -60,22 +69,9 @@ class AuditService(
   }
 
   private fun formatInteractionParameters(parameters: Map<AuditParameter, String>): String {
-    val builder = StringBuilder()
-    parameters.forEach { (key, value) ->
-      if (builder.isNotEmpty()) {
-        builder.append(",")
-      }
-      builder.append("${key.code}='$value'")
-    }
-
-    return builder.toString()
+    return parameters.map { (key, value) -> "${key.code}='$value'" }.joinToString(", ")
   }
 
   private fun isInteractionAuditable(enabledDate: LocalDateTime?) =
     enabledDate != null && LocalDateTime.now().isAfter(enabledDate)
-
-  companion object {
-    private const val INTERACTION_SUCCEEDED = "P"
-    private const val INTERACTION_FAILED = "F"
-  }
 }

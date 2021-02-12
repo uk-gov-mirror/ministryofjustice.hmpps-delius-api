@@ -76,10 +76,10 @@ class ContactService(
 
     return try {
       val entity = contactRepository.saveAndFlush(contact)
-      auditService.successfulInteraction(staffEmployeeId, offender.id, AuditableInteraction.ADD_CONTACT)
+      auditService.successfulInteraction(staffEmployeeId, AuditableInteraction.ADD_CONTACT, offender.id)
       ContactMapper.INSTANCE.toDto(entity)
     } catch (e: RuntimeException) {
-      auditService.failedInteraction(staffEmployeeId, offender.id, AuditableInteraction.ADD_CONTACT)
+      auditService.failedInteraction(staffEmployeeId, AuditableInteraction.ADD_CONTACT, offender.id)
       throw e
     }
   }

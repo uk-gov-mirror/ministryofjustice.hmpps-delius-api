@@ -62,7 +62,7 @@ internal class AuditServiceTest {
     verify(auditedInteractionRepository).saveAndFlush(
       AuditedInteraction(
         LocalDateTime.of(2021, 1, 2, 10, 20),
-        "P",
+        true,
         "offenderId='5678'",
         businessInteraction,
         1234
@@ -76,12 +76,12 @@ internal class AuditServiceTest {
     whenever(businessInteractionRepository.findByCode(any())).thenReturn(businessInteraction)
     whenever(auditedInteractionRepository.saveAndFlush(any())).thenReturn(auditedInteraction)
 
-    subject.failedInteraction(1234L, 5678L, AuditableInteraction.ADD_CONTACT)
+    subject.failedInteraction(1234, AuditableInteraction.ADD_CONTACT, 5678)
     verify(auditedInteractionRepository).saveAndFlush(entityCaptor.capture())
 
     assertThat(entityCaptor.value.dateTime).isNotNull
-    assertThat(entityCaptor.value.outcome).isEqualTo("F")
-    assertThat(entityCaptor.value.userID).isEqualTo(1234L)
+    assertThat(entityCaptor.value.success).isFalse
+    assertThat(entityCaptor.value.userID).isEqualTo(1234)
     assertThat(entityCaptor.value.parameters).isEqualTo("offenderId='5678'")
 
     verifyNoMoreInteractions(auditedInteractionRepository)
@@ -92,16 +92,40 @@ internal class AuditServiceTest {
     whenever(businessInteractionRepository.findByCode(any())).thenReturn(businessInteraction)
     whenever(auditedInteractionRepository.saveAndFlush(any())).thenReturn(auditedInteraction)
 
-    subject.successfulInteraction(1234L, 5678L, AuditableInteraction.ADD_CONTACT)
+    subject.successfulInteraction(1234, AuditableInteraction.ADD_CONTACT, 5678)
 
     verify(auditedInteractionRepository).saveAndFlush(entityCaptor.capture())
 
     assertThat(entityCaptor.value.dateTime).isNotNull
-    assertThat(entityCaptor.value.outcome).isEqualTo("P")
-    assertThat(entityCaptor.value.userID).isEqualTo(1234L)
+    assertThat(entityCaptor.value.success).isTrue
+    assertThat(entityCaptor.value.userID).isEqualTo(1234)
     assertThat(entityCaptor.value.parameters).isEqualTo("offenderId='5678'")
 
     verifyNoMoreInteractions(auditedInteractionRepository)
+  }
+
+  @Test
+  fun `Creating successful NSI interaction`() {
+    whenever(businessInteractionRepository.findByCode(any())).thenReturn(businessInteraction)
+    whenever(auditedInteractionRepository.saveAndFlush(any())).thenReturn(auditedInteraction)
+
+    subject.successfulInteraction(1234, AuditableInteraction.ADD_CONTACT, nsiId = 3434)
+
+    verify(auditedInteractionRepository).saveAndFlush(entityCaptor.capture())
+
+    assertThat(entityCaptor.value.dateTime).isNotNull
+    assertThat(entityCaptor.value.success).isTrue
+    assertThat(entityCaptor.value.userID).isEqualTo(1234)
+    assertThat(entityCaptor.value.parameters).isEqualTo("nsiId='3434'")
+
+    verifyNoMoreInteractions(auditedInteractionRepository)
+  }
+
+  @Test
+  fun `Creating interaction with no parameters fails`() {
+    assertThrows<RuntimeException> {
+      subject.successfulInteraction(1234, AuditableInteraction.ADD_CONTACT)
+    }
   }
 
   @Test
@@ -109,7 +133,7 @@ internal class AuditServiceTest {
     whenever(businessInteractionRepository.findByCode(any())).thenReturn(null)
 
     assertThrows<RuntimeException> {
-      subject.successfulInteraction(1234L, 5678L, AuditableInteraction.ADD_CONTACT)
+      subject.successfulInteraction(1234, AuditableInteraction.ADD_CONTACT, 5678)
     }
   }
 
@@ -118,7 +142,7 @@ internal class AuditServiceTest {
     val notEnabledBusinessInteraction = businessInteraction.copy(enabledDate = LocalDateTime.now().plusYears(1))
     whenever(businessInteractionRepository.findByCode(any())).thenReturn(notEnabledBusinessInteraction)
 
-    subject.successfulInteraction(1234L, 5678L, AuditableInteraction.ADD_CONTACT)
+    subject.successfulInteraction(1234, AuditableInteraction.ADD_CONTACT, 5678)
 
     verifyNoMoreInteractions(auditedInteractionRepository)
   }
@@ -128,7 +152,7 @@ internal class AuditServiceTest {
     val notEnabledBusinessInteraction = businessInteraction.copy(enabledDate = null)
     whenever(businessInteractionRepository.findByCode(any())).thenReturn(notEnabledBusinessInteraction)
 
-    subject.successfulInteraction(1234L, 5678L, AuditableInteraction.ADD_CONTACT)
+    subject.successfulInteraction(1234, AuditableInteraction.ADD_CONTACT, 5678)
 
     verifyNoMoreInteractions(auditedInteractionRepository)
   }

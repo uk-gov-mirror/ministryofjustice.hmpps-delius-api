@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.deliusapi.entity
 
+import org.hibernate.annotations.Type
 import java.time.LocalDateTime
 import javax.persistence.Column
 import javax.persistence.Entity
@@ -15,8 +16,9 @@ data class AuditedInteraction(
   @Column(name = "DATE_TIME")
   var dateTime: LocalDateTime?,
 
-  @Column(nullable = false, columnDefinition = "CHAR(1)")
-  var outcome: String,
+  @Column(name = "OUTCOME", nullable = false, columnDefinition = "CHAR(1)")
+  @Type(type = "uk.gov.justice.digital.hmpps.deliusapi.type.PassFailType")
+  var success: Boolean,
 
   @Column(name = "INTERACTION_PARAMETERS", length = 500)
   var parameters: String,

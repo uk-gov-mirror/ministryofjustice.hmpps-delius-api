@@ -9,6 +9,10 @@ import javax.persistence.JoinTable
 import javax.persistence.ManyToMany
 import javax.persistence.Table
 
+/**
+ * Office location.
+ * Note: we are not checking start date in the filter as neither does Delius
+ */
 @Entity
 @Table(name = "OFFICE_LOCATION")
 @Where(clause = "END_DATE IS NULL OR END_DATE > CURRENT_DATE")

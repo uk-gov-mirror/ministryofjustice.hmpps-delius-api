@@ -8,7 +8,7 @@ import javax.persistence.Table
 
 @Entity
 @Table(name = "STAFF")
-@Where(clause = "END_DATE IS NULL OR END_DATE > CURRENT_DATE")
+@Where(clause = "START_DATE <= CURRENT_DATE AND (END_DATE IS NULL OR END_DATE > CURRENT_DATE)")
 data class Staff(
   @Id
   @Column(name = "STAFF_ID")

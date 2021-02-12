@@ -14,20 +14,29 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
-import java.time.ZonedDateTime
+import java.time.ZoneOffset
+import java.util.Date
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.primaryConstructor
 
 object Fake {
   val faker = Faker()
-  val mapper = ContactMapper.INSTANCE
+  val mapper: ContactMapper = ContactMapper.INSTANCE
 
-  fun zonedDateTime(): ZonedDateTime = faker.date().past(10, TimeUnit.DAYS).toInstant().atZone(ZoneId.systemDefault())
-  fun localDateTime(): LocalDateTime = zonedDateTime().toLocalDateTime()
-  fun localDate(): LocalDate = zonedDateTime().toLocalDate()
-  fun localTime(): LocalTime = zonedDateTime().toLocalTime()
-  fun crn() = "${faker.lorem().fixedString(1)}${faker.number().randomNumber(6, true)}"
+  private fun Date.toLocalTime(): LocalTime = this.toInstant().atZone(ZoneId.systemDefault()).toLocalTime()
+  private fun Date.toLocalDate(): LocalDate = this.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+  private fun Date.toLocalDateTime(): LocalDateTime = this.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+
+  fun localTimeBetween(hourFrom: Int, hourTo: Int): LocalTime = faker.date().between(
+    Date.from(LocalDateTime.of(1900, 1, 1, hourFrom, 0).toInstant(ZoneOffset.UTC)),
+    Date.from(LocalDateTime.of(1900, 1, 1, hourTo, 0).toInstant(ZoneOffset.UTC))
+  ).toLocalTime()
+
+  fun randomLocalDate(): LocalDate = faker.date().past(10, TimeUnit.DAYS).toLocalDate()
+  fun randomLocalDateTime(): LocalDateTime = faker.date().past(10, TimeUnit.DAYS).toLocalDateTime()
+
+  private fun crn() = "${faker.lorem().fixedString(1)}${faker.number().randomNumber(6, true)}"
 
   fun offender() = Offender(id = faker.number().randomNumber(), crn = crn())
   fun contactType() = ContactType(id = faker.number().randomNumber(), code = faker.lorem().characters(1, 10), contactAlertFlag = true)
@@ -48,9 +57,9 @@ object Fake {
     team = team(),
     staff = staff(),
     officeLocation = officeLocation(),
-    contactDate = localDate(),
-    contactStartTime = localTime(),
-    contactEndTime = localTime(),
+    contactDate = randomLocalDate(),
+    contactStartTime = localTimeBetween(0, 12),
+    contactEndTime = localTimeBetween(12, 23),
     alert = faker.bool().bool(),
     sensitive = faker.bool().bool(),
     notes = faker.lorem().paragraph(),
@@ -59,8 +68,8 @@ object Fake {
     partitionAreaId = faker.number().randomNumber(),
     staffEmployeeId = faker.number().randomNumber(),
     teamProviderId = faker.number().randomNumber(),
-    createdDateTime = localDateTime(),
-    lastUpdatedDateTime = localDateTime(),
+    createdDateTime = randomLocalDateTime(),
+    lastUpdatedDateTime = randomLocalDateTime(),
     description = faker.company().bs(),
   ).merge(partial)
 

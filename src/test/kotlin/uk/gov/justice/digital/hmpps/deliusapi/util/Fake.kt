@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.deliusapi.util
 
 import com.github.javafaker.Faker
+import uk.gov.justice.digital.hmpps.deliusapi.entity.AuditedInteraction
+import uk.gov.justice.digital.hmpps.deliusapi.entity.BusinessInteraction
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
 import uk.gov.justice.digital.hmpps.deliusapi.entity.ContactOutcomeType
 import uk.gov.justice.digital.hmpps.deliusapi.entity.ContactType
@@ -83,6 +85,24 @@ object Fake {
 
   fun newContact() = newContact(null)
 
+  inline fun <reified Partial : Any> auditedInteraction(partial: Partial?) = AuditedInteraction(
+    dateTime = randomLocalDateTime(),
+    success = faker.bool().bool(),
+    parameters = faker.lorem().characters(),
+    businessInteraction = businessInteraction(),
+    userID = faker.number().randomNumber(),
+  ).merge(partial)
+
+  fun auditedInteraction() = auditedInteraction(null)
+
+  inline fun <reified Partial : Any> businessInteraction(partial: Partial?): BusinessInteraction = BusinessInteraction(
+    id = faker.number().randomNumber(),
+    code = faker.letterify("????"),
+    description = faker.lorem().characters(50),
+    enabledDate = randomLocalDateTime()
+  ).merge(partial)
+
+  fun businessInteraction() = businessInteraction(null)
   /**
    * Merge all properties of partial into a shallow copy of target.
    */

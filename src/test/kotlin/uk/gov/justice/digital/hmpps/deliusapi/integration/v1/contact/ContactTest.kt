@@ -92,8 +92,8 @@ class ContactTest : IntegrationTestBase() {
     val newContact = Fake.newContact(
       object {
         val offenderCrn = "X320811"
-        val contactType = "C376"
-        val contactOutcome = "BI01"
+        val contactType = "COUP" // Unplanned Contact from Offender
+        val contactOutcome = "CO22" // No Action Required
         val provider = "C00"
         val team = "C00T01"
         val staff = "C00T01U"

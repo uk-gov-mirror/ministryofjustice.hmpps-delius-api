@@ -28,6 +28,10 @@ class ContactService(
     val type = contactTypeRepository.findByCode(request.contactType)
       ?: throw BadRequestException("Contact type with code '${request.contactType}' does not exist")
 
+    if (type.outcomeTypes?.none { it.code == request.contactOutcome } == true) {
+      throw BadRequestException("Contact type with code '${request.contactType}' does not support outcome code '${request.contactOutcome}'")
+    }
+
     if (request.alert && !type.contactAlertFlag) {
       throw BadRequestException("Contact type '${type.code}' does not support alert")
     }

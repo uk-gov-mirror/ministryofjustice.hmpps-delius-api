@@ -41,7 +41,7 @@ object Fake {
   private fun crn() = "${faker.lorem().fixedString(1)}${faker.number().randomNumber(6, true)}"
 
   fun offender() = Offender(id = faker.number().randomNumber(), crn = crn())
-  fun contactType() = ContactType(id = faker.number().randomNumber(), code = faker.lorem().characters(1, 10), contactAlertFlag = true)
+  fun contactType(outcomeTypes: List<ContactOutcomeType>? = null) = ContactType(id = faker.number().randomNumber(), code = faker.lorem().characters(1, 10), contactAlertFlag = true, outcomeTypes = outcomeTypes)
   fun contactOutcomeType() = ContactOutcomeType(id = faker.number().randomNumber(), code = faker.lorem().characters(1, 10))
   fun provider(code: String? = null, officeLocations: List<OfficeLocation>? = null) =
     Provider(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(3), officeLocations = officeLocations)
@@ -50,30 +50,33 @@ object Fake {
   fun team(code: String? = null, staff: List<Staff>? = null) = Team(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(6), staff = staff)
   fun staff(code: String? = null) = Staff(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(7))
 
-  inline fun <reified Partial : Any> contact(partial: Partial?): Contact = Contact(
-    id = faker.number().randomNumber(),
-    offender = offender(),
-    contactType = contactType(),
-    contactOutcomeType = contactOutcomeType(),
-    provider = provider(),
-    team = team(),
-    staff = staff(),
-    officeLocation = officeLocation(),
-    contactDate = randomLocalDate(),
-    contactStartTime = localTimeBetween(0, 12),
-    contactEndTime = localTimeBetween(12, 23),
-    alert = faker.bool().bool(),
-    sensitive = faker.bool().bool(),
-    notes = faker.lorem().paragraph(),
-    createdByUserId = faker.number().randomNumber(),
-    lastUpdatedUserId = faker.number().randomNumber(),
-    partitionAreaId = faker.number().randomNumber(),
-    staffEmployeeId = faker.number().randomNumber(),
-    teamProviderId = faker.number().randomNumber(),
-    createdDateTime = randomLocalDateTime(),
-    lastUpdatedDateTime = randomLocalDateTime(),
-    description = faker.company().bs(),
-  ).merge(partial)
+  inline fun <reified Partial : Any> contact(partial: Partial?): Contact {
+    val contactOutcomeType = contactOutcomeType()
+    return Contact(
+      id = faker.number().randomNumber(),
+      offender = offender(),
+      contactType = contactType(listOf(contactOutcomeType)),
+      contactOutcomeType = contactOutcomeType,
+      provider = provider(),
+      team = team(),
+      staff = staff(),
+      officeLocation = officeLocation(),
+      contactDate = randomLocalDate(),
+      contactStartTime = localTimeBetween(0, 12),
+      contactEndTime = localTimeBetween(12, 23),
+      alert = faker.bool().bool(),
+      sensitive = faker.bool().bool(),
+      notes = faker.lorem().paragraph(),
+      createdByUserId = faker.number().randomNumber(),
+      lastUpdatedUserId = faker.number().randomNumber(),
+      partitionAreaId = faker.number().randomNumber(),
+      staffEmployeeId = faker.number().randomNumber(),
+      teamProviderId = faker.number().randomNumber(),
+      createdDateTime = randomLocalDateTime(),
+      lastUpdatedDateTime = randomLocalDateTime(),
+      description = faker.company().bs(),
+    ).merge(partial)
+  }
 
   fun contact() = contact(null)
 

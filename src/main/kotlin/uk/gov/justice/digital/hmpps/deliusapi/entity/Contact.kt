@@ -120,4 +120,12 @@ data class Contact(
 
   @Column(name = "DESCRIPTION")
   var description: String? = null,
+
+  @JoinColumn(name = "EVENT_ID")
+  @ManyToOne
+  var event: Event? = null,
+
+  @JoinColumn(name = "RQMNT_ID")
+  @ManyToOne
+  var requirement: Requirement? = null,
 )

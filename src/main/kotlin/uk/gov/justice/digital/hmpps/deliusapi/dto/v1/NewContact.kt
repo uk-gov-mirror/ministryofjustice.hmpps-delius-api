@@ -5,9 +5,11 @@ import uk.gov.justice.digital.hmpps.deliusapi.validation.StartTime
 import uk.gov.justice.digital.hmpps.deliusapi.validation.TimeRange
 import java.time.LocalDate
 import java.time.LocalTime
+import javax.validation.constraints.AssertTrue
 import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
 import javax.validation.constraints.Pattern
+import javax.validation.constraints.Positive
 import javax.validation.constraints.Size
 
 @TimeRange(message = "contact start and end times must form a valid range")
@@ -59,5 +61,19 @@ data class NewContact(
   val notes: String?,
 
   @field:Size(min = 0, max = 200)
-  val description: String?
-)
+  val description: String?,
+
+  @field:Positive
+  val eventId: Long? = null,
+
+  @field:Positive
+  val requirementId: Long? = null,
+) {
+  @AssertTrue(message = "Cannot specify a requirement without an event")
+  fun isEventProvidedWithRequirement(): Boolean {
+    if (requirementId == null) {
+      return true
+    }
+    return eventId != null
+  }
+}

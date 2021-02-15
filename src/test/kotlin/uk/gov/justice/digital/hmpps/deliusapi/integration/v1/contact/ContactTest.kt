@@ -47,6 +47,7 @@ class ContactTest : IntegrationTestBase() {
         Arguments.of(Fake.newContact(object { val staff = "12345678" }), "staff"),
         Arguments.of(Fake.newContact(object { val officeLocation = "123456" }), "officeLocation"),
         Arguments.of(Fake.newContact(object { val officeLocation = "12345678" }), "officeLocation"),
+        Arguments.of(Fake.newContact(object { val requirementId = 1L; val eventId = null }), "eventProvidedWithRequirement"),
       )
   }
 
@@ -91,7 +92,7 @@ class ContactTest : IntegrationTestBase() {
     val token = jwtAuthHelper.createJwt("bob")
     val newContact = Fake.newContact(
       object {
-        val offenderCrn = "X320811"
+        val offenderCrn = "X320741"
         val contactType = "C376"
         val contactOutcome = "BI01"
         val provider = "C00"
@@ -99,6 +100,8 @@ class ContactTest : IntegrationTestBase() {
         val staff = "C00T01U"
         val officeLocation = "C00OFFA"
         val alert = false
+        val eventId = 2500295343L
+        val requirementId = 2500083652
       }
     )
     var id = 0L
@@ -117,8 +120,51 @@ class ContactTest : IntegrationTestBase() {
     Assertions.assertThat(id).describedAs("should return contact id").isPositive
     val entity = repository.findByIdOrNull(id)
     Assertions.assertThat(entity).describedAs("should save contact").isNotNull
-      .extracting { it?.offender?.id }
+
+    Assertions.assertThat(entity?.offender?.id)
       .describedAs("should save expected offender")
-      .isEqualTo(2600343964L)
+      .isEqualTo(2500343964L)
+
+    Assertions.assertThat(entity?.contactType?.id)
+      .describedAs("should save expected type")
+      .isEqualTo(1509L)
+
+    Assertions.assertThat(entity?.contactOutcomeType?.id)
+      .describedAs("should save expected outcome type")
+      .isEqualTo(1500002000L)
+
+    Assertions.assertThat(entity?.provider?.id)
+      .describedAs("should save expected provider")
+      .isEqualTo(2500000002L)
+
+    Assertions.assertThat(entity?.team?.id)
+      .describedAs("should save expected team")
+      .isEqualTo(2500000005L)
+
+    Assertions.assertThat(entity?.staff?.id)
+      .describedAs("should save expected staff")
+      .isEqualTo(2500000005L)
+
+    Assertions.assertThat(entity?.officeLocation?.id)
+      .describedAs("should save expected office location")
+      .isEqualTo(2500000000L)
+
+    Assertions.assertThat(entity?.contactDate).isEqualTo(newContact.contactDate)
+    Assertions.assertThat(entity?.contactStartTime).isEqualToIgnoringNanos(newContact.contactStartTime)
+    Assertions.assertThat(entity?.contactEndTime).isEqualToIgnoringNanos(newContact.contactEndTime)
+    Assertions.assertThat(entity?.alert).isFalse
+    Assertions.assertThat(entity?.sensitive).isEqualTo(newContact.sensitive)
+    Assertions.assertThat(entity?.notes).isEqualTo(newContact.notes)
+    Assertions.assertThat(entity?.description).isEqualTo(newContact.description)
+
+    Assertions.assertThat(entity?.event?.id)
+      .describedAs("should save expected event")
+      .isNotNull
+      .isEqualTo(newContact.eventId)
+
+    Assertions.assertThat(entity?.requirement?.id)
+      .describedAs("should save expected requirement")
+      .isNotNull
+      .isEqualTo(newContact.requirementId)
   }
 }

@@ -4,7 +4,6 @@ import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import org.assertj.core.api.Assertions
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
@@ -54,17 +53,9 @@ class ContactServiceTest {
   private lateinit var subject: ContactService
 
   private lateinit var newContact: NewContact
-  private lateinit var offender: Offender
   private lateinit var type: ContactType
   private lateinit var outcome: ContactOutcomeType
-
-  @BeforeEach
-  fun beforeEach() {
-    newContact = Fake.newContact()
-    offender = Fake.offender()
-    type = Fake.contactType()
-    outcome = Fake.contactOutcomeType()
-  }
+  private lateinit var offender: Offender
 
   @Test
   fun `Creating contact`() {
@@ -133,8 +124,22 @@ class ContactServiceTest {
     shouldThrowBadRequest()
   }
 
+  @Test
+  fun `Attempting to create contact with missing event`() {
+    havingDependentEntities(havingEvent = false)
+    shouldThrowBadRequest()
+  }
+
+  @Test
+  fun `Attempting to create contact with missing requirement`() {
+    havingDependentEntities(havingRequirement = false)
+    shouldThrowBadRequest()
+  }
+
   fun havingDependentEntities(
     havingOffender: Boolean = true,
+    havingEvent: Boolean = true,
+    havingRequirement: Boolean = true,
     havingType: Boolean = true,
     havingOutcome: Boolean = true,
     havingProvider: Boolean = true,
@@ -142,12 +147,20 @@ class ContactServiceTest {
     havingTeam: Boolean = true,
     havingStaff: Boolean = true,
   ) {
+    newContact = Fake.newContact()
+
+    val requirements = if (havingRequirement) listOf(Fake.requirement(id = newContact.requirementId), Fake.requirement()) else listOf()
+    val disposals = listOf(Fake.disposal(requirements = requirements))
+    val events = if (havingEvent) listOf(Fake.event(id = newContact.eventId, disposals = disposals), Fake.event()) else listOf()
+    offender = Fake.offender(events = events)
     whenever(offenderRepository.findByCrn(newContact.offenderCrn))
       .thenReturn(if (havingOffender) offender else null)
 
+    type = Fake.contactType()
     whenever(contactTypeRepository.findByCode(newContact.contactType))
       .thenReturn(if (havingType) type else null)
 
+    outcome = Fake.contactOutcomeType()
     whenever(contactOutcomeTypeRepository.findByCode(newContact.contactOutcome))
       .thenReturn(if (havingOutcome) outcome else null)
 

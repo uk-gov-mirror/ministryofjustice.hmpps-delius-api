@@ -9,20 +9,14 @@ import javax.persistence.OneToMany
 import javax.persistence.Table
 
 @Entity
-@Table(name = "OFFENDER")
+@Table(name = "EVENT")
 @Where(clause = "SOFT_DELETED = 0")
-data class Offender(
+data class Event(
   @Id
-  @Column(name = "OFFENDER_ID")
+  @Column(name = "EVENT_ID")
   var id: Long,
 
-  @Column(name = "CRN", columnDefinition = "CHAR(7)")
-  var crn: String,
-
-  @Column(name = "SOFT_DELETED", columnDefinition = "NUMBER", nullable = false)
-  var softDeleted: Boolean = false,
-
+  @JoinColumn(name = "EVENT_ID")
   @OneToMany
-  @JoinColumn(name = "OFFENDER_ID")
-  var events: List<Event>? = null,
+  var disposals: List<Disposal>? = null,
 )

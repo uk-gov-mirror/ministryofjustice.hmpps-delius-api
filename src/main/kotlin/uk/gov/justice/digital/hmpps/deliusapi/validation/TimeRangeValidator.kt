@@ -37,8 +37,8 @@ class TimeRangeValidator : ConstraintValidator<TimeRange, Any> {
         if (attr != null) Pair(attr.annotationClass, member.get(value) as LocalTime?) else null
       }.toMap()
 
-    val start = map[StartTime::class] ?: throw RuntimeException("Cannot determine start time for time rage validation")
-    val end = map[EndTime::class] ?: throw RuntimeException("Cannot determine end time for time rage validation")
+    val start = map[StartTime::class] ?: throw RuntimeException("Cannot determine start time for time range validation")
+    val end = map[EndTime::class] ?: throw RuntimeException("Cannot determine end time for time range validation")
 
     return start == end || end.isAfter(start)
   }

@@ -26,5 +26,7 @@ class ContactMapperTest {
     Assertions.assertThat(observed.sensitive).isEqualTo(source.sensitive)
     Assertions.assertThat(observed.notes).isEqualTo(source.notes)
     Assertions.assertThat(observed.description).isEqualTo(source.description)
+    Assertions.assertThat(observed.eventId).isEqualTo(source.event?.id)
+    Assertions.assertThat(observed.requirementId).isEqualTo(source.requirement?.id)
   }
 }

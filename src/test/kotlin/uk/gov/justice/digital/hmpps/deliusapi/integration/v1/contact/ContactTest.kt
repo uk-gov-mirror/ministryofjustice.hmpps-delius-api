@@ -127,11 +127,11 @@ class ContactTest : IntegrationTestBase() {
 
     Assertions.assertThat(entity?.contactType?.id)
       .describedAs("should save expected type")
-      .isEqualTo(1509L)
+      .isEqualTo(327L)
 
     Assertions.assertThat(entity?.contactOutcomeType?.id)
       .describedAs("should save expected outcome type")
-      .isEqualTo(1500002000L)
+      .isEqualTo(94L)
 
     Assertions.assertThat(entity?.provider?.id)
       .describedAs("should save expected provider")

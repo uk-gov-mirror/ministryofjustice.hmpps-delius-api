@@ -19,21 +19,19 @@ class NewContactValidationTest {
 
   @Test
   fun `Invalid new contact`() {
-    val subject = Fake.newContact(
-      object {
-        val offenderCrn = "bacon"
-        val contactType = ""
-        val contactOutcome = ""
-        val provider = "AA"
-        val team = "AAAAA"
-        val staff = "AAAAAA"
-        val officeLocation = "AAAAAA"
-        val contactStartTime = LocalTime.NOON
-        val contactEndTime = LocalTime.MIDNIGHT
-        val notes = Fake.faker.lorem().characters(4001)
-        val eventId = 0L
-        val requirementId = 0L
-      }
+    val subject = Fake.newContact().copy(
+      offenderCrn = "bacon",
+      contactType = "",
+      contactOutcome = Fake.faker.lorem().characters(11),
+      provider = Fake.faker.lorem().characters(2),
+      team = Fake.faker.lorem().characters(5),
+      staff = Fake.faker.lorem().characters(6),
+      officeLocation = Fake.faker.lorem().characters(6),
+      contactStartTime = LocalTime.NOON,
+      contactEndTime = LocalTime.MIDNIGHT,
+      notes = Fake.faker.lorem().characters(4001),
+      eventId = 0L,
+      requirementId = 0L,
     )
     val result = whenValidating(subject)
 
@@ -56,12 +54,7 @@ class NewContactValidationTest {
 
   @Test
   fun `Invalid new contact when requirement id provided without event id`() {
-    val subject = Fake.newContact(
-      object {
-        val eventId = null
-        val requirementId = 1L
-      }
-    )
+    val subject = Fake.newContact().copy(eventId = null, requirementId = 1L)
 
     val result = whenValidating(subject)
     Assertions.assertThat(result)

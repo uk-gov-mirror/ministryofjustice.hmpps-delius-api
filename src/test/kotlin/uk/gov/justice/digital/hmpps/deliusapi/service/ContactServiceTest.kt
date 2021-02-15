@@ -18,7 +18,6 @@ import uk.gov.justice.digital.hmpps.deliusapi.entity.ContactOutcomeType
 import uk.gov.justice.digital.hmpps.deliusapi.entity.ContactType
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Offender
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
-import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactOutcomeTypeRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactTypeRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.OffenderRepository
@@ -39,9 +38,6 @@ class ContactServiceTest {
 
   @Mock
   private lateinit var contactTypeRepository: ContactTypeRepository
-
-  @Mock
-  private lateinit var contactOutcomeTypeRepository: ContactOutcomeTypeRepository
 
   @Mock
   private lateinit var providerRepository: ProviderRepository
@@ -143,6 +139,13 @@ class ContactServiceTest {
     shouldThrowBadRequest()
   }
 
+  @Test
+  fun `Attempting to create contact with date in past and no contact outcome`() {
+    havingDependentEntities()
+    newContact = newContact.copy(contactDate = Fake.randomPastLocalDate(), contactOutcome = null)
+    shouldThrowBadRequest()
+  }
+
   fun havingDependentEntities(
     havingOffender: Boolean = true,
     havingEvent: Boolean = true,
@@ -156,20 +159,18 @@ class ContactServiceTest {
   ) {
     newContact = Fake.newContact()
 
-    val requirements = if (havingRequirement) listOf(Fake.requirement(id = newContact.requirementId), Fake.requirement()) else listOf()
+    val offenderId = Fake.faker.number().randomNumber()
+    val requirements = if (havingRequirement) listOf(Fake.requirement(id = newContact.requirementId, offenderId = offenderId), Fake.requirement()) else listOf()
     val disposals = listOf(Fake.disposal(requirements = requirements))
     val events = if (havingEvent) listOf(Fake.event(id = newContact.eventId, disposals = disposals), Fake.event()) else listOf()
-    offender = Fake.offender(events = events)
+    offender = Fake.offender(id = offenderId, events = events)
     whenever(offenderRepository.findByCrn(newContact.offenderCrn))
       .thenReturn(if (havingOffender) offender else null)
 
-    type = Fake.contactType()
+    outcome = Fake.contactOutcomeType(code = newContact.contactOutcome)
+    type = Fake.contactType(outcomeTypes = if (havingOutcome) listOf(outcome, Fake.contactOutcomeType()) else listOf())
     whenever(contactTypeRepository.findByCode(newContact.contactType))
       .thenReturn(if (havingType) type else null)
-
-    outcome = Fake.contactOutcomeType()
-    whenever(contactOutcomeTypeRepository.findByCode(newContact.contactOutcome))
-      .thenReturn(if (havingOutcome) outcome else null)
 
     val staff = if (havingStaff) listOf(Fake.staff(code = newContact.staff), Fake.staff()) else listOf()
     val teams = if (havingTeam) listOf(Fake.team(code = newContact.team, staff = staff), Fake.team()) else listOf()

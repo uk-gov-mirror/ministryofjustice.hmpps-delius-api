@@ -23,7 +23,11 @@ data class ContactType(
 
   @Column(name = "CONTACT_ALERT_FLAG")
   @Type(type = "yes_no")
-  var contactAlertFlag: Boolean = false,
+  var alertFlag: Boolean = false,
+
+  @Column(name = "CONTACT_OUTCOME_FLAG", nullable = false)
+  @Type(type = "yes_no")
+  var outcomeFlag: Boolean = false,
 
   @ManyToMany
   @JoinTable(

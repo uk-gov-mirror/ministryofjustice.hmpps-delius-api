@@ -22,9 +22,8 @@ data class NewContact(
   @field:Size(min = 1, max = 10)
   val contactType: String,
 
-  @field:NotBlank
   @field:Size(min = 1, max = 10)
-  val contactOutcome: String,
+  val contactOutcome: String? = null,
 
   @field:NotBlank
   @field:Size(min = 3, max = 3, message = "size must be {min}")

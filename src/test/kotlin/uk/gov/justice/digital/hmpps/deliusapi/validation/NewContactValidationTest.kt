@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.deliusapi.validation
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewContact
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 import java.time.LocalTime
 import javax.validation.Validation
@@ -29,15 +30,14 @@ class NewContactValidationTest {
         val officeLocation = "AAAAAA"
         val contactStartTime = LocalTime.NOON
         val contactEndTime = LocalTime.MIDNIGHT
+        val notes = Fake.faker.lorem().characters(4001)
+        val eventId = 0L
+        val requirementId = 0L
       }
     )
-    val result = validator.validate(subject)
-    val invalidProperties = result.map {
-      val property = it.propertyPath.toString()
-      if (property == "") it.message else property
-    }.distinct()
+    val result = whenValidating(subject)
 
-    Assertions.assertThat(invalidProperties)
+    Assertions.assertThat(result)
       .describedAs("validating $subject")
       .containsOnly(
         "provider",
@@ -47,7 +47,33 @@ class NewContactValidationTest {
         "offenderCrn",
         "officeLocation",
         "staff",
-        "contact start and end times must form a valid range"
+        "contact start and end times must form a valid range",
+        "notes",
+        "eventId",
+        "requirementId"
       )
+  }
+
+  @Test
+  fun `Invalid new contact when requirement id provided without event id`() {
+    val subject = Fake.newContact(
+      object {
+        val eventId = null
+        val requirementId = 1L
+      }
+    )
+
+    val result = whenValidating(subject)
+    Assertions.assertThat(result)
+      .describedAs("validating $subject")
+      .containsOnly("eventProvidedWithRequirement")
+  }
+
+  private fun whenValidating(subject: NewContact): List<String> {
+    val result = validator.validate(subject)
+    return result.map {
+      val property = it.propertyPath.toString()
+      if (property == "") it.message else property
+    }.distinct()
   }
 }

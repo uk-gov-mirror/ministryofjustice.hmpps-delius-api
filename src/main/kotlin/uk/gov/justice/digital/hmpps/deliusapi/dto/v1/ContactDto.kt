@@ -17,6 +17,8 @@ data class ContactDto(
   val contactEndTime: LocalTime,
   val alert: Boolean,
   val sensitive: Boolean,
-  val notes: String?,
-  val description: String?
+  val notes: String? = null,
+  val description: String? = null,
+  val eventId: Long? = null,
+  val requirementId: Long? = null,
 )

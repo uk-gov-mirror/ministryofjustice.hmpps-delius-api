@@ -1,14 +1,18 @@
 package uk.gov.justice.digital.hmpps.deliusapi.util
 
 import com.github.javafaker.Faker
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewContact
 import uk.gov.justice.digital.hmpps.deliusapi.entity.AuditedInteraction
 import uk.gov.justice.digital.hmpps.deliusapi.entity.BusinessInteraction
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
 import uk.gov.justice.digital.hmpps.deliusapi.entity.ContactOutcomeType
 import uk.gov.justice.digital.hmpps.deliusapi.entity.ContactType
+import uk.gov.justice.digital.hmpps.deliusapi.entity.Disposal
+import uk.gov.justice.digital.hmpps.deliusapi.entity.Event
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Offender
 import uk.gov.justice.digital.hmpps.deliusapi.entity.OfficeLocation
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Provider
+import uk.gov.justice.digital.hmpps.deliusapi.entity.Requirement
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Staff
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Team
 import uk.gov.justice.digital.hmpps.deliusapi.mapper.ContactMapper
@@ -40,15 +44,20 @@ object Fake {
 
   private fun crn() = "${faker.lorem().fixedString(1)}${faker.number().randomNumber(6, true)}"
 
-  fun offender() = Offender(id = faker.number().randomNumber(), crn = crn())
+  fun offender(events: List<Event> = listOf(event())) =
+    Offender(id = faker.number().randomNumber(), crn = crn(), events = events)
   fun contactType(outcomeTypes: List<ContactOutcomeType>? = null) = ContactType(id = faker.number().randomNumber(), code = faker.lorem().characters(1, 10), contactAlertFlag = true, outcomeTypes = outcomeTypes)
   fun contactOutcomeType() = ContactOutcomeType(id = faker.number().randomNumber(), code = faker.lorem().characters(1, 10))
-  fun provider(code: String? = null, officeLocations: List<OfficeLocation>? = null) =
+  fun provider(code: String? = null, officeLocations: List<OfficeLocation>? = listOf(officeLocation())) =
     Provider(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(3), officeLocations = officeLocations)
-  fun officeLocation(code: String? = null, teams: List<Team>? = null) =
+  fun officeLocation(code: String? = null, teams: List<Team>? = listOf(team())) =
     OfficeLocation(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(7), teams = teams)
-  fun team(code: String? = null, staff: List<Staff>? = null) = Team(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(6), staff = staff)
+  fun team(code: String? = null, staff: List<Staff>? = listOf(staff())) = Team(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(6), staff = staff)
   fun staff(code: String? = null) = Staff(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(7))
+  fun requirement(id: Long? = null) = Requirement(id = id ?: faker.number().randomNumber())
+  fun disposal(requirements: List<Requirement>? = listOf(requirement())) = Disposal(id = faker.number().randomNumber(), requirements = requirements)
+  fun event(id: Long? = null, disposals: List<Disposal>? = listOf(disposal())) =
+    Event(id = id ?: faker.number().randomNumber(), disposals = disposals)
 
   inline fun <reified Partial : Any> contact(partial: Partial?): Contact {
     val contactOutcomeType = contactOutcomeType()
@@ -75,6 +84,8 @@ object Fake {
       createdDateTime = randomLocalDateTime(),
       lastUpdatedDateTime = randomLocalDateTime(),
       description = faker.company().bs(),
+      event = event(),
+      requirement = requirement(),
     ).merge(partial)
   }
 
@@ -84,7 +95,7 @@ object Fake {
 
   fun contactDto() = contactDto(null)
 
-  inline fun <reified Partial : Any> newContact(partial: Partial?) = mapper.toNew(contactDto()).merge(partial)
+  inline fun <reified Partial : Any> newContact(partial: Partial?): NewContact = mapper.toNew(contactDto()).merge(partial)
 
   fun newContact() = newContact(null)
 

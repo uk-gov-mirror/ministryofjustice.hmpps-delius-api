@@ -39,6 +39,19 @@ class ContactService(
     val offender = offenderRepository.findByCrn(request.offenderCrn)
       ?: throw BadRequestException("Offender with code '${request.offenderCrn}' does not exist")
 
+    val event = if (request.eventId != null)
+      offender.events?.find { it.id == request.eventId }
+        ?: throw BadRequestException("Event with id '${request.eventId}' does not exist on offender '${request.offenderCrn}'")
+    else null
+
+    val requirement = if (request.requirementId != null) {
+      if (event == null) {
+        throw BadRequestException("Cannot specify a requirement without an event")
+      }
+      event.disposals?.flatMap { it.requirements ?: listOf() }?.find { it.id == request.requirementId }
+        ?: throw BadRequestException("Requirement with id '${request.requirementId}' does not exist on event '${request.eventId}'")
+    } else null
+
     val provider = providerRepository.findByCode(request.provider)
       ?: throw BadRequestException("Provider with code '${request.provider}' does not exist")
 
@@ -63,6 +76,8 @@ class ContactService(
       provider = provider,
       team = team,
       staff = staff,
+      event = event,
+      requirement = requirement,
       officeLocation = officeLocation,
       contactDate = request.contactDate,
       contactStartTime = request.contactStartTime,

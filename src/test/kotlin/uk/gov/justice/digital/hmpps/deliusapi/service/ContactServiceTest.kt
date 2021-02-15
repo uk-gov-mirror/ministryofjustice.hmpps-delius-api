@@ -136,6 +136,13 @@ class ContactServiceTest {
     shouldThrowBadRequest()
   }
 
+  @Test
+  fun `Attempting to create contact with type not matching outcome`() {
+    havingDependentEntities()
+    newContact = newContact.copy(contactOutcome = "INVALID")
+    shouldThrowBadRequest()
+  }
+
   fun havingDependentEntities(
     havingOffender: Boolean = true,
     havingEvent: Boolean = true,

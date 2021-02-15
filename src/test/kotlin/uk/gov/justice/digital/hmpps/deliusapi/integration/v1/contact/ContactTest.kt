@@ -93,8 +93,8 @@ class ContactTest : IntegrationTestBase() {
     val newContact = Fake.newContact(
       object {
         val offenderCrn = "X320741"
-        val contactType = "C376"
-        val contactOutcome = "BI01"
+        val contactType = "COUP" // Unplanned Contact from Offender
+        val contactOutcome = "CO22" // No Action Required
         val provider = "C00"
         val team = "C00T01"
         val staff = "C00T01U"
@@ -127,11 +127,11 @@ class ContactTest : IntegrationTestBase() {
 
     Assertions.assertThat(entity?.contactType?.id)
       .describedAs("should save expected type")
-      .isEqualTo(1509L)
+      .isEqualTo(327L)
 
     Assertions.assertThat(entity?.contactOutcomeType?.id)
       .describedAs("should save expected outcome type")
-      .isEqualTo(1500002000L)
+      .isEqualTo(94L)
 
     Assertions.assertThat(entity?.provider?.id)
       .describedAs("should save expected provider")

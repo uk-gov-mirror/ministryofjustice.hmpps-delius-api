@@ -50,7 +50,7 @@ class AuditService(
       throw BadRequestException("No audit parameters provided")
     }
 
-    val businessInteraction = businessInteractionRepository.findByCode(interaction.code)
+    val businessInteraction = businessInteractionRepository.findFirstByCode(interaction.code)
       ?: throw BadRequestException("Business Interaction with code ${interaction.code} does not exist")
 
     if (!isInteractionAuditable(businessInteraction.enabledDate)) {

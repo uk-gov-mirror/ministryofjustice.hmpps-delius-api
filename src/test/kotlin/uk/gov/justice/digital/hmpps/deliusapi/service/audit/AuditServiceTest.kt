@@ -48,7 +48,7 @@ internal class AuditServiceTest {
 
   @Test
   fun `Creating audited interaction using generic method`() {
-    whenever(businessInteractionRepository.findByCode(AuditableInteraction.ADD_CONTACT.code)).thenReturn(businessInteraction)
+    whenever(businessInteractionRepository.findFirstByCode(AuditableInteraction.ADD_CONTACT.code)).thenReturn(businessInteraction)
     whenever(auditedInteractionRepository.saveAndFlush(any())).thenReturn(auditedInteraction)
 
     subject.createAuditedInteraction(
@@ -73,7 +73,7 @@ internal class AuditServiceTest {
 
   @Test
   fun `Creating failed interaction`() {
-    whenever(businessInteractionRepository.findByCode(any())).thenReturn(businessInteraction)
+    whenever(businessInteractionRepository.findFirstByCode(any())).thenReturn(businessInteraction)
     whenever(auditedInteractionRepository.saveAndFlush(any())).thenReturn(auditedInteraction)
 
     subject.failedInteraction(1234, AuditableInteraction.ADD_CONTACT, 5678)
@@ -89,7 +89,7 @@ internal class AuditServiceTest {
 
   @Test
   fun `Creating successful interaction`() {
-    whenever(businessInteractionRepository.findByCode(any())).thenReturn(businessInteraction)
+    whenever(businessInteractionRepository.findFirstByCode(any())).thenReturn(businessInteraction)
     whenever(auditedInteractionRepository.saveAndFlush(any())).thenReturn(auditedInteraction)
 
     subject.successfulInteraction(1234, AuditableInteraction.ADD_CONTACT, 5678)
@@ -106,7 +106,7 @@ internal class AuditServiceTest {
 
   @Test
   fun `Creating successful NSI interaction`() {
-    whenever(businessInteractionRepository.findByCode(any())).thenReturn(businessInteraction)
+    whenever(businessInteractionRepository.findFirstByCode(any())).thenReturn(businessInteraction)
     whenever(auditedInteractionRepository.saveAndFlush(any())).thenReturn(auditedInteraction)
 
     subject.successfulInteraction(1234, AuditableInteraction.ADD_CONTACT, nsiId = 3434)
@@ -130,7 +130,7 @@ internal class AuditServiceTest {
 
   @Test
   fun `When no business interaction found throws exception`() {
-    whenever(businessInteractionRepository.findByCode(any())).thenReturn(null)
+    whenever(businessInteractionRepository.findFirstByCode(any())).thenReturn(null)
 
     assertThrows<RuntimeException> {
       subject.successfulInteraction(1234, AuditableInteraction.ADD_CONTACT, 5678)
@@ -140,7 +140,7 @@ internal class AuditServiceTest {
   @Test
   fun `When enabled date has not passed do not audit`() {
     val notEnabledBusinessInteraction = businessInteraction.copy(enabledDate = LocalDateTime.now().plusYears(1))
-    whenever(businessInteractionRepository.findByCode(any())).thenReturn(notEnabledBusinessInteraction)
+    whenever(businessInteractionRepository.findFirstByCode(any())).thenReturn(notEnabledBusinessInteraction)
 
     subject.successfulInteraction(1234, AuditableInteraction.ADD_CONTACT, 5678)
 
@@ -150,7 +150,7 @@ internal class AuditServiceTest {
   @Test
   fun `When enabled date null do not audit`() {
     val notEnabledBusinessInteraction = businessInteraction.copy(enabledDate = null)
-    whenever(businessInteractionRepository.findByCode(any())).thenReturn(notEnabledBusinessInteraction)
+    whenever(businessInteractionRepository.findFirstByCode(any())).thenReturn(notEnabledBusinessInteraction)
 
     subject.successfulInteraction(1234, AuditableInteraction.ADD_CONTACT, 5678)
 

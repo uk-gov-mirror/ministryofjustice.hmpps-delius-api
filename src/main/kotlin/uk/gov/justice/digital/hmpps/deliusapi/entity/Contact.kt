@@ -35,17 +35,17 @@ data class Contact(
   var id: Long = 0,
 
   @Column(name = "CONTACT_DATE", nullable = false)
-  var contactDate: LocalDate,
+  var date: LocalDate,
 
   @JoinColumn(name = "OFFENDER_ID", nullable = false)
   @ManyToOne
   val offender: Offender,
 
   @Column(name = "CONTACT_START_TIME")
-  var contactStartTime: LocalTime? = null,
+  var startTime: LocalTime? = null,
 
   @Column(name = "CONTACT_END_TIME")
-  var contactEndTime: LocalTime? = null,
+  var endTime: LocalTime? = null,
 
   @Column(name = "NOTES")
   @Lob
@@ -91,11 +91,11 @@ data class Contact(
 
   @JoinColumn(name = "CONTACT_TYPE_ID")
   @ManyToOne
-  var contactType: ContactType? = null,
+  var type: ContactType? = null,
 
   @JoinColumn(name = "CONTACT_OUTCOME_TYPE_ID")
   @ManyToOne
-  var contactOutcomeType: ContactOutcomeType? = null,
+  var outcome: ContactOutcomeType? = null,
 
   @Column(name = "CREATED_BY_USER_ID", nullable = false)
   @CreatedBy

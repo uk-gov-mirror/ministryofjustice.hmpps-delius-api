@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.deliusapi.util
 
 import com.github.javafaker.Faker
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.ContactDto
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewContact
 import uk.gov.justice.digital.hmpps.deliusapi.entity.AuditedInteraction
 import uk.gov.justice.digital.hmpps.deliusapi.entity.BusinessInteraction
@@ -23,8 +24,6 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.Date
 import java.util.concurrent.TimeUnit
-import kotlin.reflect.full.declaredMemberProperties
-import kotlin.reflect.full.primaryConstructor
 
 object Fake {
   val faker = Faker()
@@ -39,40 +38,47 @@ object Fake {
     Date.from(LocalDateTime.of(1900, 1, 1, hourTo, 0).toInstant(ZoneOffset.UTC))
   ).toLocalTime()
 
-  fun randomLocalDate(): LocalDate = faker.date().past(10, TimeUnit.DAYS).toLocalDate()
+  fun randomPastLocalDate(): LocalDate = faker.date().past(10, TimeUnit.DAYS).toLocalDate()
   fun randomLocalDateTime(): LocalDateTime = faker.date().past(10, TimeUnit.DAYS).toLocalDateTime()
 
   private fun crn() = "${faker.lorem().fixedString(1)}${faker.number().randomNumber(6, true)}"
 
-  fun offender(events: List<Event> = listOf(event())) =
-    Offender(id = faker.number().randomNumber(), crn = crn(), events = events)
-  fun contactType(outcomeTypes: List<ContactOutcomeType>? = null) = ContactType(id = faker.number().randomNumber(), code = faker.lorem().characters(1, 10), contactAlertFlag = true, outcomeTypes = outcomeTypes)
-  fun contactOutcomeType() = ContactOutcomeType(id = faker.number().randomNumber(), code = faker.lorem().characters(1, 10))
+  fun offender(id: Long? = null, events: List<Event> = listOf(event())) =
+    Offender(id = id ?: faker.number().randomNumber(), crn = crn(), events = events)
+
+  fun contactType(outcomeTypes: List<ContactOutcomeType> = listOf(contactOutcomeType())) = ContactType(
+    id = faker.number().randomNumber(),
+    code = faker.lorem().characters(1, 10),
+    alertFlag = true,
+    outcomeFlag = true,
+    outcomeTypes = outcomeTypes,
+  )
+  fun contactOutcomeType(code: String? = null) = ContactOutcomeType(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(1, 10))
   fun provider(code: String? = null, officeLocations: List<OfficeLocation>? = listOf(officeLocation())) =
     Provider(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(3), officeLocations = officeLocations)
   fun officeLocation(code: String? = null, teams: List<Team>? = listOf(team())) =
     OfficeLocation(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(7), teams = teams)
   fun team(code: String? = null, staff: List<Staff>? = listOf(staff())) = Team(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(6), staff = staff)
   fun staff(code: String? = null) = Staff(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(7))
-  fun requirement(id: Long? = null) = Requirement(id = id ?: faker.number().randomNumber())
+  fun requirement(id: Long? = null, offenderId: Long? = null) = Requirement(id = id ?: faker.number().randomNumber(), offenderId = offenderId ?: faker.number().randomNumber())
   fun disposal(requirements: List<Requirement>? = listOf(requirement())) = Disposal(id = faker.number().randomNumber(), requirements = requirements)
   fun event(id: Long? = null, disposals: List<Disposal>? = listOf(disposal())) =
     Event(id = id ?: faker.number().randomNumber(), disposals = disposals)
 
-  inline fun <reified Partial : Any> contact(partial: Partial?): Contact {
+  fun contact(): Contact {
     val contactOutcomeType = contactOutcomeType()
     return Contact(
       id = faker.number().randomNumber(),
       offender = offender(),
-      contactType = contactType(listOf(contactOutcomeType)),
-      contactOutcomeType = contactOutcomeType,
+      type = contactType(listOf(contactOutcomeType)),
+      outcome = contactOutcomeType,
       provider = provider(),
       team = team(),
       staff = staff(),
       officeLocation = officeLocation(),
-      contactDate = randomLocalDate(),
-      contactStartTime = localTimeBetween(0, 12),
-      contactEndTime = localTimeBetween(12, 23),
+      date = randomPastLocalDate(),
+      startTime = localTimeBetween(0, 12),
+      endTime = localTimeBetween(12, 23),
       alert = faker.bool().bool(),
       sensitive = faker.bool().bool(),
       notes = faker.lorem().paragraph(),
@@ -86,59 +92,25 @@ object Fake {
       description = faker.company().bs(),
       event = event(),
       requirement = requirement(),
-    ).merge(partial)
+    )
   }
 
-  fun contact() = contact(null)
+  fun contactDto(): ContactDto = mapper.toDto(contact())
 
-  inline fun <reified Partial : Any> contactDto(partial: Partial?) = mapper.toDto(contact()).merge(partial)
+  fun newContact(): NewContact = mapper.toNew(contactDto())
 
-  fun contactDto() = contactDto(null)
-
-  inline fun <reified Partial : Any> newContact(partial: Partial?): NewContact = mapper.toNew(contactDto()).merge(partial)
-
-  fun newContact() = newContact(null)
-
-  inline fun <reified Partial : Any> auditedInteraction(partial: Partial?) = AuditedInteraction(
+  fun auditedInteraction() = AuditedInteraction(
     dateTime = randomLocalDateTime(),
     success = faker.bool().bool(),
     parameters = faker.lorem().characters(),
     businessInteraction = businessInteraction(),
     userID = faker.number().randomNumber(),
-  ).merge(partial)
+  )
 
-  fun auditedInteraction() = auditedInteraction(null)
-
-  inline fun <reified Partial : Any> businessInteraction(partial: Partial?): BusinessInteraction = BusinessInteraction(
+  fun businessInteraction() = BusinessInteraction(
     id = faker.number().randomNumber(),
     code = faker.letterify("????"),
     description = faker.lorem().characters(50),
     enabledDate = randomLocalDateTime()
-  ).merge(partial)
-
-  fun businessInteraction() = businessInteraction(null)
-  /**
-   * Merge all properties of partial into a shallow copy of target.
-   */
-  inline fun <reified T : Any, reified Partial : Any> T.merge(partial: Partial?): T {
-    if (partial == null) {
-      return this
-    }
-
-    val props = T::class.declaredMemberProperties.associateBy { it.name }
-    val partialProps = Partial::class.declaredMemberProperties.associateBy { it.name }
-
-    val primaryConstructor = T::class.primaryConstructor
-      ?: throw IllegalArgumentException("merge type must have a primary constructor")
-
-    val args = primaryConstructor.parameters.associateWith { parameter ->
-      when {
-        partialProps.containsKey(parameter.name) -> partialProps[parameter.name]?.get(partial)
-        props.containsKey(parameter.name) -> props[parameter.name]?.get(this)
-        else -> throw IllegalStateException("no declared member property found with name '${parameter.name}'")
-      }
-    }
-
-    return primaryConstructor.callBy(args)
-  }
+  )
 }

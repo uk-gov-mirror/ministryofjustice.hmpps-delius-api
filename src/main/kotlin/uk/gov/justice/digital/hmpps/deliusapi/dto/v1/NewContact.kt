@@ -20,11 +20,10 @@ data class NewContact(
 
   @field:NotBlank
   @field:Size(min = 1, max = 10)
-  val contactType: String,
+  val type: String,
 
-  @field:NotBlank
   @field:Size(min = 1, max = 10)
-  val contactOutcome: String,
+  val outcome: String? = null,
 
   @field:NotBlank
   @field:Size(min = 3, max = 3, message = "size must be {min}")
@@ -43,15 +42,15 @@ data class NewContact(
   val officeLocation: String,
 
   @field:NotNull
-  val contactDate: LocalDate,
+  val date: LocalDate,
 
   @field:NotNull
   @field:StartTime
-  val contactStartTime: LocalTime,
+  val startTime: LocalTime,
 
   @field:NotNull
   @field:EndTime
-  val contactEndTime: LocalTime,
+  val endTime: LocalTime,
 
   val alert: Boolean = false,
 

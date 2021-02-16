@@ -35,19 +35,19 @@ class ContactTest : IntegrationTestBase() {
     @JvmStatic
     fun invalidContactTestCases(): Stream<Arguments> =
       Stream.of(
-        Arguments.of(Fake.newContact(object { val offenderCrn = "" }), "offenderCrn"),
-        Arguments.of(Fake.newContact(object { val offenderCrn = "1234567" }), "offenderCrn"),
-        Arguments.of(Fake.newContact(object { val contactType = "" }), "contactType"),
-        Arguments.of(Fake.newContact(object { val contactType = "12345678910" }), "contactType"),
-        Arguments.of(Fake.newContact(object { val provider = "12" }), "provider"),
-        Arguments.of(Fake.newContact(object { val provider = "1234" }), "provider"),
-        Arguments.of(Fake.newContact(object { val team = "12345" }), "team"),
-        Arguments.of(Fake.newContact(object { val team = "1234567" }), "team"),
-        Arguments.of(Fake.newContact(object { val staff = "123456" }), "staff"),
-        Arguments.of(Fake.newContact(object { val staff = "12345678" }), "staff"),
-        Arguments.of(Fake.newContact(object { val officeLocation = "123456" }), "officeLocation"),
-        Arguments.of(Fake.newContact(object { val officeLocation = "12345678" }), "officeLocation"),
-        Arguments.of(Fake.newContact(object { val requirementId = 1L; val eventId = null }), "eventProvidedWithRequirement"),
+        Arguments.of(Fake.newContact().copy(offenderCrn = ""), "offenderCrn"),
+        Arguments.of(Fake.newContact().copy(offenderCrn = "1234567"), "offenderCrn"),
+        Arguments.of(Fake.newContact().copy(type = ""), "type"),
+        Arguments.of(Fake.newContact().copy(type = "12345678910"), "type"),
+        Arguments.of(Fake.newContact().copy(provider = "12"), "provider"),
+        Arguments.of(Fake.newContact().copy(provider = "1234"), "provider"),
+        Arguments.of(Fake.newContact().copy(team = "12345"), "team"),
+        Arguments.of(Fake.newContact().copy(team = "1234567"), "team"),
+        Arguments.of(Fake.newContact().copy(staff = "123456"), "staff"),
+        Arguments.of(Fake.newContact().copy(staff = "12345678"), "staff"),
+        Arguments.of(Fake.newContact().copy(officeLocation = "123456"), "officeLocation"),
+        Arguments.of(Fake.newContact().copy(officeLocation = "12345678"), "officeLocation"),
+        Arguments.of(Fake.newContact().copy(requirementId = 1L, eventId = null), "eventProvidedWithRequirement"),
       )
   }
 
@@ -90,19 +90,17 @@ class ContactTest : IntegrationTestBase() {
   @Test
   fun `Creating contact`() {
     val token = jwtAuthHelper.createJwt("bob")
-    val newContact = Fake.newContact(
-      object {
-        val offenderCrn = "X320741"
-        val contactType = "COUP" // Unplanned Contact from Offender
-        val contactOutcome = "CO22" // No Action Required
-        val provider = "C00"
-        val team = "C00T01"
-        val staff = "C00T01U"
-        val officeLocation = "C00OFFA"
-        val alert = false
-        val eventId = 2500295343L
-        val requirementId = 2500083652
-      }
+    val newContact = Fake.newContact().copy(
+      offenderCrn = "X320741",
+      type = "COUP", // Unplanned Contact from Offender
+      outcome = "CO22", // No Action Required
+      provider = "C00",
+      team = "C00T01",
+      staff = "C00T01U",
+      officeLocation = "C00OFFA",
+      alert = false,
+      eventId = 2500295343L,
+      requirementId = 2500083652,
     )
     var id = 0L
     webTestClient.post()
@@ -125,11 +123,11 @@ class ContactTest : IntegrationTestBase() {
       .describedAs("should save expected offender")
       .isEqualTo(2500343964L)
 
-    Assertions.assertThat(entity?.contactType?.id)
+    Assertions.assertThat(entity?.type?.id)
       .describedAs("should save expected type")
       .isEqualTo(327L)
 
-    Assertions.assertThat(entity?.contactOutcomeType?.id)
+    Assertions.assertThat(entity?.outcome?.id)
       .describedAs("should save expected outcome type")
       .isEqualTo(94L)
 
@@ -149,9 +147,9 @@ class ContactTest : IntegrationTestBase() {
       .describedAs("should save expected office location")
       .isEqualTo(2500000000L)
 
-    Assertions.assertThat(entity?.contactDate).isEqualTo(newContact.contactDate)
-    Assertions.assertThat(entity?.contactStartTime).isEqualToIgnoringNanos(newContact.contactStartTime)
-    Assertions.assertThat(entity?.contactEndTime).isEqualToIgnoringNanos(newContact.contactEndTime)
+    Assertions.assertThat(entity?.date).isEqualTo(newContact.date)
+    Assertions.assertThat(entity?.startTime).isEqualToIgnoringNanos(newContact.startTime)
+    Assertions.assertThat(entity?.endTime).isEqualToIgnoringNanos(newContact.endTime)
     Assertions.assertThat(entity?.alert).isFalse
     Assertions.assertThat(entity?.sensitive).isEqualTo(newContact.sensitive)
     Assertions.assertThat(entity?.notes).isEqualTo(newContact.notes)

@@ -13,4 +13,7 @@ data class Requirement(
   @Id
   @Column(name = "RQMNT_ID")
   var id: Long,
+
+  @Column(name = "OFFENDER_ID")
+  var offenderId: Long,
 )

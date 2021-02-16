@@ -37,8 +37,8 @@ class ContactTest : IntegrationTestBase() {
       Stream.of(
         Arguments.of(Fake.newContact().copy(offenderCrn = ""), "offenderCrn"),
         Arguments.of(Fake.newContact().copy(offenderCrn = "1234567"), "offenderCrn"),
-        Arguments.of(Fake.newContact().copy(contactType = ""), "contactType"),
-        Arguments.of(Fake.newContact().copy(contactType = "12345678910"), "contactType"),
+        Arguments.of(Fake.newContact().copy(type = ""), "type"),
+        Arguments.of(Fake.newContact().copy(type = "12345678910"), "type"),
         Arguments.of(Fake.newContact().copy(provider = "12"), "provider"),
         Arguments.of(Fake.newContact().copy(provider = "1234"), "provider"),
         Arguments.of(Fake.newContact().copy(team = "12345"), "team"),
@@ -92,8 +92,8 @@ class ContactTest : IntegrationTestBase() {
     val token = jwtAuthHelper.createJwt("bob")
     val newContact = Fake.newContact().copy(
       offenderCrn = "X320741",
-      contactType = "COUP", // Unplanned Contact from Offender
-      contactOutcome = "CO22", // No Action Required
+      type = "COUP", // Unplanned Contact from Offender
+      outcome = "CO22", // No Action Required
       provider = "C00",
       team = "C00T01",
       staff = "C00T01U",
@@ -123,11 +123,11 @@ class ContactTest : IntegrationTestBase() {
       .describedAs("should save expected offender")
       .isEqualTo(2500343964L)
 
-    Assertions.assertThat(entity?.contactType?.id)
+    Assertions.assertThat(entity?.type?.id)
       .describedAs("should save expected type")
       .isEqualTo(327L)
 
-    Assertions.assertThat(entity?.contactOutcomeType?.id)
+    Assertions.assertThat(entity?.outcome?.id)
       .describedAs("should save expected outcome type")
       .isEqualTo(94L)
 
@@ -147,9 +147,9 @@ class ContactTest : IntegrationTestBase() {
       .describedAs("should save expected office location")
       .isEqualTo(2500000000L)
 
-    Assertions.assertThat(entity?.contactDate).isEqualTo(newContact.contactDate)
-    Assertions.assertThat(entity?.contactStartTime).isEqualToIgnoringNanos(newContact.contactStartTime)
-    Assertions.assertThat(entity?.contactEndTime).isEqualToIgnoringNanos(newContact.contactEndTime)
+    Assertions.assertThat(entity?.date).isEqualTo(newContact.date)
+    Assertions.assertThat(entity?.startTime).isEqualToIgnoringNanos(newContact.startTime)
+    Assertions.assertThat(entity?.endTime).isEqualToIgnoringNanos(newContact.endTime)
     Assertions.assertThat(entity?.alert).isFalse
     Assertions.assertThat(entity?.sensitive).isEqualTo(newContact.sensitive)
     Assertions.assertThat(entity?.notes).isEqualTo(newContact.notes)

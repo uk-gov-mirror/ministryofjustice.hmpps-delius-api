@@ -21,14 +21,14 @@ class NewContactValidationTest {
   fun `Invalid new contact`() {
     val subject = Fake.newContact().copy(
       offenderCrn = "bacon",
-      contactType = "",
-      contactOutcome = Fake.faker.lorem().characters(11),
+      type = "",
+      outcome = Fake.faker.lorem().characters(11),
       provider = Fake.faker.lorem().characters(2),
       team = Fake.faker.lorem().characters(5),
       staff = Fake.faker.lorem().characters(6),
       officeLocation = Fake.faker.lorem().characters(6),
-      contactStartTime = LocalTime.NOON,
-      contactEndTime = LocalTime.MIDNIGHT,
+      startTime = LocalTime.NOON,
+      endTime = LocalTime.MIDNIGHT,
       notes = Fake.faker.lorem().characters(4001),
       eventId = 0L,
       requirementId = 0L,
@@ -39,8 +39,8 @@ class NewContactValidationTest {
       .describedAs("validating $subject")
       .containsOnly(
         "provider",
-        "contactType",
-        "contactOutcome",
+        "type",
+        "outcome",
         "team",
         "offenderCrn",
         "officeLocation",

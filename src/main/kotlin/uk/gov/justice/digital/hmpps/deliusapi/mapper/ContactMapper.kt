@@ -14,8 +14,8 @@ interface ContactMapper {
 
   @Mappings(
     Mapping(source = "offender.crn", target = "offenderCrn"),
-    Mapping(source = "contactType.code", target = "contactType"),
-    Mapping(source = "contactOutcomeType.code", target = "contactOutcome"),
+    Mapping(source = "type.code", target = "type"),
+    Mapping(source = "outcome.code", target = "outcome"),
     Mapping(source = "provider.code", target = "provider"),
     Mapping(source = "team.code", target = "team"),
     Mapping(source = "staff.code", target = "staff"),

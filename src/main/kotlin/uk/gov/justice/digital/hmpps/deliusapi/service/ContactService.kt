@@ -24,10 +24,10 @@ class ContactService(
 ) {
 
   fun createContact(request: NewContact): ContactDto {
-    val type = contactTypeRepository.findByCode(request.contactType)
-      ?: throw BadRequestException("Contact type with code '${request.contactType}' does not exist")
+    val type = contactTypeRepository.findByCode(request.type)
+      ?: throw BadRequestException("Contact type with code '${request.type}' does not exist")
 
-    if (type.outcomeFlag && request.contactOutcome == null && request.contactDate.isBefore(LocalDate.now())) {
+    if (type.outcomeFlag && request.outcome == null && request.date.isBefore(LocalDate.now())) {
       throw BadRequestException("Contact type '${type.code}' requires an outcome type")
     }
 
@@ -35,9 +35,9 @@ class ContactService(
       throw BadRequestException("Contact type '${type.code}' does not support alert")
     }
 
-    val outcome = if (request.contactOutcome != null)
-      type.outcomeTypes?.find { it.code == request.contactOutcome }
-        ?: throw BadRequestException("Contact type with code '${request.contactType}' does not support outcome code '${request.contactOutcome}'")
+    val outcome = if (request.outcome != null)
+      type.outcomeTypes?.find { it.code == request.outcome }
+        ?: throw BadRequestException("Contact type with code '${request.type}' does not support outcome code '${request.outcome}'")
     else null
 
     val offender = offenderRepository.findByCrn(request.offenderCrn)
@@ -72,17 +72,17 @@ class ContactService(
 
     val contact = Contact(
       offender = offender,
-      contactType = type,
-      contactOutcomeType = outcome,
+      type = type,
+      outcome = outcome,
       provider = provider,
       team = team,
       staff = staff,
       event = event,
       requirement = requirement,
       officeLocation = officeLocation,
-      contactDate = request.contactDate,
-      contactStartTime = request.contactStartTime,
-      contactEndTime = request.contactEndTime,
+      date = request.date,
+      startTime = request.startTime,
+      endTime = request.endTime,
       alert = request.alert,
       sensitive = request.sensitive,
       notes = request.notes,

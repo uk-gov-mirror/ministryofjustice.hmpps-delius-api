@@ -135,14 +135,14 @@ class ContactServiceTest {
   @Test
   fun `Attempting to create contact with type not matching outcome`() {
     havingDependentEntities()
-    newContact = newContact.copy(contactOutcome = "INVALID")
+    newContact = newContact.copy(outcome = "INVALID")
     shouldThrowBadRequest()
   }
 
   @Test
   fun `Attempting to create contact with date in past and no contact outcome`() {
     havingDependentEntities()
-    newContact = newContact.copy(contactDate = Fake.randomPastLocalDate(), contactOutcome = null)
+    newContact = newContact.copy(date = Fake.randomPastLocalDate(), outcome = null)
     shouldThrowBadRequest()
   }
 
@@ -167,9 +167,9 @@ class ContactServiceTest {
     whenever(offenderRepository.findByCrn(newContact.offenderCrn))
       .thenReturn(if (havingOffender) offender else null)
 
-    outcome = Fake.contactOutcomeType(code = newContact.contactOutcome)
+    outcome = Fake.contactOutcomeType(code = newContact.outcome)
     type = Fake.contactType(outcomeTypes = if (havingOutcome) listOf(outcome, Fake.contactOutcomeType()) else listOf())
-    whenever(contactTypeRepository.findByCode(newContact.contactType))
+    whenever(contactTypeRepository.findByCode(newContact.type))
       .thenReturn(if (havingType) type else null)
 
     val staff = if (havingStaff) listOf(Fake.staff(code = newContact.staff), Fake.staff()) else listOf()

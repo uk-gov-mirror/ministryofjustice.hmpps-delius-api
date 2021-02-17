@@ -69,6 +69,56 @@ class ContactServiceTest {
   }
 
   @Test
+  fun `Creating future contact with acceptable absence outcome`() {
+    val savedContact = Fake.contact()
+
+    havingDependentEntities()
+    newContact = newContact.copy(date = Fake.randomFutureLocalDate())
+
+    whenever(contactTypeRepository.findByCode(newContact.type)).thenReturn(type.copy(outcomeTypes = listOf(outcome.copy(attendance = false, compliantAcceptable = true))))
+    whenever(contactRepository.saveAndFlush(any())).thenReturn(savedContact)
+
+    subject.createContact(newContact)
+
+    verify(contactRepository).saveAndFlush(any())
+  }
+
+  @Test
+  fun `Creating future contact with no outcome`() {
+    val savedContact = Fake.contact()
+    havingDependentEntities()
+    newContact = newContact.copy(date = Fake.randomFutureLocalDate(), outcome = null)
+
+    whenever(contactRepository.saveAndFlush(any())).thenReturn(savedContact)
+
+    subject.createContact(newContact)
+
+    verify(contactRepository).saveAndFlush(any())
+  }
+
+  @Test
+  fun `Creating historic contact with no outcome when outcome not required`() {
+    val savedContact = Fake.contact()
+    havingDependentEntities()
+    newContact = newContact.copy(date = Fake.randomPastLocalDate(), outcome = null)
+
+    whenever(contactTypeRepository.findByCode(newContact.type)).thenReturn(type.copy(outcomeFlag = false))
+    whenever(contactRepository.saveAndFlush(any())).thenReturn(savedContact)
+
+    subject.createContact(newContact)
+
+    verify(contactRepository).saveAndFlush(any())
+  }
+
+  @Test
+  fun `Attempting to create historic contact with no outcome when outcome required`() {
+    havingDependentEntities()
+    newContact = newContact.copy(date = Fake.randomPastLocalDate(), outcome = null)
+
+    shouldThrowBadRequest()
+  }
+
+  @Test
   fun `Error saving contact`() {
     havingDependentEntities()
     whenever(contactRepository.saveAndFlush(any())).thenThrow(RuntimeException::class.java)
@@ -91,7 +141,7 @@ class ContactServiceTest {
   }
 
   @Test
-  fun `Attempting to create contact with missing outcome`() {
+  fun `Attempting to create historic contact with missing outcome`() {
     havingDependentEntities(havingOutcome = false)
     shouldThrowBadRequest()
   }

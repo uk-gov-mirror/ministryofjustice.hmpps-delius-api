@@ -80,3 +80,6 @@ logging:
   uris:
     exclude:
       regex: .*/health|*/info|*/ping|.*/swagger.*|/webjars/.*|
+
+auditing:
+  default-staff-id: 1

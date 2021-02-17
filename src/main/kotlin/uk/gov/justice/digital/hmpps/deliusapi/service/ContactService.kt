@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.deliusapi.service
 
 import org.springframework.stereotype.Service
+import uk.gov.justice.digital.hmpps.deliusapi.advice.Auditable
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.ContactDto
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewContact
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
@@ -10,7 +11,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactTypeRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.OffenderRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ProviderRepository
-import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditService
+import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditContext
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditableInteraction
 import java.time.LocalDate
 
@@ -20,10 +21,16 @@ class ContactService(
   private val offenderRepository: OffenderRepository,
   private val contactTypeRepository: ContactTypeRepository,
   private val providerRepository: ProviderRepository,
-  private val auditService: AuditService
 ) {
 
+  @Auditable(AuditableInteraction.ADD_CONTACT)
   fun createContact(request: NewContact): ContactDto {
+    val offender = offenderRepository.findByCrn(request.offenderCrn)
+      ?: throw BadRequestException("Offender with code '${request.offenderCrn}' does not exist")
+
+    val audit = AuditContext.get(AuditableInteraction.ADD_CONTACT)
+    audit.offenderId = offender.id
+
     val type = contactTypeRepository.findByCode(request.type)
       ?: throw BadRequestException("Contact type with code '${request.type}' does not exist")
 
@@ -43,9 +50,6 @@ class ContactService(
     if (outcome != null && request.date.isAfter(LocalDate.now()) && !(outcome.compliantAcceptable == true && outcome.attendance == false)) {
       throw BadRequestException("Outcome code '${request.outcome}' not a permissible absence - only permissible absences can be recorded for a future attendance")
     }
-
-    val offender = offenderRepository.findByCrn(request.offenderCrn)
-      ?: throw BadRequestException("Offender with code '${request.offenderCrn}' does not exist")
 
     val event = if (request.eventId != null)
       offender.events?.find { it.id == request.eventId }
@@ -72,8 +76,6 @@ class ContactService(
     val staff = team.staff?.find { it.code == request.staff }
       ?: throw BadRequestException("Staff with officer code '${request.staff}' does not exist in team '${request.team}'")
 
-    val staffEmployeeId = 1L
-
     val contact = Contact(
       offender = offender,
       type = type,
@@ -94,17 +96,11 @@ class ContactService(
 
       // TODO need to set to something from configuration
       partitionAreaId = 0,
-      staffEmployeeId = staffEmployeeId,
+      staffEmployeeId = 1, // <- not actually sure what this is it should reference a PROVIDER_EMPLOYEE
       teamProviderId = 1,
     )
 
-    return try {
-      val entity = contactRepository.saveAndFlush(contact)
-      auditService.successfulInteraction(staffEmployeeId, AuditableInteraction.ADD_CONTACT, offender.id)
-      ContactMapper.INSTANCE.toDto(entity)
-    } catch (e: RuntimeException) {
-      auditService.failedInteraction(staffEmployeeId, AuditableInteraction.ADD_CONTACT, offender.id)
-      throw e
-    }
+    val entity = contactRepository.saveAndFlush(contact)
+    return ContactMapper.INSTANCE.toDto(entity)
   }
 }

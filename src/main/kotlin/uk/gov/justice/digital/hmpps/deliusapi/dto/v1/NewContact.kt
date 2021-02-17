@@ -12,7 +12,7 @@ import javax.validation.constraints.Pattern
 import javax.validation.constraints.Positive
 import javax.validation.constraints.Size
 
-@TimeRange(message = "contact start and end times must form a valid range")
+@TimeRange(name = "contact", message = "contact start and end times must form a valid range")
 data class NewContact(
   @field:NotBlank
   @field:Pattern(regexp = "^[a-zA-Z][0-9]{6}\$", message = "must be a valid CRN")
@@ -45,11 +45,11 @@ data class NewContact(
   val date: LocalDate,
 
   @field:NotNull
-  @field:StartTime
+  @field:StartTime(name = "contact")
   val startTime: LocalTime,
 
   @field:NotNull
-  @field:EndTime
+  @field:EndTime(name = "contact")
   val endTime: LocalTime,
 
   val alert: Boolean = false,

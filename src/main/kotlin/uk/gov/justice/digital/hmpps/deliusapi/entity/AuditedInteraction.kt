@@ -28,5 +28,5 @@ data class AuditedInteraction(
   var businessInteraction: BusinessInteraction,
 
   @Column(name = "USER_ID")
-  var userID: Long,
+  var userId: Long,
 )

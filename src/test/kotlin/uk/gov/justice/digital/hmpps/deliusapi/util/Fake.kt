@@ -38,7 +38,7 @@ object Fake {
     Date.from(LocalDateTime.of(1900, 1, 1, hourTo, 0).toInstant(ZoneOffset.UTC))
   ).toLocalTime()
 
-  fun randomPastLocalDate(): LocalDate = faker.date().past(10, TimeUnit.DAYS).toLocalDate()
+  fun randomPastLocalDate(): LocalDate = faker.date().past(10, 1, TimeUnit.DAYS).toLocalDate()
   fun randomLocalDateTime(): LocalDateTime = faker.date().past(10, TimeUnit.DAYS).toLocalDateTime()
   fun randomFutureLocalDate(): LocalDate = faker.date().future(10, TimeUnit.DAYS).toLocalDate()
 

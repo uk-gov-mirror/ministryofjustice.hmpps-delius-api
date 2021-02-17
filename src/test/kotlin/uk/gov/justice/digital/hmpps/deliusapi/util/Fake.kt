@@ -40,6 +40,7 @@ object Fake {
 
   fun randomPastLocalDate(): LocalDate = faker.date().past(10, TimeUnit.DAYS).toLocalDate()
   fun randomLocalDateTime(): LocalDateTime = faker.date().past(10, TimeUnit.DAYS).toLocalDateTime()
+  fun randomFutureLocalDate(): LocalDate = faker.date().future(10, TimeUnit.DAYS).toLocalDate()
 
   private fun crn() = "${faker.lorem().fixedString(1)}${faker.number().randomNumber(6, true)}"
 
@@ -53,7 +54,7 @@ object Fake {
     outcomeFlag = true,
     outcomeTypes = outcomeTypes,
   )
-  fun contactOutcomeType(code: String? = null) = ContactOutcomeType(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(1, 10))
+  fun contactOutcomeType(code: String? = null) = ContactOutcomeType(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(1, 10), compliantAcceptable = true, attendance = true)
   fun provider(code: String? = null, officeLocations: List<OfficeLocation>? = listOf(officeLocation())) =
     Provider(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(3), officeLocations = officeLocations)
   fun officeLocation(code: String? = null, teams: List<Team>? = listOf(team())) =

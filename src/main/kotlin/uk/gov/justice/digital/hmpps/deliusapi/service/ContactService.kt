@@ -40,6 +40,10 @@ class ContactService(
         ?: throw BadRequestException("Contact type with code '${request.type}' does not support outcome code '${request.outcome}'")
     else null
 
+    if (outcome != null && request.date.isAfter(LocalDate.now()) && !(outcome.compliantAcceptable == true && outcome.attendance == false)) {
+      throw BadRequestException("Outcome code '${request.outcome}' not a permissible absence - only permissible absences can be recorded for a future attendance")
+    }
+
     val offender = offenderRepository.findByCrn(request.offenderCrn)
       ?: throw BadRequestException("Offender with code '${request.offenderCrn}' does not exist")
 

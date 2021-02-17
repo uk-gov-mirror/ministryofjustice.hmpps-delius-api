@@ -3,10 +3,12 @@ package uk.gov.justice.digital.hmpps.deliusapi.service
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.ArgumentCaptor
+import org.mockito.Captor
 import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
@@ -14,16 +16,21 @@ import org.mockito.junit.jupiter.MockitoSettings
 import org.mockito.quality.Strictness
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.ContactDto
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewContact
+import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
 import uk.gov.justice.digital.hmpps.deliusapi.entity.ContactOutcomeType
 import uk.gov.justice.digital.hmpps.deliusapi.entity.ContactType
+import uk.gov.justice.digital.hmpps.deliusapi.entity.Event
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Offender
+import uk.gov.justice.digital.hmpps.deliusapi.entity.OfficeLocation
+import uk.gov.justice.digital.hmpps.deliusapi.entity.Provider
+import uk.gov.justice.digital.hmpps.deliusapi.entity.Requirement
+import uk.gov.justice.digital.hmpps.deliusapi.entity.Staff
+import uk.gov.justice.digital.hmpps.deliusapi.entity.Team
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactTypeRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.OffenderRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ProviderRepository
-import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditService
-import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditableInteraction
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 
 @ExtendWith(MockitoExtension::class)
@@ -42,8 +49,8 @@ class ContactServiceTest {
   @Mock
   private lateinit var providerRepository: ProviderRepository
 
-  @Mock
-  private lateinit var auditService: AuditService
+  @Captor
+  private lateinit var entityCaptor: ArgumentCaptor<Contact>
 
   @InjectMocks
   private lateinit var subject: ContactService
@@ -52,20 +59,45 @@ class ContactServiceTest {
   private lateinit var type: ContactType
   private lateinit var outcome: ContactOutcomeType
   private lateinit var offender: Offender
+  private lateinit var provider: Provider
+  private lateinit var staff: Staff
+  private lateinit var team: Team
+  private lateinit var officeLocation: OfficeLocation
+  private lateinit var event: Event
+  private lateinit var requirement: Requirement
 
   @Test
   fun `Creating contact`() {
     val savedContact = Fake.contact()
 
     havingDependentEntities()
-    whenever(contactRepository.saveAndFlush(any())).thenReturn(savedContact)
+    whenever(contactRepository.saveAndFlush(entityCaptor.capture())).thenReturn(savedContact)
 
     val observed = subject.createContact(newContact)
-    Assertions.assertThat(observed)
+    assertThat(observed)
       .isInstanceOf(ContactDto::class.java)
       .hasFieldOrPropertyWithValue("id", savedContact.id)
 
-    verify(auditService).successfulInteraction(1, AuditableInteraction.ADD_CONTACT, offender.id)
+    val entity = entityCaptor.value
+    assertThat(entity.offender).isSameAs(offender)
+    assertThat(entity.type).isSameAs(type)
+    assertThat(entity.outcome).isSameAs(outcome)
+    assertThat(entity.provider).isSameAs(provider)
+    assertThat(entity.team).isSameAs(team)
+    assertThat(entity.staff).isSameAs(staff)
+    assertThat(entity.event).isSameAs(event)
+    assertThat(entity.requirement).isSameAs(requirement)
+    assertThat(entity.officeLocation).isSameAs(officeLocation)
+    assertThat(entity.date).isEqualTo(newContact.date)
+    assertThat(entity.startTime).isEqualTo(newContact.startTime)
+    assertThat(entity.endTime).isEqualTo(newContact.endTime)
+    assertThat(entity.alert).isEqualTo(newContact.alert)
+    assertThat(entity.sensitive).isEqualTo(newContact.sensitive)
+    assertThat(entity.notes).isEqualTo(newContact.notes)
+    assertThat(entity.description).isEqualTo(newContact.description)
+    assertThat(entity.partitionAreaId).isEqualTo(0)
+    assertThat(entity.staffEmployeeId).isEqualTo(1)
+    assertThat(entity.teamProviderId).isEqualTo(1)
   }
 
   @Test
@@ -116,16 +148,6 @@ class ContactServiceTest {
     newContact = newContact.copy(date = Fake.randomPastLocalDate(), outcome = null)
 
     shouldThrowBadRequest()
-  }
-
-  @Test
-  fun `Error saving contact`() {
-    havingDependentEntities()
-    whenever(contactRepository.saveAndFlush(any())).thenThrow(RuntimeException::class.java)
-
-    assertThrows<RuntimeException> { subject.createContact(newContact) }
-
-    verify(auditService).failedInteraction(1, AuditableInteraction.ADD_CONTACT, offender.id)
   }
 
   @Test
@@ -196,7 +218,7 @@ class ContactServiceTest {
     shouldThrowBadRequest()
   }
 
-  fun havingDependentEntities(
+  private fun havingDependentEntities(
     havingOffender: Boolean = true,
     havingEvent: Boolean = true,
     havingRequirement: Boolean = true,
@@ -210,9 +232,13 @@ class ContactServiceTest {
     newContact = Fake.newContact()
 
     val offenderId = Fake.faker.number().randomNumber()
-    val requirements = if (havingRequirement) listOf(Fake.requirement(id = newContact.requirementId, offenderId = offenderId), Fake.requirement()) else listOf()
-    val disposals = listOf(Fake.disposal(requirements = requirements))
-    val events = if (havingEvent) listOf(Fake.event(id = newContact.eventId, disposals = disposals), Fake.event()) else listOf()
+
+    requirement = Fake.requirement(id = newContact.requirementId, offenderId = offenderId)
+    val requirements = if (havingRequirement) listOf(requirement, Fake.requirement()) else listOf()
+
+    event = Fake.event(id = newContact.eventId, disposals = listOf(Fake.disposal(requirements = requirements)))
+    val events = if (havingEvent) listOf(event, Fake.event()) else listOf()
+
     offender = Fake.offender(id = offenderId, events = events)
     whenever(offenderRepository.findByCrn(newContact.offenderCrn))
       .thenReturn(if (havingOffender) offender else null)
@@ -222,12 +248,17 @@ class ContactServiceTest {
     whenever(contactTypeRepository.findByCode(newContact.type))
       .thenReturn(if (havingType) type else null)
 
-    val staff = if (havingStaff) listOf(Fake.staff(code = newContact.staff), Fake.staff()) else listOf()
-    val teams = if (havingTeam) listOf(Fake.team(code = newContact.team, staff = staff), Fake.team()) else listOf()
-    val officeLocations = if (havingOfficeLocation) listOf(Fake.officeLocation(code = newContact.officeLocation, teams = teams), Fake.officeLocation()) else listOf()
-    val provider = if (havingProvider) Fake.provider(code = newContact.provider, officeLocations = officeLocations) else null
+    this.staff = Fake.staff(code = newContact.staff)
+    val staff = if (havingStaff) listOf(this.staff, Fake.staff()) else listOf()
 
-    whenever(providerRepository.findByCode(newContact.provider)).thenReturn(provider)
+    team = Fake.team(code = newContact.team, staff = staff)
+    val teams = if (havingTeam) listOf(team, Fake.team()) else listOf()
+
+    officeLocation = Fake.officeLocation(code = newContact.officeLocation, teams = teams)
+    val officeLocations = if (havingOfficeLocation) listOf(officeLocation, Fake.officeLocation()) else listOf()
+
+    provider = Fake.provider(code = newContact.provider, officeLocations = officeLocations)
+    whenever(providerRepository.findByCode(newContact.provider)).thenReturn(if (havingProvider) provider else null)
   }
 
   fun shouldThrowBadRequest() = assertThrows<BadRequestException> {

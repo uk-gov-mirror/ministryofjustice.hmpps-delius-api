@@ -105,7 +105,7 @@ object Fake {
     success = faker.bool().bool(),
     parameters = faker.lorem().characters(),
     businessInteraction = businessInteraction(),
-    userID = faker.number().randomNumber(),
+    userId = faker.number().randomNumber(),
   )
 
   fun businessInteraction() = BusinessInteraction(

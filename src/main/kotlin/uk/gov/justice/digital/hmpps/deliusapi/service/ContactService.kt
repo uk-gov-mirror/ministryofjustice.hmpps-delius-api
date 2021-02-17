@@ -5,6 +5,8 @@ import uk.gov.justice.digital.hmpps.deliusapi.advice.Auditable
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.ContactDto
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewContact
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
+import uk.gov.justice.digital.hmpps.deliusapi.entity.YesNoBoth.B
+import uk.gov.justice.digital.hmpps.deliusapi.entity.YesNoBoth.Y
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import uk.gov.justice.digital.hmpps.deliusapi.mapper.ContactMapper
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
@@ -34,7 +36,7 @@ class ContactService(
     val type = contactTypeRepository.findByCode(request.type)
       ?: throw BadRequestException("Contact type with code '${request.type}' does not exist")
 
-    if (type.outcomeFlag && request.outcome == null && request.date.isBefore(LocalDate.now())) {
+    if (type.outcomeFlag == Y && request.outcome == null && request.date.isBefore(LocalDate.now())) {
       throw BadRequestException("Contact type '${type.code}' requires an outcome type")
     }
 
@@ -67,11 +69,23 @@ class ContactService(
     val provider = providerRepository.findByCode(request.provider)
       ?: throw BadRequestException("Provider with code '${request.provider}' does not exist")
 
-    val officeLocation = provider.officeLocations?.find { it.code == request.officeLocation }
-      ?: throw BadRequestException("Office location with code '${request.officeLocation}' does not exist in provider '${request.provider}'")
+    val team = provider.teams?.find { it.code == request.team }
+      ?: throw BadRequestException("Team with code '${request.team}' does not exist for provider '${request.provider}'")
 
-    val team = officeLocation.teams?.find { it.code == request.team }
-      ?: throw BadRequestException("Team with code '${request.team}' does not exist at office location '${request.officeLocation}'")
+    if (type.locationFlag == Y && request.officeLocation.isNullOrBlank()) {
+      throw BadRequestException("Location is required for contact type '${request.type}'")
+    }
+
+    val officeLocation =
+      when {
+        !request.officeLocation.isNullOrBlank() && (type.locationFlag == Y || type.locationFlag == B) ->
+          team.officeLocations?.find { it.code == request.officeLocation }
+        else -> null
+      }
+
+    if (type.locationFlag == Y && officeLocation == null) {
+      throw BadRequestException("Team with code '${request.team}' does not exist at office location '${request.officeLocation}'")
+    }
 
     val staff = team.staff?.find { it.code == request.staff }
       ?: throw BadRequestException("Staff with officer code '${request.staff}' does not exist in team '${request.team}'")

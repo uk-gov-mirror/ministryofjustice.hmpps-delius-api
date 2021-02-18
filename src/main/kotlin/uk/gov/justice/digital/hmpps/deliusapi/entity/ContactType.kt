@@ -35,6 +35,14 @@ data class ContactType(
   @Enumerated(EnumType.STRING)
   var locationFlag: YesNoBoth,
 
+  @Column(name = "ATTENDANCE_CONTACT")
+  @Type(type = "yes_no")
+  var attendanceContact: Boolean = false,
+
+  @Column(name = "RECORDED_HOURS_CREDITED")
+  @Type(type = "yes_no")
+  var recordedHoursCredited: Boolean = false,
+
   @ManyToMany
   @JoinTable(
     name = "R_CONTACT_TYPE_OUTCOME",

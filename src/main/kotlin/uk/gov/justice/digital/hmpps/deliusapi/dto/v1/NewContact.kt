@@ -43,13 +43,11 @@ data class NewContact(
   @field:NotNull
   val date: LocalDate,
 
-  @field:NotNull
   @field:StartTime(name = "contact")
-  val startTime: LocalTime,
+  val startTime: LocalTime?,
 
-  @field:NotNull
   @field:EndTime(name = "contact")
-  val endTime: LocalTime,
+  val endTime: LocalTime?,
 
   val alert: Boolean = false,
 

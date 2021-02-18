@@ -7,6 +7,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.AdditionalAnswers.returnsFirstArg
 import org.mockito.ArgumentCaptor
 import org.mockito.Captor
 import org.mockito.InjectMocks
@@ -159,6 +160,46 @@ class ContactServiceTest {
   }
 
   @Test
+  fun `Creating non-attendance and non-recordedHoursCredited contact without times`() {
+    havingDependentEntities()
+
+    newContact = newContact.copy(startTime = null, endTime = null)
+
+    whenever(contactTypeRepository.findByCode(newContact.type)).thenReturn(type.copy(attendanceContact = false, recordedHoursCredited = false))
+
+    passesValidation()
+  }
+
+  @Test
+  fun `Creating outcomed non-recordedHoursCredited contact without end time`() {
+    havingDependentEntities()
+
+    newContact = newContact.copy(endTime = null)
+
+    whenever(contactTypeRepository.findByCode(newContact.type)).thenReturn(type.copy(recordedHoursCredited = false))
+
+    passesValidation()
+  }
+
+  @Test
+  fun `Attempting to create outcomed recordedHoursCredited contact without end time`() {
+    havingDependentEntities()
+
+    newContact = newContact.copy(endTime = null)
+
+    shouldThrowBadRequest()
+  }
+
+  @Test
+  fun `Attempting to create attendance contact without start time`() {
+    havingDependentEntities()
+
+    newContact = newContact.copy(startTime = null, endTime = null)
+
+    shouldThrowBadRequest()
+  }
+
+  @Test
   fun `Attempting to creating contact with no location when location required`() {
     havingDependentEntities()
     newContact = newContact.copy(officeLocation = null)
@@ -290,7 +331,7 @@ class ContactServiceTest {
   }
 
   private fun passesValidation() {
-    whenever(contactRepository.saveAndFlush(any())).thenReturn(Fake.contact())
+    whenever(contactRepository.saveAndFlush(any())).then(returnsFirstArg<Contact>())
 
     subject.createContact(newContact)
 

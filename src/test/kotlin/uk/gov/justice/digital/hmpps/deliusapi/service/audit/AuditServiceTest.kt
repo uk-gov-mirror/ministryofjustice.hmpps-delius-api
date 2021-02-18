@@ -56,7 +56,6 @@ internal class AuditServiceTest {
     whenever(auditedInteractionRepository.saveAndFlush(any())).thenReturn(auditedInteraction)
 
     subject.createAuditedInteraction(
-      LocalDateTime.of(2021, 1, 2, 10, 20),
       1234,
       AuditableInteraction.ADD_CONTACT,
       mapOf(AuditParameter.OFFENDER_ID to "5678"),
@@ -65,7 +64,7 @@ internal class AuditServiceTest {
 
     verify(auditedInteractionRepository).saveAndFlush(
       AuditedInteraction(
-        LocalDateTime.of(2021, 1, 2, 10, 20),
+        null,
         true,
         "offenderId='5678'",
         businessInteraction,
@@ -84,7 +83,7 @@ internal class AuditServiceTest {
     subject.failedInteraction(AuditableInteraction.ADD_CONTACT, AuditContext(5678))
     verify(auditedInteractionRepository).saveAndFlush(entityCaptor.capture())
 
-    assertThat(entityCaptor.value.dateTime).isNotNull
+    assertThat(entityCaptor.value.dateTime).isNull()
     assertThat(entityCaptor.value.success).isFalse
     assertThat(entityCaptor.value.userId).isEqualTo(1234)
     assertThat(entityCaptor.value.parameters).isEqualTo("offenderId='5678'")
@@ -102,7 +101,7 @@ internal class AuditServiceTest {
 
     verify(auditedInteractionRepository).saveAndFlush(entityCaptor.capture())
 
-    assertThat(entityCaptor.value.dateTime).isNotNull
+    assertThat(entityCaptor.value.dateTime).isNull()
     assertThat(entityCaptor.value.success).isTrue
     assertThat(entityCaptor.value.userId).isEqualTo(1234)
     assertThat(entityCaptor.value.parameters).isEqualTo("offenderId='5678'")
@@ -120,7 +119,7 @@ internal class AuditServiceTest {
 
     verify(auditedInteractionRepository).saveAndFlush(entityCaptor.capture())
 
-    assertThat(entityCaptor.value.dateTime).isNotNull
+    assertThat(entityCaptor.value.dateTime).isNull()
     assertThat(entityCaptor.value.success).isTrue
     assertThat(entityCaptor.value.userId).isEqualTo(1234)
     assertThat(entityCaptor.value.parameters).isEqualTo("nsiId='3434'")

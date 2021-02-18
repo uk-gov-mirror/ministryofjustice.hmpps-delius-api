@@ -1,0 +1,9 @@
+{
+  "properties": [
+    {
+      "name": "contacts.allowed-types",
+      "type": "java.util.Set<java.lang.String>",
+      "description": "Comma-separated list of contact types that can be added using this API."
+    }
+  ]
+}

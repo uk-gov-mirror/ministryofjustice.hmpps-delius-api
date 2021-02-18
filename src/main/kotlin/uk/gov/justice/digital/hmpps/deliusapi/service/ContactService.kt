@@ -91,11 +91,11 @@ class ContactService(
       ?: throw BadRequestException("Staff with officer code '${request.staff}' does not exist in team '${request.team}'")
 
     if (type.attendanceContact && request.startTime == null) {
-      throw BadRequestException("Contact type  '${type.code}' requires a start time")
+      throw BadRequestException("Contact type '${type.code}' requires a start time")
     }
 
     if (type.recordedHoursCredited && outcome != null && request.endTime == null) {
-      throw BadRequestException("Contact type '${type.code}' requires a time when an outcome is provided")
+      throw BadRequestException("Contact type '${type.code}' requires an end time when an outcome is provided")
     }
 
     val contact = Contact(

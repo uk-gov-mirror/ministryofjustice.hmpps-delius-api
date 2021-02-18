@@ -45,12 +45,19 @@ class TimeRangeValidator : ConstraintValidator<TimeRange, Any> {
         if (attr != null) Pair(attr.annotationClass, member.get(value) as LocalTime?) else null
       }.toMap()
 
-    fun <T : Annotation> get(clazz: KClass<T>, field: String): LocalTime =
-      map[clazz] ?: throw RuntimeException("Cannot determine $field for $name time range validation")
+    fun <T : Annotation> get(clazz: KClass<T>, field: String): LocalTime? =
+      when {
+        map.containsKey(clazz) ->
+          map[clazz]
+        else ->
+          throw RuntimeException("Cannot determine $field for $name time range validation")
+      }
 
     val start = get(StartTime::class, "start time")
     val end = get(EndTime::class, "end time")
 
-    return start == end || end.isAfter(start)
+    return start == end ||
+      start != null && end == null ||
+      start != null && end != null && end.isAfter(start)
   }
 }

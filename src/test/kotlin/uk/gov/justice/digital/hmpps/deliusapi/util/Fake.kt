@@ -54,6 +54,8 @@ object Fake {
     alertFlag = true,
     outcomeFlag = Y,
     locationFlag = Y,
+    attendanceContact = true,
+    recordedHoursCredited = true,
     outcomeTypes = outcomeTypes,
   )
   fun contactOutcomeType(code: String? = null) = ContactOutcomeType(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(1, 10), compliantAcceptable = true, attendance = true)

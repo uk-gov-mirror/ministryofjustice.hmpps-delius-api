@@ -18,6 +18,20 @@ class NewContactValidationTest {
   }
 
   @Test
+  fun `Valid new contact with no start or end time`() {
+    val subject = Fake.newContact().copy(startTime = null, endTime = null)
+    val result = validator.validate(subject)
+    Assertions.assertThat(result).isEmpty()
+  }
+
+  @Test
+  fun `Valid new contact with only start time`() {
+    val subject = Fake.newContact().copy(endTime = null)
+    val result = validator.validate(subject)
+    Assertions.assertThat(result).isEmpty()
+  }
+
+  @Test
   fun `Invalid new contact`() {
     val subject = Fake.newContact().copy(
       offenderCrn = "bacon",
@@ -60,6 +74,24 @@ class NewContactValidationTest {
     Assertions.assertThat(result)
       .describedAs("validating $subject")
       .containsOnly("eventProvidedWithRequirement")
+  }
+
+  @Test
+  fun `Invalid new contact with only end time`() {
+    val subject = Fake.newContact().copy(startTime = null)
+    val result = whenValidating(subject)
+    Assertions.assertThat(result)
+      .describedAs("validating $subject")
+      .containsOnly("contact start and end times must form a valid range")
+  }
+
+  @Test
+  fun `Invalid new contact with start time after end time`() {
+    val subject = Fake.newContact().copy(startTime = LocalTime.of(10, 20), endTime = LocalTime.of(9, 20))
+    val result = whenValidating(subject)
+    Assertions.assertThat(result)
+      .describedAs("validating $subject")
+      .containsOnly("contact start and end times must form a valid range")
   }
 
   private fun whenValidating(subject: NewContact): List<String> {

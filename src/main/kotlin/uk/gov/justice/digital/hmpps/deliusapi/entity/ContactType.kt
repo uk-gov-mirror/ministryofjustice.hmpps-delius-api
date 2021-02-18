@@ -4,6 +4,8 @@ import org.hibernate.annotations.Type
 import org.hibernate.annotations.Where
 import javax.persistence.Column
 import javax.persistence.Entity
+import javax.persistence.EnumType
+import javax.persistence.Enumerated
 import javax.persistence.Id
 import javax.persistence.JoinColumn
 import javax.persistence.JoinTable
@@ -25,9 +27,13 @@ data class ContactType(
   @Type(type = "yes_no")
   var alertFlag: Boolean = false,
 
-  @Column(name = "CONTACT_OUTCOME_FLAG", nullable = false)
-  @Type(type = "yes_no")
-  var outcomeFlag: Boolean = false,
+  @Column(name = "CONTACT_OUTCOME_FLAG", columnDefinition = "CHAR(1)", nullable = false)
+  @Enumerated(EnumType.STRING)
+  var outcomeFlag: YesNoBoth,
+
+  @Column(name = "CONTACT_LOCATION_FLAG", columnDefinition = "CHAR(1)", nullable = false)
+  @Enumerated(EnumType.STRING)
+  var locationFlag: YesNoBoth,
 
   @ManyToMany
   @JoinTable(

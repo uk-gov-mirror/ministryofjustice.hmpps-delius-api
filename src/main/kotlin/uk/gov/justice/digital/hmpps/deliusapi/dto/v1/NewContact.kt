@@ -37,9 +37,8 @@ data class NewContact(
   @field:Size(min = 7, max = 7, message = "size must be {min}")
   val staff: String,
 
-  @field:NotBlank
   @field:Size(min = 7, max = 7, message = "size must be {min}")
-  val officeLocation: String,
+  val officeLocation: String?,
 
   @field:NotNull
   val date: LocalDate,

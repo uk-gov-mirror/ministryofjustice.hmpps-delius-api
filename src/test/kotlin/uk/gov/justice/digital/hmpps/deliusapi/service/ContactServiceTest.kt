@@ -26,6 +26,8 @@ import uk.gov.justice.digital.hmpps.deliusapi.entity.Provider
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Requirement
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Staff
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Team
+import uk.gov.justice.digital.hmpps.deliusapi.entity.YesNoBoth.B
+import uk.gov.justice.digital.hmpps.deliusapi.entity.YesNoBoth.N
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactTypeRepository
@@ -102,44 +104,66 @@ class ContactServiceTest {
 
   @Test
   fun `Creating future contact with acceptable absence outcome`() {
-    val savedContact = Fake.contact()
-
     havingDependentEntities()
     newContact = newContact.copy(date = Fake.randomFutureLocalDate())
 
     whenever(contactTypeRepository.findByCode(newContact.type)).thenReturn(type.copy(outcomeTypes = listOf(outcome.copy(attendance = false, compliantAcceptable = true))))
-    whenever(contactRepository.saveAndFlush(any())).thenReturn(savedContact)
 
-    subject.createContact(newContact)
-
-    verify(contactRepository).saveAndFlush(any())
+    passesValidation()
   }
 
   @Test
   fun `Creating future contact with no outcome`() {
-    val savedContact = Fake.contact()
     havingDependentEntities()
     newContact = newContact.copy(date = Fake.randomFutureLocalDate(), outcome = null)
 
-    whenever(contactRepository.saveAndFlush(any())).thenReturn(savedContact)
-
-    subject.createContact(newContact)
-
-    verify(contactRepository).saveAndFlush(any())
+    passesValidation()
   }
 
   @Test
   fun `Creating historic contact with no outcome when outcome not required`() {
-    val savedContact = Fake.contact()
     havingDependentEntities()
     newContact = newContact.copy(date = Fake.randomPastLocalDate(), outcome = null)
 
-    whenever(contactTypeRepository.findByCode(newContact.type)).thenReturn(type.copy(outcomeFlag = false))
-    whenever(contactRepository.saveAndFlush(any())).thenReturn(savedContact)
+    whenever(contactTypeRepository.findByCode(newContact.type)).thenReturn(type.copy(outcomeFlag = N))
 
-    subject.createContact(newContact)
+    passesValidation()
+  }
 
-    verify(contactRepository).saveAndFlush(any())
+  @Test
+  fun `Creating contact with no location when location not required`() {
+    havingDependentEntities()
+    newContact = newContact.copy(officeLocation = null)
+
+    whenever(contactTypeRepository.findByCode(newContact.type)).thenReturn(type.copy(locationFlag = N))
+
+    passesValidation()
+  }
+
+  @Test
+  fun `Creating contact with no location when location optional`() {
+    havingDependentEntities()
+    newContact = newContact.copy(officeLocation = null)
+
+    whenever(contactTypeRepository.findByCode(newContact.type)).thenReturn(type.copy(locationFlag = B))
+
+    passesValidation()
+  }
+
+  @Test
+  fun `Creating contact with location when location optional`() {
+    havingDependentEntities()
+    whenever(contactTypeRepository.findByCode(newContact.type)).thenReturn(type.copy(locationFlag = B))
+
+    passesValidation()
+  }
+
+  @Test
+  fun `Attempting to creating contact with no location when location required`() {
+    havingDependentEntities()
+    newContact = newContact.copy(officeLocation = null)
+
+    shouldThrowBadRequest()
   }
 
   @Test
@@ -251,17 +275,25 @@ class ContactServiceTest {
     this.staff = Fake.staff(code = newContact.staff)
     val staff = if (havingStaff) listOf(this.staff, Fake.staff()) else listOf()
 
-    team = Fake.team(code = newContact.team, staff = staff)
-    val teams = if (havingTeam) listOf(team, Fake.team()) else listOf()
-
-    officeLocation = Fake.officeLocation(code = newContact.officeLocation, teams = teams)
+    officeLocation = Fake.officeLocation(code = newContact.officeLocation)
     val officeLocations = if (havingOfficeLocation) listOf(officeLocation, Fake.officeLocation()) else listOf()
 
-    provider = Fake.provider(code = newContact.provider, officeLocations = officeLocations)
+    team = Fake.team(code = newContact.team, staff = staff, officeLocation = officeLocations)
+    val teams = if (havingTeam) listOf(team, Fake.team()) else listOf()
+
+    provider = Fake.provider(code = newContact.provider, teams = teams)
     whenever(providerRepository.findByCode(newContact.provider)).thenReturn(if (havingProvider) provider else null)
   }
 
   fun shouldThrowBadRequest() = assertThrows<BadRequestException> {
     subject.createContact(newContact)
+  }
+
+  private fun passesValidation() {
+    whenever(contactRepository.saveAndFlush(any())).thenReturn(Fake.contact())
+
+    subject.createContact(newContact)
+
+    verify(contactRepository).saveAndFlush(any())
   }
 }

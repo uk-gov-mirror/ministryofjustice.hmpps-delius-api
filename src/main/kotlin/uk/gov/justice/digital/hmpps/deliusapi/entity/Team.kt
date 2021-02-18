@@ -26,5 +26,13 @@ data class Team(
     joinColumns = [JoinColumn(name = "TEAM_ID", referencedColumnName = "TEAM_ID")],
     inverseJoinColumns = [JoinColumn(name = "STAFF_ID", referencedColumnName = "STAFF_ID")],
   )
-  var staff: List<Staff>? = null
+  var staff: List<Staff>? = null,
+
+  @ManyToMany
+  @JoinTable(
+    name = "TEAM_OFFICE_LOCATION",
+    joinColumns = [JoinColumn(name = "TEAM_ID", referencedColumnName = "TEAM_ID")],
+    inverseJoinColumns = [JoinColumn(name = "OFFICE_LOCATION_ID", referencedColumnName = "OFFICE_LOCATION_ID")],
+  )
+  val officeLocations: List<OfficeLocation>? = null,
 )

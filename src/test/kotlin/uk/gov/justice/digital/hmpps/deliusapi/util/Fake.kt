@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.entity.Provider
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Requirement
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Staff
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Team
+import uk.gov.justice.digital.hmpps.deliusapi.entity.YesNoBoth.Y
 import uk.gov.justice.digital.hmpps.deliusapi.mapper.ContactMapper
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -51,15 +52,17 @@ object Fake {
     id = faker.number().randomNumber(),
     code = faker.lorem().characters(1, 10),
     alertFlag = true,
-    outcomeFlag = true,
+    outcomeFlag = Y,
+    locationFlag = Y,
     outcomeTypes = outcomeTypes,
   )
   fun contactOutcomeType(code: String? = null) = ContactOutcomeType(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(1, 10), compliantAcceptable = true, attendance = true)
-  fun provider(code: String? = null, officeLocations: List<OfficeLocation>? = listOf(officeLocation())) =
-    Provider(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(3), officeLocations = officeLocations)
-  fun officeLocation(code: String? = null, teams: List<Team>? = listOf(team())) =
-    OfficeLocation(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(7), teams = teams)
-  fun team(code: String? = null, staff: List<Staff>? = listOf(staff())) = Team(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(6), staff = staff)
+  fun provider(code: String? = null, teams: List<Team> = listOf(team())) =
+    Provider(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(3), teams = teams)
+  fun team(code: String? = null, staff: List<Staff>? = listOf(staff()), officeLocation: List<OfficeLocation> = listOf(officeLocation())) =
+    Team(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(6), staff = staff, officeLocations = officeLocation)
+  fun officeLocation(code: String? = null) =
+    OfficeLocation(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(7))
   fun staff(code: String? = null) = Staff(id = faker.number().randomNumber(), code = code ?: faker.lorem().characters(7))
   fun requirement(id: Long? = null, offenderId: Long? = null) = Requirement(id = id ?: faker.number().randomNumber(), offenderId = offenderId ?: faker.number().randomNumber())
   fun disposal(requirements: List<Requirement>? = listOf(requirement())) = Disposal(id = faker.number().randomNumber(), requirements = requirements)
@@ -68,13 +71,15 @@ object Fake {
 
   fun contact(): Contact {
     val contactOutcomeType = contactOutcomeType()
+    val team = team()
+    val provider = provider(teams = listOf(team))
     return Contact(
       id = faker.number().randomNumber(),
       offender = offender(),
       type = contactType(listOf(contactOutcomeType)),
       outcome = contactOutcomeType,
-      provider = provider(),
-      team = team(),
+      provider = provider,
+      team = team,
       staff = staff(),
       officeLocation = officeLocation(),
       date = randomPastLocalDate(),

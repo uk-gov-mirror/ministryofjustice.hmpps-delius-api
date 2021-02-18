@@ -43,23 +43,23 @@ API is also deployed to this environment on merge to the `main` branch.
 |-------------------------:|:----------------|---------------------------------------------------------------------------------------|
 |       Delius API Service | merge to `main` | https://delius-api.test.probation.service.justice.gov.uk                              |
 |               nDelius UI | Manual via NDST | https://ndelius.test.probation.service.justice.gov.uk                                 |
-| Interventions Service UI | _Undefined_     | https://hmpps-interventions-ui-dev.apps.live-1.cloud-platform.service.justice.gov.uk/ |
+| Interventions Service UI | merge to `main` | https://hmpps-interventions-ui-dev.apps.live-1.cloud-platform.service.justice.gov.uk/ |
 |            Community API | merge to `main` | https://community-api-secure.test.delius.probation.hmpps.dsd.io/                      |
 |               HMPPS-Auth | merge to `main` | https://sign-in-dev.hmpps.service.justice.gov.uk/                                     |
 
-### Pre-Prod 
+### Stage
 
 A representative environment with full integrated services which also contains a
 production dataset. This environment should be treated like production from a
 data protection perspective.
 
-|                Component | Deploy Trigger       | URL                                                          |
-|-------------------------:|:---------------------|--------------------------------------------------------------|
-|       Delius API Service | CircleCI Approval    | https://delius-api.pre-prod.probation.service.justice.gov.uk |
-|               nDelius UI | Manual via NDST      | https://ndelius.stage.probation.service.justice.gov.uk       |
-| Interventions Service UI | _Undefined_          |                                                              |
-|            Community API | _CircleCI Approval?_ |                                                              |
-|               HMPPS-Auth | _CircleCI Approval?_ |                                                              |
+|                Component | Deploy Trigger       | URL                                                       |
+|-------------------------:|:---------------------|-----------------------------------------------------------|
+|       Delius API Service | CircleCI Approval    | https://delius-api.stage.probation.service.justice.gov.uk |
+|               nDelius UI | Manual via NDST      | https://ndelius.stage.probation.service.justice.gov.uk    |
+| Interventions Service UI | _Undefined_          |                                                           |
+|            Community API | _CircleCI Approval?_ |                                                           |
+|               HMPPS-Auth | _CircleCI Approval?_ |                                                           |
     
 ### Production
 

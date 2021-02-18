@@ -95,7 +95,7 @@ class ContactService(
     }
 
     if (type.recordedHoursCredited && outcome != null && request.endTime == null) {
-      throw BadRequestException("Contact type '${type.code}' requires an time when an outcome is provided")
+      throw BadRequestException("Contact type '${type.code}' requires a time when an outcome is provided")
     }
 
     val contact = Contact(

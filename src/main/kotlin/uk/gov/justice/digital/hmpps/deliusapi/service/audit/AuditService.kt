@@ -30,7 +30,6 @@ class AuditService(
     val userId = securityUserContext.getCurrentDeliusUserId()
 
     createAuditedInteraction(
-      LocalDateTime.now(),
       userId,
       interaction,
       parameterMap.mapValues { it.value.toString() },
@@ -39,7 +38,6 @@ class AuditService(
   }
 
   fun createAuditedInteraction(
-    dateTime: LocalDateTime = LocalDateTime.now(),
     userId: Long,
     interaction: AuditableInteraction,
     parameters: Map<AuditParameter, String>,
@@ -58,7 +56,7 @@ class AuditService(
     }
 
     val auditedInteraction = AuditedInteraction(
-      dateTime,
+      null,
       success,
       formatInteractionParameters(parameters),
       businessInteraction,

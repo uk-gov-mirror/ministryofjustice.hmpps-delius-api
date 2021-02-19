@@ -18,11 +18,6 @@ spring:
     serialization:
       WRITE_DATES_AS_TIMESTAMPS: false
 
-  profiles:
-    group:
-      test:
-        - "stdout"
-
   jpa:
     properties:
       hibernate:
@@ -76,10 +71,8 @@ logging:
   level:
     org.springframework: INFO
     org.springframework.security: INFO
-    uk.gov.justice.hmpps: DEBUG
-  uris:
-    exclude:
-      regex: .*/health|*/info|*/ping|.*/swagger.*|/webjars/.*|
+    uk.gov.justice.digital.hmpps: DEBUG
+    com.microsoft.applicationinsights: INFO
 
 auditing:
   default-staff-id: 1

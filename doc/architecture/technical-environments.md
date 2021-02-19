@@ -65,13 +65,13 @@ data protection perspective.
 
 The production environment. 
 
-|                Component | Deploy Trigger       | URL                                                      |
-|-------------------------:|:---------------------|----------------------------------------------------------|
-|       Delius API Service | CircleCI Approval    | https://delius-api.prod.probation.service.justice.gov.uk |
-|               nDelius UI | Manual via NDST      | https://ndelius.prod.probation.service.justice.gov.uk    |
-| Interventions Service UI | _Undefined_          |                                                          |
-|            Community API | _CircleCI Approval?_ |                                                          |
-|               HMPPS-Auth | _CircleCI Approval?_ |                                                          |
+|                Component | Deploy Trigger       | URL                                                 |
+|-------------------------:|:---------------------|-----------------------------------------------------|
+|       Delius API Service | CircleCI Approval    | https://delius-api.probation.service.justice.gov.uk |
+|               nDelius UI | Manual via NDST      | https://ndelius.probation.service.justice.gov.uk    |
+| Interventions Service UI | _Undefined_          |                                                     |
+|            Community API | _CircleCI Approval?_ |                                                     |
+|               HMPPS-Auth | _CircleCI Approval?_ |                                                     |
 
 ## Environment Information
 

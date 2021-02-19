@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.deliusapi.dto.v1
 
+import uk.gov.justice.digital.hmpps.deliusapi.validation.AllowedValues
 import uk.gov.justice.digital.hmpps.deliusapi.validation.EndTime
 import uk.gov.justice.digital.hmpps.deliusapi.validation.StartTime
 import uk.gov.justice.digital.hmpps.deliusapi.validation.TimeRange
@@ -20,6 +21,7 @@ data class NewContact(
 
   @field:NotBlank
   @field:Size(min = 1, max = 10)
+  @field:AllowedValues("\${contacts.allowed-types}")
   val type: String,
 
   @field:Size(min = 1, max = 10)

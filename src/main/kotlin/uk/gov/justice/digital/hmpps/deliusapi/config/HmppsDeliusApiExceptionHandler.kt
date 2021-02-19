@@ -20,7 +20,7 @@ import javax.validation.ValidationException
 class HmppsDeliusApiExceptionHandler {
   @ExceptionHandler(ValidationException::class)
   fun handleValidationException(e: Exception): ResponseEntity<ErrorResponse> {
-    log.info("Validation exception: {}", e.message)
+    log.debug("Validation exception: {}", e.message)
     return ResponseEntity
       .status(BAD_REQUEST)
       .body(
@@ -35,6 +35,7 @@ class HmppsDeliusApiExceptionHandler {
   @ResponseStatus(BAD_REQUEST)
   @ExceptionHandler(MethodArgumentNotValidException::class)
   fun handleValidationException(e: MethodArgumentNotValidException): ErrorResponse {
+    log.debug("Validation exception: {}", e.message)
     val errors = e.bindingResult.allErrors.mapNotNull {
       if (it is FieldError) {
         "${it.field} ${it.defaultMessage}"
@@ -49,15 +50,19 @@ class HmppsDeliusApiExceptionHandler {
 
   @ResponseStatus(BAD_REQUEST)
   @ExceptionHandler(HttpMediaTypeNotSupportedException::class, BadRequestException::class)
-  fun handleGenericBadRequest(e: Exception): ErrorResponse = ErrorResponse(
-    status = BAD_REQUEST,
-    userMessage = e.message,
-    developerMessage = e.message
-  )
+  fun handleGenericBadRequest(e: Exception): ErrorResponse {
+    log.debug("Bad request", e)
+    return ErrorResponse(
+      status = BAD_REQUEST,
+      userMessage = e.message,
+      developerMessage = e.message
+    )
+  }
 
   @ResponseStatus(BAD_REQUEST)
   @ExceptionHandler(HttpMessageNotReadableException::class)
   fun handleJsonParseException(e: HttpMessageNotReadableException): ErrorResponse {
+    log.info("JSON parse error", e)
     val message = when (val cause = e.cause) {
       is MissingKotlinParameterException -> {
         val messages = cause.path.joinToString(", ") { "$it is required" }

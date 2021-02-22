@@ -7,5 +7,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 class AuthAwareAuthenticationToken(jwt: Jwt, authorities: Collection<GrantedAuthority?>) :
   JwtAuthenticationToken(jwt, authorities) {
 
-  val subject = jwt.subject
+  val subject: String = jwt.subject
+  val authSource: String? = jwt.getClaimAsString("auth_source")
+  val userId: Long? = jwt.getClaim("user_id")
 }

@@ -13,18 +13,25 @@ import kotlin.reflect.jvm.javaField
 @Constraint(validatedBy = [TimeRangeValidator::class])
 @Retention(AnnotationRetention.RUNTIME)
 annotation class TimeRange(
+  val name: String,
   val message: String,
   val groups: Array<KClass<*>> = arrayOf(),
   val payload: Array<KClass<out Payload>> = arrayOf()
 )
 
 @Target(AnnotationTarget.FIELD)
-annotation class StartTime
+annotation class StartTime(val name: String)
 
 @Target(AnnotationTarget.FIELD)
-annotation class EndTime
+annotation class EndTime(val name: String)
 
 class TimeRangeValidator : ConstraintValidator<TimeRange, Any> {
+  private lateinit var name: String
+
+  override fun initialize(annotation: TimeRange) {
+    name = annotation.name
+  }
+
   override fun isValid(value: Any?, context: ConstraintValidatorContext?): Boolean {
     if (value == null) {
       return false
@@ -33,13 +40,24 @@ class TimeRangeValidator : ConstraintValidator<TimeRange, Any> {
     val map = value.javaClass.kotlin.declaredMemberProperties
       .mapNotNull { member ->
         val annotations = member.javaField?.annotations
-        val attr = annotations?.find { it is StartTime } ?: annotations?.find { it is EndTime }
+        val attr = annotations?.find { it is StartTime && it.name == name }
+          ?: annotations?.find { it is EndTime && it.name == name }
         if (attr != null) Pair(attr.annotationClass, member.get(value) as LocalTime?) else null
       }.toMap()
 
-    val start = map[StartTime::class] ?: throw RuntimeException("Cannot determine start time for time range validation")
-    val end = map[EndTime::class] ?: throw RuntimeException("Cannot determine end time for time range validation")
+    fun <T : Annotation> get(clazz: KClass<T>, field: String): LocalTime? =
+      when {
+        map.containsKey(clazz) ->
+          map[clazz]
+        else ->
+          throw RuntimeException("Cannot determine $field for $name time range validation")
+      }
 
-    return start == end || end.isAfter(start)
+    val start = get(StartTime::class, "start time")
+    val end = get(EndTime::class, "end time")
+
+    return start == end ||
+      start != null && end == null ||
+      start != null && end != null && end.isAfter(start)
   }
 }

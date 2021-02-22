@@ -21,5 +21,5 @@ data class Provider(
 
   @OneToMany
   @JoinColumn(name = "PROBATION_AREA_ID")
-  val officeLocations: List<OfficeLocation>? = null,
+  val teams: List<Team>? = null,
 )

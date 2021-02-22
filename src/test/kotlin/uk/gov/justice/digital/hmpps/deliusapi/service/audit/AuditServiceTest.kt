@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.entity.AuditedInteraction
 import uk.gov.justice.digital.hmpps.deliusapi.entity.BusinessInteraction
 import uk.gov.justice.digital.hmpps.deliusapi.repository.AuditedInteractionRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.BusinessInteractionRepository
+import uk.gov.justice.digital.hmpps.deliusapi.service.SecurityUserContext
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 import java.lang.RuntimeException
 import java.time.LocalDateTime
@@ -30,6 +31,9 @@ internal class AuditServiceTest {
 
   @Mock
   private lateinit var businessInteractionRepository: BusinessInteractionRepository
+
+  @Mock
+  private lateinit var securityUserContext: SecurityUserContext
 
   @InjectMocks
   private lateinit var subject: AuditService
@@ -52,7 +56,6 @@ internal class AuditServiceTest {
     whenever(auditedInteractionRepository.saveAndFlush(any())).thenReturn(auditedInteraction)
 
     subject.createAuditedInteraction(
-      LocalDateTime.of(2021, 1, 2, 10, 20),
       1234,
       AuditableInteraction.ADD_CONTACT,
       mapOf(AuditParameter.OFFENDER_ID to "5678"),
@@ -61,7 +64,7 @@ internal class AuditServiceTest {
 
     verify(auditedInteractionRepository).saveAndFlush(
       AuditedInteraction(
-        LocalDateTime.of(2021, 1, 2, 10, 20),
+        null,
         true,
         "offenderId='5678'",
         businessInteraction,
@@ -75,13 +78,14 @@ internal class AuditServiceTest {
   fun `Creating failed interaction`() {
     whenever(businessInteractionRepository.findFirstByCode(any())).thenReturn(businessInteraction)
     whenever(auditedInteractionRepository.saveAndFlush(any())).thenReturn(auditedInteraction)
+    whenever(securityUserContext.getCurrentDeliusUserId()).thenReturn(1234)
 
-    subject.failedInteraction(1234, AuditableInteraction.ADD_CONTACT, 5678)
+    subject.failedInteraction(AuditableInteraction.ADD_CONTACT, AuditContext(5678))
     verify(auditedInteractionRepository).saveAndFlush(entityCaptor.capture())
 
-    assertThat(entityCaptor.value.dateTime).isNotNull
+    assertThat(entityCaptor.value.dateTime).isNull()
     assertThat(entityCaptor.value.success).isFalse
-    assertThat(entityCaptor.value.userID).isEqualTo(1234)
+    assertThat(entityCaptor.value.userId).isEqualTo(1234)
     assertThat(entityCaptor.value.parameters).isEqualTo("offenderId='5678'")
 
     verifyNoMoreInteractions(auditedInteractionRepository)
@@ -91,14 +95,15 @@ internal class AuditServiceTest {
   fun `Creating successful interaction`() {
     whenever(businessInteractionRepository.findFirstByCode(any())).thenReturn(businessInteraction)
     whenever(auditedInteractionRepository.saveAndFlush(any())).thenReturn(auditedInteraction)
+    whenever(securityUserContext.getCurrentDeliusUserId()).thenReturn(1234)
 
-    subject.successfulInteraction(1234, AuditableInteraction.ADD_CONTACT, 5678)
+    subject.successfulInteraction(AuditableInteraction.ADD_CONTACT, AuditContext(5678))
 
     verify(auditedInteractionRepository).saveAndFlush(entityCaptor.capture())
 
-    assertThat(entityCaptor.value.dateTime).isNotNull
+    assertThat(entityCaptor.value.dateTime).isNull()
     assertThat(entityCaptor.value.success).isTrue
-    assertThat(entityCaptor.value.userID).isEqualTo(1234)
+    assertThat(entityCaptor.value.userId).isEqualTo(1234)
     assertThat(entityCaptor.value.parameters).isEqualTo("offenderId='5678'")
 
     verifyNoMoreInteractions(auditedInteractionRepository)
@@ -108,14 +113,15 @@ internal class AuditServiceTest {
   fun `Creating successful NSI interaction`() {
     whenever(businessInteractionRepository.findFirstByCode(any())).thenReturn(businessInteraction)
     whenever(auditedInteractionRepository.saveAndFlush(any())).thenReturn(auditedInteraction)
+    whenever(securityUserContext.getCurrentDeliusUserId()).thenReturn(1234)
 
-    subject.successfulInteraction(1234, AuditableInteraction.ADD_CONTACT, nsiId = 3434)
+    subject.successfulInteraction(AuditableInteraction.ADD_CONTACT, AuditContext(nsiId = 3434))
 
     verify(auditedInteractionRepository).saveAndFlush(entityCaptor.capture())
 
-    assertThat(entityCaptor.value.dateTime).isNotNull
+    assertThat(entityCaptor.value.dateTime).isNull()
     assertThat(entityCaptor.value.success).isTrue
-    assertThat(entityCaptor.value.userID).isEqualTo(1234)
+    assertThat(entityCaptor.value.userId).isEqualTo(1234)
     assertThat(entityCaptor.value.parameters).isEqualTo("nsiId='3434'")
 
     verifyNoMoreInteractions(auditedInteractionRepository)
@@ -124,16 +130,17 @@ internal class AuditServiceTest {
   @Test
   fun `Creating interaction with no parameters fails`() {
     assertThrows<RuntimeException> {
-      subject.successfulInteraction(1234, AuditableInteraction.ADD_CONTACT)
+      subject.successfulInteraction(AuditableInteraction.ADD_CONTACT, AuditContext())
     }
   }
 
   @Test
   fun `When no business interaction found throws exception`() {
     whenever(businessInteractionRepository.findFirstByCode(any())).thenReturn(null)
+    whenever(securityUserContext.getCurrentDeliusUserId()).thenReturn(1234)
 
     assertThrows<RuntimeException> {
-      subject.successfulInteraction(1234, AuditableInteraction.ADD_CONTACT, 5678)
+      subject.successfulInteraction(AuditableInteraction.ADD_CONTACT, AuditContext(5678))
     }
   }
 
@@ -141,8 +148,9 @@ internal class AuditServiceTest {
   fun `When enabled date has not passed do not audit`() {
     val notEnabledBusinessInteraction = businessInteraction.copy(enabledDate = LocalDateTime.now().plusYears(1))
     whenever(businessInteractionRepository.findFirstByCode(any())).thenReturn(notEnabledBusinessInteraction)
+    whenever(securityUserContext.getCurrentDeliusUserId()).thenReturn(1234)
 
-    subject.successfulInteraction(1234, AuditableInteraction.ADD_CONTACT, 5678)
+    subject.successfulInteraction(AuditableInteraction.ADD_CONTACT, AuditContext(5678))
 
     verifyNoMoreInteractions(auditedInteractionRepository)
   }
@@ -151,8 +159,9 @@ internal class AuditServiceTest {
   fun `When enabled date null do not audit`() {
     val notEnabledBusinessInteraction = businessInteraction.copy(enabledDate = null)
     whenever(businessInteractionRepository.findFirstByCode(any())).thenReturn(notEnabledBusinessInteraction)
+    whenever(securityUserContext.getCurrentDeliusUserId()).thenReturn(1234)
 
-    subject.successfulInteraction(1234, AuditableInteraction.ADD_CONTACT, 5678)
+    subject.successfulInteraction(AuditableInteraction.ADD_CONTACT, AuditContext(5678))
 
     verifyNoMoreInteractions(auditedInteractionRepository)
   }

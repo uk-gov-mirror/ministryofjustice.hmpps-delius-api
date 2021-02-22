@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.deliusapi.dto.v1
 
+import uk.gov.justice.digital.hmpps.deliusapi.validation.AllowedValues
 import uk.gov.justice.digital.hmpps.deliusapi.validation.EndTime
 import uk.gov.justice.digital.hmpps.deliusapi.validation.StartTime
 import uk.gov.justice.digital.hmpps.deliusapi.validation.TimeRange
@@ -12,7 +13,7 @@ import javax.validation.constraints.Pattern
 import javax.validation.constraints.Positive
 import javax.validation.constraints.Size
 
-@TimeRange(message = "contact start and end times must form a valid range")
+@TimeRange(name = "contact", message = "contact start and end times must form a valid range")
 data class NewContact(
   @field:NotBlank
   @field:Pattern(regexp = "^[a-zA-Z][0-9]{6}\$", message = "must be a valid CRN")
@@ -20,11 +21,11 @@ data class NewContact(
 
   @field:NotBlank
   @field:Size(min = 1, max = 10)
-  val contactType: String,
+  @field:AllowedValues("\${contacts.allowed-types}")
+  val type: String,
 
-  @field:NotBlank
   @field:Size(min = 1, max = 10)
-  val contactOutcome: String,
+  val outcome: String? = null,
 
   @field:NotBlank
   @field:Size(min = 3, max = 3, message = "size must be {min}")
@@ -38,20 +39,17 @@ data class NewContact(
   @field:Size(min = 7, max = 7, message = "size must be {min}")
   val staff: String,
 
-  @field:NotBlank
   @field:Size(min = 7, max = 7, message = "size must be {min}")
-  val officeLocation: String,
+  val officeLocation: String?,
 
   @field:NotNull
-  val contactDate: LocalDate,
+  val date: LocalDate,
 
-  @field:NotNull
-  @field:StartTime
-  val contactStartTime: LocalTime,
+  @field:StartTime(name = "contact")
+  val startTime: LocalTime?,
 
-  @field:NotNull
-  @field:EndTime
-  val contactEndTime: LocalTime,
+  @field:EndTime(name = "contact")
+  val endTime: LocalTime?,
 
   val alert: Boolean = false,
 

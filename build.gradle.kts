@@ -29,6 +29,7 @@ dependencies {
   kapt("org.mapstruct:mapstruct-processor:1.4.2.Final")
 
   developmentOnly("org.springframework.boot:spring-boot-devtools")
+  kapt("org.springframework.boot:spring-boot-configuration-processor")
 
   testImplementation("io.jsonwebtoken:jjwt:0.9.1")
   testImplementation("com.github.tomakehurst:wiremock-standalone:2.27.2")

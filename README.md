@@ -108,17 +108,20 @@ curl -v http://localhost:8081/health/ping --header "Authorization: Bearer $AUTH_
 
 The service includes an in-memory data based for development purposes. This is
 a lightweight but basic schema for use in initial development work but is not
-representative of the production Delius database 
+representative of the production Delius database.
 
 * H2 Web console - <http://localhost:8080/h2-console>
-* JDBC URL: `jdbc:h2:file:/tmp/hmpps-delius-api-dev;Mode=Oracle`
+* JDBC URL: `jdbc:h2:file:./dev;MODE=Oracle;AUTO_SERVER=TRUE;AUTO_SERVER_PORT=9092`
 * USER: `sa`
 * PASSWORD: `password`
 
-You can also connect to H2 remotely, useful for Intellij database tools &
-using the extra code sense it adds to JPA. 
- 
-`jdbc:h2:tcp://localhost:9092/file:/tmp/hmpps-delius-api-dev;Mode=Oracle`
+You can also connect to H2 remotely using the above JDBC URL - useful for Intellij 
+database tools, and the extra code sense it adds to JPA.
+
+The [src/main/resources/db](src/main/resources/db) directory contains the schema 
+and data used for testing. On server startup, Flyway loads any new SQL files into
+the local H2 database. Any changes to existing files will automatically clear down and
+re-populate the database (`spring.flyway.clean-on-validation-error=true`).
 
 ### Oracle Database
 

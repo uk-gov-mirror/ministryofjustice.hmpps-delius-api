@@ -28,7 +28,7 @@ class JwtAuthHelper {
 
   fun createJwt(
     subject: String?,
-    userId: Long? = Fake.faker.number().randomNumber(),
+    userId: Long? = Fake.randomPositiveId(),
     scope: List<String>? = listOf(),
     roles: List<String>? = listOf(),
     expired: Boolean = false,

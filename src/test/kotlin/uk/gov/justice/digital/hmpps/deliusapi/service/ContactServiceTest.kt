@@ -296,7 +296,7 @@ class ContactServiceTest {
   ) {
     newContact = Fake.newContact()
 
-    val offenderId = Fake.faker.number().randomNumber()
+    val offenderId = Fake.randomPositiveId()
 
     requirement = Fake.requirement(id = newContact.requirementId, offenderId = offenderId)
     val requirements = if (havingRequirement) listOf(requirement, Fake.requirement()) else listOf()

@@ -8,14 +8,19 @@ import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import java.time.LocalDate
 import java.time.LocalDateTime
+import javax.persistence.CascadeType
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.EntityListeners
+import javax.persistence.FetchType
+import javax.persistence.GeneratedValue
+import javax.persistence.GenerationType
 import javax.persistence.Id
 import javax.persistence.JoinColumn
 import javax.persistence.Lob
 import javax.persistence.ManyToOne
 import javax.persistence.OneToMany
+import javax.persistence.SequenceGenerator
 import javax.persistence.Table
 import javax.persistence.Version
 
@@ -25,6 +30,8 @@ import javax.persistence.Version
 @Where(clause = "SOFT_DELETED = 0")
 data class Nsi(
   @Id
+  @SequenceGenerator(name = "NSI_ID_GENERATOR", sequenceName = "NSI_ID_SEQ", allocationSize = 1)
+  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "NSI_ID_GENERATOR")
   @Column(name = "NSI_ID", nullable = false)
   var id: Long = 0,
 
@@ -77,8 +84,11 @@ data class Nsi(
   @ManyToOne
   var outcome: StandardReference? = null,
 
-  @Column(name = "ACTIVE_FLAG")
-  var active: Boolean = true,
+  @Column(name = "ACTIVE_FLAG", columnDefinition = "NUMBER")
+  var active: Boolean,
+
+  @Column(name = "PENDING_TRANSFER", columnDefinition = "NUMBER")
+  var pendingTransfer: Boolean,
 
   @JoinColumn(name = "RQMNT_ID")
   @ManyToOne
@@ -87,6 +97,9 @@ data class Nsi(
   @JoinColumn(name = "INTENDED_PROVIDER_ID")
   @ManyToOne
   var intendedProvider: Provider? = null,
+
+  @Column(name = "SOFT_DELETED", columnDefinition = "NUMBER", nullable = false)
+  var softDeleted: Boolean = false,
 
   @Column(name = "ROW_VERSION", nullable = false)
   @Version
@@ -109,6 +122,7 @@ data class Nsi(
   var lastUpdatedUserId: Long = 0,
 
   @JoinColumn(name = "NSI_ID")
-  @OneToMany
+  @OneToMany(cascade = [CascadeType.PERSIST], fetch = FetchType.EAGER)
+  @Where(clause = "ACTIVE_FLAG = 1")
   var managers: List<NsiManager>? = null,
 )

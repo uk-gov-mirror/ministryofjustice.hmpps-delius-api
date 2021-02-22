@@ -13,8 +13,13 @@ import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactTypeRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.OffenderRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ProviderRepository
+import uk.gov.justice.digital.hmpps.deliusapi.repository.findByCrnOrBadRequest
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditContext
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditableInteraction
+import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getEvent
+import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getRequirement
+import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getStaffOrBadRequest
+import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getTeamOrBadRequest
 import java.time.LocalDate
 
 @Service
@@ -27,8 +32,7 @@ class ContactService(
 
   @Auditable(AuditableInteraction.ADD_CONTACT)
   fun createContact(request: NewContact): ContactDto {
-    val offender = offenderRepository.findByCrn(request.offenderCrn)
-      ?: throw BadRequestException("Offender with code '${request.offenderCrn}' does not exist")
+    val offender = offenderRepository.findByCrnOrBadRequest(request.offenderCrn)
 
     val audit = AuditContext.get(AuditableInteraction.ADD_CONTACT)
     audit.offenderId = offender.id
@@ -53,32 +57,22 @@ class ContactService(
       throw BadRequestException("Outcome code '${request.outcome}' not a permissible absence - only permissible absences can be recorded for a future attendance")
     }
 
-    val event = if (request.eventId != null)
-      offender.events?.find { it.id == request.eventId }
-        ?: throw BadRequestException("Event with id '${request.eventId}' does not exist on offender '${offender.crn}'")
-    else null
-
-    val requirement = if (request.requirementId != null) {
-      if (event == null) {
-        throw BadRequestException("Cannot specify a requirement without an event")
-      }
-      event.disposals?.flatMap { it.requirements ?: listOf() }?.find { it.id == request.requirementId && it.offenderId == offender.id }
-        ?: throw BadRequestException("Requirement with id '${request.requirementId}' does not exist on event '${request.eventId}' and offender '${offender.crn}'")
-    } else null
+    val event = offender.getEvent(request.eventId)
+    val requirement = offender.getRequirement(event, request.requirementId)
 
     val provider = providerRepository.findByCode(request.provider)
       ?: throw BadRequestException("Provider with code '${request.provider}' does not exist")
 
-    val team = provider.teams?.find { it.code == request.team }
-      ?: throw BadRequestException("Team with code '${request.team}' does not exist for provider '${request.provider}'")
+    val team = provider.getTeamOrBadRequest(request.team)
+    val staff = team.getStaffOrBadRequest(request.staff)
 
-    if (type.locationFlag == Y && request.officeLocation.isNullOrBlank()) {
+    if (type.locationFlag == Y && request.officeLocation == null) {
       throw BadRequestException("Location is required for contact type '${request.type}'")
     }
 
     val officeLocation =
       when {
-        !request.officeLocation.isNullOrBlank() && (type.locationFlag == Y || type.locationFlag == B) ->
+        request.officeLocation != null && (type.locationFlag == Y || type.locationFlag == B) ->
           team.officeLocations?.find { it.code == request.officeLocation }
         else -> null
       }
@@ -86,9 +80,6 @@ class ContactService(
     if (type.locationFlag == Y && officeLocation == null) {
       throw BadRequestException("Team with code '${request.team}' does not exist at office location '${request.officeLocation}'")
     }
-
-    val staff = team.staff?.find { it.code == request.staff }
-      ?: throw BadRequestException("Staff with officer code '${request.staff}' does not exist in team '${request.team}'")
 
     if (type.attendanceContact && request.startTime == null) {
       throw BadRequestException("Contact type '${type.code}' requires a start time")

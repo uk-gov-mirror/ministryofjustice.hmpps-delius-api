@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.deliusapi.entity
 
-import org.hibernate.annotations.Where
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.Id
@@ -9,17 +8,16 @@ import javax.persistence.OneToMany
 import javax.persistence.Table
 
 @Entity
-@Table(name = "PROBATION_AREA")
-@Where(clause = "SELECTABLE = 'Y'")
-data class Provider(
+@Table(name = "R_REFERENCE_DATA_MASTER")
+data class ReferenceDataMaster(
   @Id
-  @Column(name = "PROBATION_AREA_ID")
+  @Column(name = "REFERENCE_DATA_MASTER_ID")
   var id: Long,
 
-  @Column(name = "CODE", columnDefinition = "CHAR(3)")
+  @Column(name = "CODE_SET_NAME", length = 100, nullable = false)
   var code: String,
 
+  @JoinColumn(name = "REFERENCE_DATA_MASTER_ID")
   @OneToMany
-  @JoinColumn(name = "PROBATION_AREA_ID")
-  var teams: List<Team>? = null,
+  var standardReferences: List<StandardReference>? = null,
 )

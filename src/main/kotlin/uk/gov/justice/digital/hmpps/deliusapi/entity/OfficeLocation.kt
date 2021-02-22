@@ -19,5 +19,5 @@ data class OfficeLocation(
   var id: Long,
 
   @Column(name = "CODE", columnDefinition = "CHAR(7)")
-  val code: String,
+  var code: String,
 )

@@ -23,5 +23,5 @@ data class ContactOutcomeType(
   val compliantAcceptable: Boolean?,
 
   @Column(name = "OUTCOME_ATTENDANCE", columnDefinition = "CHAR(1)")
-  val attendance: Boolean?
+  var attendance: Boolean?
 )

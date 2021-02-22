@@ -11,7 +11,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import javax.validation.Validator
-import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.functions
@@ -45,9 +44,6 @@ abstract class PropertyCaseBuilder<T : Any, P, Me : PropertyCaseBuilder<T, P, Me
     add("$reason $name = '$value'", mapOf(name to value), name)
 
   fun isNull(): Me = add("$name is null", mapOf(name to null), name)
-
-  fun bothNull(other: KProperty1<T, *>): Me =
-    add("$name & ${other.name} are null", mapOf(name to null, other.name to null), name)
 
   fun dependent(other: KProperty1<T, *>) =
     add("$name is dependent on ${other.name}", mapOf(other.name to null), name)
@@ -103,12 +99,15 @@ class LocalTimePropertyCaseBuilder<T : Any>(property: KProperty1<T, LocalTime?>,
     add("$name is before ${other.name}", mapOf(name to other.get(subject)?.minusSeconds(1)), name, other.name)
 }
 
-class ValidationTestCaseBuilder<T : Any>(
-  val valid: Boolean,
-  val factory: (existing: T?, parameters: Map<String, Any?>?) -> T
-) {
+class ValidationTestCaseBuilder<T : Any>(val factory: (existing: T?, parameters: Map<String, Any?>?) -> T) {
 
+  var valid = false
   val cases = mutableListOf<ValidationTestCase<T>>()
+
+  fun setValid(): ValidationTestCaseBuilder<T> {
+    valid = true
+    return this
+  }
 
   fun string(property: KProperty1<T, String?>, delegate: (b: StringPropertyCaseBuilder<T>) -> StringPropertyCaseBuilder<T>) =
     add(StringPropertyCaseBuilder(property, this), delegate)
@@ -127,6 +126,9 @@ class ValidationTestCaseBuilder<T : Any>(
 
   fun kitchenSink() = add("kitchen sink", mapOf())
 
+  fun <P> allNull(vararg properties: KProperty1<T, P?>) =
+    add(properties.joinToString(" & ") { it.name } + " are null", properties.associateBy({ it.name }, { null }))
+
   fun add(name: String, args: Map<String, Any?>, vararg invalidPaths: String, strict: Boolean = true) =
     add(RawValidationTestCase(name, args, invalidPaths.toList()), strict = strict)
 
@@ -143,16 +145,24 @@ class ValidationTestCaseBuilder<T : Any>(
   }
 
   companion object {
-    inline fun <reified T : Any> from(type: KClass<T>, valid: Boolean = false): ValidationTestCaseBuilder<T> {
+    /**
+     * Get a validation test case builder with a suitable factory chosen from the static Fake object.
+     */
+    inline fun <reified T : Any> fromFake(): ValidationTestCaseBuilder<T> {
+      val type = T::class
       val factory = Fake::class.functions.find {
         it.javaMethod?.returnType == type.java && it.parameters.none { p -> p.kind != KParameter.Kind.INSTANCE }
       } ?: throw RuntimeException("No faker factory found for type ${type.simpleName}")
 
-      val copy = type.memberFunctions.find { it.name == "copy" }
+      return fromFactory { factory.call(Fake) as T }
+    }
+
+    inline fun <reified T : Any> fromFactory(crossinline subjectFactory: () -> T): ValidationTestCaseBuilder<T> {
+      val copy = T::class.memberFunctions.find { it.name == "copy" }
         ?: throw RuntimeException("No copy method on type, is this a data class?")
 
-      return ValidationTestCaseBuilder(valid) { existing, parameters ->
-        val subject = existing ?: factory.call(Fake) as T
+      return ValidationTestCaseBuilder { existing, parameters ->
+        val subject = existing ?: subjectFactory()
         if (parameters == null) subject else {
           val map = parameters.mapKeys { (k) -> copy.parameters.find { it.name == k } ?: throw RuntimeException("No property $k") }
             .plus(copy.instanceParameter!! to subject)

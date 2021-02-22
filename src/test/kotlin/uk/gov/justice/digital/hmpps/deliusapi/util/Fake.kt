@@ -20,12 +20,13 @@ import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiStatus
 import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiType
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Offender
 import uk.gov.justice.digital.hmpps.deliusapi.entity.OfficeLocation
-import uk.gov.justice.digital.hmpps.deliusapi.entity.PartitionArea
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Provider
+import uk.gov.justice.digital.hmpps.deliusapi.entity.ReferenceDataMaster
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Requirement
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Staff
 import uk.gov.justice.digital.hmpps.deliusapi.entity.StandardReference
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Team
+import uk.gov.justice.digital.hmpps.deliusapi.entity.TransferReason
 import uk.gov.justice.digital.hmpps.deliusapi.entity.YesNoBoth.Y
 import uk.gov.justice.digital.hmpps.deliusapi.mapper.ContactMapper
 import uk.gov.justice.digital.hmpps.deliusapi.mapper.NsiMapper
@@ -62,10 +63,9 @@ object Fake {
 
   private fun crn() = "${faker.lorem().fixedString(1)}${faker.number().randomNumber(6, true)}"
 
-  fun offender(id: Long? = null, events: List<Event> = listOf(event())) =
-    Offender(id = id ?: id(), crn = crn(), events = events)
+  fun offender() = Offender(id = id(), crn = crn(), events = listOf(event()))
 
-  fun contactType(outcomeTypes: List<ContactOutcomeType> = listOf(contactOutcomeType())) = ContactType(
+  fun contactType() = ContactType(
     id = id(),
     code = faker.options().option(*allowedContactTypes),
     alertFlag = true,
@@ -73,29 +73,30 @@ object Fake {
     locationFlag = Y,
     attendanceContact = true,
     recordedHoursCredited = true,
-    outcomeTypes = outcomeTypes,
+    outcomeTypes = listOf(contactOutcomeType()),
   )
-  fun contactOutcomeType(code: String? = null) = ContactOutcomeType(id = id(), code = code ?: faker.lorem().characters(1, 10), compliantAcceptable = true, attendance = true)
-  fun provider(code: String? = null, teams: List<Team> = listOf(team())) =
-    Provider(id = id(), code = code ?: faker.lorem().characters(3), teams = teams)
-  fun team(code: String? = null, staff: List<Staff>? = listOf(staff()), officeLocation: List<OfficeLocation> = listOf(officeLocation())) =
-    Team(id = id(), code = code ?: faker.lorem().characters(6), staff = staff, officeLocations = officeLocation)
-  fun officeLocation(code: String? = null) =
-    OfficeLocation(id = id(), code = code ?: faker.lorem().characters(7))
-  fun staff(code: String? = null) = Staff(id = id(), code = code ?: faker.lorem().characters(7))
-  fun requirement(id: Long? = null, offenderId: Long? = null) = Requirement(id = id ?: id(), offenderId = offenderId ?: id())
-  fun disposal(requirements: List<Requirement>? = listOf(requirement())) = Disposal(id = id(), requirements = requirements)
-  fun event(id: Long? = null, disposals: List<Disposal>? = listOf(disposal())) =
-    Event(id = id ?: id(), disposals = disposals)
+  fun contactOutcomeType() = ContactOutcomeType(id = id(), code = faker.lorem().characters(1, 10), compliantAcceptable = true, attendance = true)
+  fun provider() = Provider(id = id(), code = faker.lorem().characters(3), teams = listOf(team()))
+  fun team() = Team(
+    id = id(),
+    code = faker.lorem().characters(6),
+    staff = listOf(staff()),
+    officeLocations = listOf(officeLocation())
+  )
+  fun officeLocation() = OfficeLocation(id = id(), code = faker.lorem().characters(7))
+  fun staff() = Staff(id = id(), code = faker.lorem().characters(7))
+  fun requirement() = Requirement(id = id(), offenderId = id(), active = true)
+  fun disposal() = Disposal(id = id(), requirements = listOf(requirement()))
+  fun event() = Event(id = id(), disposals = listOf(disposal()), referralDate = randomPastLocalDate(), active = true)
 
   fun contact(): Contact {
     val contactOutcomeType = contactOutcomeType()
     val team = team()
-    val provider = provider(teams = listOf(team))
+    val provider = provider().copy(teams = listOf(team))
     return Contact(
       id = id(),
       offender = offender(),
-      type = contactType(listOf(contactOutcomeType)),
+      type = contactType().copy(outcomeTypes = listOf(contactOutcomeType)),
       outcome = contactOutcomeType,
       provider = provider,
       team = team,
@@ -142,6 +143,13 @@ object Fake {
   fun nsiType() = NsiType(
     id = id(),
     code = faker.lorem().characters(1, 20),
+    offenderLevel = true,
+    eventLevel = true,
+    allowActiveDuplicates = true,
+    allowInactiveDuplicates = true,
+    units = standardReference(),
+    minimumLength = faker.number().numberBetween(1L, 25L),
+    maximumLength = faker.number().numberBetween(75L, 100L),
   )
 
   fun standardReference() = StandardReference(
@@ -152,23 +160,18 @@ object Fake {
   fun nsiStatus() = NsiStatus(
     id = id(),
     code = faker.lorem().characters(1, 20),
-  )
-
-  fun partitionArea() = PartitionArea(
-    id = id(),
-    area = faker.lorem().characters(1, 30),
+    contactType = contactType(),
   )
 
   fun nsiManager(): NsiManager {
     val team = team()
-    val provider = provider(teams = listOf(team))
+    val provider = provider().copy(teams = listOf(team))
     return NsiManager(
       id = id(),
       startDate = randomPastLocalDate(),
       provider = provider,
       team = team,
       staff = staff(),
-      partitionArea = partitionArea(),
       active = true,
       createdDateTime = randomLocalDateTime(),
       lastUpdatedDateTime = randomLocalDateTime(),
@@ -187,7 +190,7 @@ object Fake {
     event = event(),
     type = nsiType(),
     subType = standardReference(),
-    length = faker.number().numberBetween(1L, 100),
+    length = faker.number().numberBetween(25L, 75L),
     referralDate = faker.date().past(100, 20, TimeUnit.DAYS).toLocalDate(),
     expectedStartDate = randomPastLocalDate(),
     expectedEndDate = randomFutureLocalDate(),
@@ -197,7 +200,8 @@ object Fake {
     statusDate = randomLocalDateTime(),
     notes = faker.lorem().paragraph(),
     outcome = standardReference(),
-    active = faker.bool().bool(),
+    active = false, // end date is provided here
+    pendingTransfer = false,
     requirement = requirement(),
     intendedProvider = provider(),
     createdDateTime = randomLocalDateTime(),
@@ -210,4 +214,15 @@ object Fake {
   fun nsiDto(): NsiDto = nsiMapper.toDto(nsi())
 
   fun newNsi(): NewNsi = nsiMapper.toNew(nsiDto())
+
+  fun transferReason() = TransferReason(
+    id = id(),
+    code = faker.lorem().characters(1, 20),
+  )
+
+  fun referenceDataMaster() = ReferenceDataMaster(
+    id = id(),
+    code = faker.lorem().characters(1, 20),
+    standardReferences = listOf(standardReference(), standardReference()),
+  )
 }

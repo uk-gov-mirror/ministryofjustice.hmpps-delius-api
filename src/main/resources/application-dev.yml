@@ -16,4 +16,5 @@ spring:
     path: /h2-console
   jpa.properties.hibernate.show_sql: true
 
-logging.level.org.hibernate.SQL: DEBUG
+logging.level.org.hibernate:
+  SQL: debug

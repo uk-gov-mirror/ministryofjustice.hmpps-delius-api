@@ -302,31 +302,31 @@ class ContactServiceTest {
 
     val offenderId = Fake.id()
 
-    requirement = Fake.requirement(id = newContact.requirementId, offenderId = offenderId)
+    requirement = Fake.requirement().copy(id = newContact.requirementId!!, offenderId = offenderId)
     val requirements = if (havingRequirement) listOf(requirement, Fake.requirement()) else listOf()
-
-    event = Fake.event(id = newContact.eventId, disposals = listOf(Fake.disposal(requirements = requirements)))
+    val disposals = listOf(Fake.disposal().copy(requirements = requirements))
+    event = Fake.event().copy(id = newContact.eventId!!, disposals = disposals)
     val events = if (havingEvent) listOf(event, Fake.event()) else listOf()
 
-    offender = Fake.offender(id = offenderId, events = events)
+    offender = Fake.offender().copy(id = offenderId, events = events)
     whenever(offenderRepository.findByCrn(newContact.offenderCrn))
       .thenReturn(if (havingOffender) offender else null)
 
-    outcome = Fake.contactOutcomeType(code = newContact.outcome)
-    type = Fake.contactType(outcomeTypes = if (havingOutcome) listOf(outcome, Fake.contactOutcomeType()) else listOf())
+    outcome = Fake.contactOutcomeType().copy(code = newContact.outcome!!)
+    type = Fake.contactType().copy(outcomeTypes = if (havingOutcome) listOf(outcome, Fake.contactOutcomeType()) else listOf())
     whenever(contactTypeRepository.findByCode(newContact.type))
       .thenReturn(if (havingType) type else null)
 
-    this.staff = Fake.staff(code = newContact.staff)
+    this.staff = Fake.staff().copy(code = newContact.staff)
     val staff = if (havingStaff) listOf(this.staff, Fake.staff()) else listOf()
 
-    officeLocation = Fake.officeLocation(code = newContact.officeLocation)
+    officeLocation = Fake.officeLocation().copy(code = newContact.officeLocation!!)
     val officeLocations = if (havingOfficeLocation) listOf(officeLocation, Fake.officeLocation()) else listOf()
 
-    team = Fake.team(code = newContact.team, staff = staff, officeLocation = officeLocations)
+    team = Fake.team().copy(code = newContact.team, staff = staff, officeLocations = officeLocations)
     val teams = if (havingTeam) listOf(team, Fake.team()) else listOf()
 
-    provider = Fake.provider(code = newContact.provider, teams = teams)
+    provider = Fake.provider().copy(code = newContact.provider, teams = teams)
     whenever(providerRepository.findByCode(newContact.provider)).thenReturn(if (havingProvider) provider else null)
   }
 

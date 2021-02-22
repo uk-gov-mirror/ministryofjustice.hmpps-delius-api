@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.deliusapi.entity
 
 import org.hibernate.annotations.Where
+import java.time.LocalDate
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.Id
@@ -14,6 +15,12 @@ data class Requirement(
   @Column(name = "RQMNT_ID")
   var id: Long,
 
+  @Column(name = "TERMINATION_DATE")
+  var terminationDate: LocalDate? = null,
+
   @Column(name = "OFFENDER_ID")
   var offenderId: Long,
+
+  @Column(name = "ACTIVE_FLAG", columnDefinition = "NUMBER", nullable = false)
+  var active: Boolean,
 )

@@ -43,15 +43,15 @@ object Fake {
   fun randomLocalDateTime(): LocalDateTime = faker.date().past(10, TimeUnit.DAYS).toLocalDateTime()
   fun randomFutureLocalDate(): LocalDate = faker.date().future(10, TimeUnit.DAYS).toLocalDate()
 
-  fun randomPositiveId(): Long = faker.number().numberBetween(1L, 900_000_000_000_000_000L) // maxvalue of db sequences
+  fun id(): Long = faker.number().numberBetween(1L, 900_000_000_000_000_000L) // maxvalue of db sequences
 
   private fun crn() = "${faker.lorem().fixedString(1)}${faker.number().randomNumber(6, true)}"
 
   fun offender(id: Long? = null, events: List<Event> = listOf(event())) =
-    Offender(id = id ?: randomPositiveId(), crn = crn(), events = events)
+    Offender(id = id ?: id(), crn = crn(), events = events)
 
   fun contactType(outcomeTypes: List<ContactOutcomeType> = listOf(contactOutcomeType())) = ContactType(
-    id = randomPositiveId(),
+    id = id(),
     code = faker.lorem().characters(1, 10),
     alertFlag = true,
     outcomeFlag = Y,
@@ -60,25 +60,25 @@ object Fake {
     recordedHoursCredited = true,
     outcomeTypes = outcomeTypes,
   )
-  fun contactOutcomeType(code: String? = null) = ContactOutcomeType(id = randomPositiveId(), code = code ?: faker.lorem().characters(1, 10), compliantAcceptable = true, attendance = true)
+  fun contactOutcomeType(code: String? = null) = ContactOutcomeType(id = id(), code = code ?: faker.lorem().characters(1, 10), compliantAcceptable = true, attendance = true)
   fun provider(code: String? = null, teams: List<Team> = listOf(team())) =
-    Provider(id = randomPositiveId(), code = code ?: faker.lorem().characters(3), teams = teams)
+    Provider(id = id(), code = code ?: faker.lorem().characters(3), teams = teams)
   fun team(code: String? = null, staff: List<Staff>? = listOf(staff()), officeLocation: List<OfficeLocation> = listOf(officeLocation())) =
-    Team(id = randomPositiveId(), code = code ?: faker.lorem().characters(6), staff = staff, officeLocations = officeLocation)
+    Team(id = id(), code = code ?: faker.lorem().characters(6), staff = staff, officeLocations = officeLocation)
   fun officeLocation(code: String? = null) =
-    OfficeLocation(id = randomPositiveId(), code = code ?: faker.lorem().characters(7))
-  fun staff(code: String? = null) = Staff(id = randomPositiveId(), code = code ?: faker.lorem().characters(7))
-  fun requirement(id: Long? = null, offenderId: Long? = null) = Requirement(id = id ?: randomPositiveId(), offenderId = offenderId ?: randomPositiveId())
-  fun disposal(requirements: List<Requirement>? = listOf(requirement())) = Disposal(id = randomPositiveId(), requirements = requirements)
+    OfficeLocation(id = id(), code = code ?: faker.lorem().characters(7))
+  fun staff(code: String? = null) = Staff(id = id(), code = code ?: faker.lorem().characters(7))
+  fun requirement(id: Long? = null, offenderId: Long? = null) = Requirement(id = id ?: id(), offenderId = offenderId ?: id())
+  fun disposal(requirements: List<Requirement>? = listOf(requirement())) = Disposal(id = id(), requirements = requirements)
   fun event(id: Long? = null, disposals: List<Disposal>? = listOf(disposal())) =
-    Event(id = id ?: randomPositiveId(), disposals = disposals)
+    Event(id = id ?: id(), disposals = disposals)
 
   fun contact(): Contact {
     val contactOutcomeType = contactOutcomeType()
     val team = team()
     val provider = provider(teams = listOf(team))
     return Contact(
-      id = randomPositiveId(),
+      id = id(),
       offender = offender(),
       type = contactType(listOf(contactOutcomeType)),
       outcome = contactOutcomeType,
@@ -92,11 +92,11 @@ object Fake {
       alert = faker.bool().bool(),
       sensitive = faker.bool().bool(),
       notes = faker.lorem().paragraph(),
-      createdByUserId = randomPositiveId(),
-      lastUpdatedUserId = randomPositiveId(),
-      partitionAreaId = randomPositiveId(),
-      staffEmployeeId = randomPositiveId(),
-      teamProviderId = randomPositiveId(),
+      createdByUserId = id(),
+      lastUpdatedUserId = id(),
+      partitionAreaId = id(),
+      staffEmployeeId = id(),
+      teamProviderId = id(),
       createdDateTime = randomLocalDateTime(),
       lastUpdatedDateTime = randomLocalDateTime(),
       description = faker.company().bs(),
@@ -114,11 +114,11 @@ object Fake {
     success = faker.bool().bool(),
     parameters = faker.lorem().characters(),
     businessInteraction = businessInteraction(),
-    userId = randomPositiveId(),
+    userId = id(),
   )
 
   fun businessInteraction() = BusinessInteraction(
-    id = randomPositiveId(),
+    id = id(),
     code = faker.letterify("????"),
     description = faker.lorem().characters(50),
     enabledDate = randomLocalDateTime()

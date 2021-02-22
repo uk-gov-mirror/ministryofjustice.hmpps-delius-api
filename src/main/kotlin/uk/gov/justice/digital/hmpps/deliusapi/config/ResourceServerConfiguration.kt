@@ -24,6 +24,7 @@ class ResourceServerConfiguration(
           "/info",
           "/health/**",
           "/v2/api-docs",
+          "/v3/api-docs",
           "/swagger-ui/**",
           "/swagger-resources",
           "/swagger-resources/configuration/ui",

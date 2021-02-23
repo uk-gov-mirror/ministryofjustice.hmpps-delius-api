@@ -42,7 +42,7 @@ object Fake {
   val contactMapper: ContactMapper = ContactMapper.INSTANCE
   val nsiMapper: NsiMapper = NsiMapper.INSTANCE
 
-  const val ALLOWED_CONTACT_TYPES = "C001,C002,C003,COUP"
+  const val ALLOWED_CONTACT_TYPES = "TST01,TST02,TST03"
   val allowedContactTypes = ALLOWED_CONTACT_TYPES.split(',').toTypedArray()
 
   private fun Date.toLocalTime(): LocalTime = this.toInstant().atZone(ZoneId.systemDefault()).toLocalTime()

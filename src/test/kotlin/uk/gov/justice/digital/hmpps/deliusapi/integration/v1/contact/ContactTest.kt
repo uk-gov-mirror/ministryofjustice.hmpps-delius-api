@@ -51,7 +51,7 @@ class ContactTest : IntegrationTestBase() {
         Arguments.of(Fake.newContact().copy(staff = "12345678"), "staff"),
         Arguments.of(Fake.newContact().copy(officeLocation = "123456"), "officeLocation"),
         Arguments.of(Fake.newContact().copy(officeLocation = "12345678"), "officeLocation"),
-        Arguments.of(Fake.newContact().copy(requirementId = 1L, eventId = null), "eventProvidedWithRequirement"),
+        Arguments.of(Fake.newContact().copy(requirementId = 1L, eventId = null), "Cannot specify requirementId without eventId"),
       )
   }
 

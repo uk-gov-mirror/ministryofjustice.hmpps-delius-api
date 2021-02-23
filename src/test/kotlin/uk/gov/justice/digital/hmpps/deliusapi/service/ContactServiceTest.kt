@@ -34,6 +34,8 @@ import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactTypeRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.OffenderRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ProviderRepository
+import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditContext
+import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditableInteraction
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 
 @ExtendWith(MockitoExtension::class)
@@ -101,6 +103,8 @@ class ContactServiceTest {
     assertThat(entity.partitionAreaId).isEqualTo(0)
     assertThat(entity.staffEmployeeId).isEqualTo(1)
     assertThat(entity.teamProviderId).isEqualTo(1)
+
+    shouldSetAuditContext()
   }
 
   @Test
@@ -336,5 +340,10 @@ class ContactServiceTest {
     subject.createContact(newContact)
 
     verify(contactRepository).saveAndFlush(any())
+  }
+
+  private fun shouldSetAuditContext() {
+    val context = AuditContext.get(AuditableInteraction.ADD_CONTACT)
+    assertThat(context.offenderId).isEqualTo(offender.id)
   }
 }

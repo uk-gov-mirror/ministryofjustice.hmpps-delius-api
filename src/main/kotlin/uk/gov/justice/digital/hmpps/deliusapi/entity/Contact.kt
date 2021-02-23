@@ -39,7 +39,7 @@ data class Contact(
 
   @JoinColumn(name = "OFFENDER_ID", nullable = false)
   @ManyToOne
-  val offender: Offender,
+  var offender: Offender,
 
   @Column(name = "CONTACT_START_TIME")
   var startTime: LocalTime? = null,

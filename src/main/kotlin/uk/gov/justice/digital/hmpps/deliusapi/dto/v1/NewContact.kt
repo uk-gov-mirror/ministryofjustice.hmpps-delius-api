@@ -1,77 +1,73 @@
 package uk.gov.justice.digital.hmpps.deliusapi.dto.v1
 
 import uk.gov.justice.digital.hmpps.deliusapi.validation.AllowedValues
+import uk.gov.justice.digital.hmpps.deliusapi.validation.Crn
+import uk.gov.justice.digital.hmpps.deliusapi.validation.DependentFields
 import uk.gov.justice.digital.hmpps.deliusapi.validation.EndTime
+import uk.gov.justice.digital.hmpps.deliusapi.validation.FieldGroups
+import uk.gov.justice.digital.hmpps.deliusapi.validation.NotBlankWhenProvided
+import uk.gov.justice.digital.hmpps.deliusapi.validation.OfficeLocationCode
+import uk.gov.justice.digital.hmpps.deliusapi.validation.ProviderCode
+import uk.gov.justice.digital.hmpps.deliusapi.validation.StaffCode
 import uk.gov.justice.digital.hmpps.deliusapi.validation.StartTime
-import uk.gov.justice.digital.hmpps.deliusapi.validation.TimeRange
+import uk.gov.justice.digital.hmpps.deliusapi.validation.TeamCode
+import uk.gov.justice.digital.hmpps.deliusapi.validation.TimeRanges
 import java.time.LocalDate
 import java.time.LocalTime
-import javax.validation.constraints.AssertTrue
 import javax.validation.constraints.NotBlank
-import javax.validation.constraints.NotNull
-import javax.validation.constraints.Pattern
 import javax.validation.constraints.Positive
 import javax.validation.constraints.Size
 
-@TimeRange(name = "contact", message = "contact start and end times must form a valid range")
+@TimeRanges
+@FieldGroups
 data class NewContact(
-  @field:NotBlank
-  @field:Pattern(regexp = "^[a-zA-Z][0-9]{6}\$", message = "must be a valid CRN")
+  @field:Crn
   val offenderCrn: String,
 
   @field:NotBlank
-  @field:Size(min = 1, max = 10)
+  @field:Size(max = 10)
   @field:AllowedValues("\${contacts.allowed-types}")
   val type: String,
 
-  @field:Size(min = 1, max = 10)
+  @field:NotBlankWhenProvided
+  @field:Size(max = 10)
   val outcome: String? = null,
 
-  @field:NotBlank
-  @field:Size(min = 3, max = 3, message = "size must be {min}")
+  @field:ProviderCode
   val provider: String,
 
-  @field:NotBlank
-  @field:Size(min = 6, max = 6, message = "size must be {min}")
+  @field:TeamCode
   val team: String,
 
-  @field:NotBlank
-  @field:Size(min = 7, max = 7, message = "size must be {min}")
+  @field:StaffCode
   val staff: String,
 
-  @field:Size(min = 7, max = 7, message = "size must be {min}")
+  @field:OfficeLocationCode
   val officeLocation: String?,
 
-  @field:NotNull
   val date: LocalDate,
 
   @field:StartTime(name = "contact")
   val startTime: LocalTime?,
 
   @field:EndTime(name = "contact")
+  @field:DependentFields("startTime")
   val endTime: LocalTime?,
 
   val alert: Boolean = false,
 
   val sensitive: Boolean = false,
 
-  @field:Size(min = 0, max = 4000)
+  @field:Size(max = 4000)
   val notes: String?,
 
-  @field:Size(min = 0, max = 200)
+  @field:Size(max = 200)
   val description: String?,
 
   @field:Positive
   val eventId: Long? = null,
 
   @field:Positive
+  @field:DependentFields("eventId")
   val requirementId: Long? = null,
-) {
-  @AssertTrue(message = "Cannot specify a requirement without an event")
-  fun isEventProvidedWithRequirement(): Boolean {
-    if (requirementId == null) {
-      return true
-    }
-    return eventId != null
-  }
-}
+)

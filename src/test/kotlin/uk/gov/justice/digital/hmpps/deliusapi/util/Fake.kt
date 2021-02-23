@@ -3,6 +3,10 @@ package uk.gov.justice.digital.hmpps.deliusapi.util
 import com.github.javafaker.Faker
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.ContactDto
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewContact
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewNsi
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewNsiManager
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NsiDto
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NsiManagerDto
 import uk.gov.justice.digital.hmpps.deliusapi.entity.AuditedInteraction
 import uk.gov.justice.digital.hmpps.deliusapi.entity.BusinessInteraction
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
@@ -10,14 +14,21 @@ import uk.gov.justice.digital.hmpps.deliusapi.entity.ContactOutcomeType
 import uk.gov.justice.digital.hmpps.deliusapi.entity.ContactType
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Disposal
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Event
+import uk.gov.justice.digital.hmpps.deliusapi.entity.Nsi
+import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiManager
+import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiStatus
+import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiType
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Offender
 import uk.gov.justice.digital.hmpps.deliusapi.entity.OfficeLocation
+import uk.gov.justice.digital.hmpps.deliusapi.entity.PartitionArea
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Provider
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Requirement
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Staff
+import uk.gov.justice.digital.hmpps.deliusapi.entity.StandardReference
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Team
 import uk.gov.justice.digital.hmpps.deliusapi.entity.YesNoBoth.Y
 import uk.gov.justice.digital.hmpps.deliusapi.mapper.ContactMapper
+import uk.gov.justice.digital.hmpps.deliusapi.mapper.NsiMapper
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -28,7 +39,11 @@ import java.util.concurrent.TimeUnit
 
 object Fake {
   val faker = Faker()
-  val mapper: ContactMapper = ContactMapper.INSTANCE
+  val contactMapper: ContactMapper = ContactMapper.INSTANCE
+  val nsiMapper: NsiMapper = NsiMapper.INSTANCE
+
+  const val ALLOWED_CONTACT_TYPES = "C001,C002,C003,COUP"
+  val allowedContactTypes = ALLOWED_CONTACT_TYPES.split(',').toTypedArray()
 
   private fun Date.toLocalTime(): LocalTime = this.toInstant().atZone(ZoneId.systemDefault()).toLocalTime()
   private fun Date.toLocalDate(): LocalDate = this.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
@@ -40,8 +55,8 @@ object Fake {
   ).toLocalTime()
 
   fun randomPastLocalDate(): LocalDate = faker.date().past(10, 1, TimeUnit.DAYS).toLocalDate()
-  fun randomLocalDateTime(): LocalDateTime = faker.date().past(10, TimeUnit.DAYS).toLocalDateTime()
-  fun randomFutureLocalDate(): LocalDate = faker.date().future(10, TimeUnit.DAYS).toLocalDate()
+  fun randomLocalDateTime(): LocalDateTime = faker.date().past(10, 1, TimeUnit.DAYS).toLocalDateTime()
+  fun randomFutureLocalDate(): LocalDate = faker.date().future(10, 1, TimeUnit.DAYS).toLocalDate()
 
   fun id(): Long = faker.number().numberBetween(1L, 900_000_000_000_000_000L) // maxvalue of db sequences
 
@@ -52,7 +67,7 @@ object Fake {
 
   fun contactType(outcomeTypes: List<ContactOutcomeType> = listOf(contactOutcomeType())) = ContactType(
     id = id(),
-    code = faker.lorem().characters(1, 10),
+    code = faker.options().option(*allowedContactTypes),
     alertFlag = true,
     outcomeFlag = Y,
     locationFlag = Y,
@@ -92,22 +107,22 @@ object Fake {
       alert = faker.bool().bool(),
       sensitive = faker.bool().bool(),
       notes = faker.lorem().paragraph(),
-      createdByUserId = id(),
-      lastUpdatedUserId = id(),
       partitionAreaId = id(),
       staffEmployeeId = id(),
       teamProviderId = id(),
-      createdDateTime = randomLocalDateTime(),
-      lastUpdatedDateTime = randomLocalDateTime(),
       description = faker.company().bs(),
       event = event(),
       requirement = requirement(),
+      createdDateTime = randomLocalDateTime(),
+      lastUpdatedDateTime = randomLocalDateTime(),
+      createdByUserId = id(),
+      lastUpdatedUserId = id(),
     )
   }
 
-  fun contactDto(): ContactDto = mapper.toDto(contact())
+  fun contactDto(): ContactDto = contactMapper.toDto(contact())
 
-  fun newContact(): NewContact = mapper.toNew(contactDto())
+  fun newContact(): NewContact = contactMapper.toNew(contactDto())
 
   fun auditedInteraction() = AuditedInteraction(
     dateTime = randomLocalDateTime(),
@@ -123,4 +138,76 @@ object Fake {
     description = faker.lorem().characters(50),
     enabledDate = randomLocalDateTime()
   )
+
+  fun nsiType() = NsiType(
+    id = id(),
+    code = faker.lorem().characters(1, 20),
+  )
+
+  fun standardReference() = StandardReference(
+    id = id(),
+    code = faker.lorem().characters(1, 20),
+  )
+
+  fun nsiStatus() = NsiStatus(
+    id = id(),
+    code = faker.lorem().characters(1, 20),
+  )
+
+  fun partitionArea() = PartitionArea(
+    id = id(),
+    area = faker.lorem().characters(1, 30),
+  )
+
+  fun nsiManager(): NsiManager {
+    val team = team()
+    val provider = provider(teams = listOf(team))
+    return NsiManager(
+      id = id(),
+      startDate = randomPastLocalDate(),
+      provider = provider,
+      team = team,
+      staff = staff(),
+      partitionArea = partitionArea(),
+      active = true,
+      createdDateTime = randomLocalDateTime(),
+      lastUpdatedDateTime = randomLocalDateTime(),
+      createdByUserId = id(),
+      lastUpdatedUserId = id(),
+    )
+  }
+
+  fun nsiManagerDto(): NsiManagerDto = nsiMapper.toDto(nsiManager())
+
+  fun newNsiManager(): NewNsiManager = nsiMapper.toNew(nsiManagerDto())
+
+  fun nsi() = Nsi(
+    id = id(),
+    offender = offender(),
+    event = event(),
+    type = nsiType(),
+    subType = standardReference(),
+    length = faker.number().numberBetween(1L, 100),
+    referralDate = faker.date().past(100, 20, TimeUnit.DAYS).toLocalDate(),
+    expectedStartDate = randomPastLocalDate(),
+    expectedEndDate = randomFutureLocalDate(),
+    startDate = randomPastLocalDate(),
+    endDate = LocalDate.now(),
+    status = nsiStatus(),
+    statusDate = randomLocalDateTime(),
+    notes = faker.lorem().paragraph(),
+    outcome = standardReference(),
+    active = faker.bool().bool(),
+    requirement = requirement(),
+    intendedProvider = provider(),
+    createdDateTime = randomLocalDateTime(),
+    lastUpdatedDateTime = randomLocalDateTime(),
+    createdByUserId = id(),
+    lastUpdatedUserId = id(),
+    managers = listOf(nsiManager()),
+  )
+
+  fun nsiDto(): NsiDto = nsiMapper.toDto(nsi())
+
+  fun newNsi(): NewNsi = nsiMapper.toNew(nsiDto())
 }

@@ -115,7 +115,7 @@ class ContactTest : IntegrationTestBase() {
       .bodyValue(request)
       .exchange()
       // Then it should return successfully
-      .expectStatus().isOk
+      .expectStatus().isCreated
       .expectBody()
       // And it should return the correct details
       .jsonPath("$.eventId").value(equalTo(request.eventId))

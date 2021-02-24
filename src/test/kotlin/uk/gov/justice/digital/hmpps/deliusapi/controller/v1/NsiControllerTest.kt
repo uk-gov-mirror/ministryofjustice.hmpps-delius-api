@@ -25,7 +25,7 @@ class NsiControllerTest {
 
     whenever(service.createNsi(request)).thenReturn(dto)
 
-    val observed = subject.create(request)
+    val observed = subject.create(request).body
     Assertions.assertThat(observed).isSameAs(dto)
   }
 }

@@ -51,9 +51,15 @@ the correct container entities in nDelius
 
 ## Infrastructure 
 
-### Code Repositories 
+### Code Repositories
 - Application build and deployment pipeline definitions: https://github.com/ministryofjustice/hmpps-delius-api
-- ECS cluster definition : https://github.com/ministryofjustice/hmpps-delius-network-terraform/tree/master/ecs-cluster
+- ECS service definition : https://github.com/ministryofjustice/hmpps-delius-core-terraform/tree/master/application/delius-api
+
+### Image Repository
+- Elastic Container Repository - https://gallery.ecr.aws/hmpps/delius-api
+```shell
+docker pull public.ecr.aws/hmpps/delius-api
+```
 
 ### Deployment Pipelines 
 

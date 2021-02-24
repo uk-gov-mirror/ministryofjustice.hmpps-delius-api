@@ -14,7 +14,7 @@ import javax.persistence.Table
 
 @Entity
 @Table(name = "R_CONTACT_TYPE")
-@Where(clause = "SELECTABLE = 'Y'")
+@Where(clause = "SELECTABLE = 'Y' OR SPG_OVERRIDE = 1")
 data class ContactType(
   @Id
   @Column(name = "CONTACT_TYPE_ID")

@@ -20,8 +20,7 @@ class CreateNsiTest : IntegrationTestBase() {
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(newNsi)
       .exchange()
-      .expectStatus()
-      .isOk
+      .expectStatus().isCreated
       .expectBody()
   }
 }

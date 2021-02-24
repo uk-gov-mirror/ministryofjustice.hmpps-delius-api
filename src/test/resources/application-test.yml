@@ -7,3 +7,5 @@ management.endpoint:
 
 tokenverification:
   api.base.url: http://localhost:9090/auth
+
+contacts.allowed-types: TST01,TST02,TST03

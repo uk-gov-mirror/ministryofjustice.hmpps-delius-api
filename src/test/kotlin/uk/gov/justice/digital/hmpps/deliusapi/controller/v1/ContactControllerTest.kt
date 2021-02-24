@@ -25,7 +25,7 @@ class ContactControllerTest {
 
     whenever(service.createContact(request)).thenReturn(contact)
 
-    val observed = subject.create(request)
+    val observed = subject.create(request).body
     Assertions.assertThat(observed).isSameAs(contact)
   }
 }

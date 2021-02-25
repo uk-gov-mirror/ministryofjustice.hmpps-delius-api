@@ -11,6 +11,6 @@ import java.util.Optional
 @Service(value = "auditorAware")
 class AuditorAwareConfiguration : AuditorAware<Long> {
   override fun getCurrentAuditor(): Optional<Long> {
-    return Optional.of(8800)
+    return Optional.of(2500217590)
   }
 }

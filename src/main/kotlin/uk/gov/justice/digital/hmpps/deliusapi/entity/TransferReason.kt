@@ -7,13 +7,13 @@ import javax.persistence.Id
 import javax.persistence.Table
 
 @Entity
-@Table(name = "STAFF")
-@Where(clause = "START_DATE <= CURRENT_DATE AND (END_DATE IS NULL OR END_DATE > CURRENT_DATE)")
-data class Staff(
+@Table(name = "R_TRANSFER_REASON")
+@Where(clause = "SELECTABLE = 'Y'")
+data class TransferReason(
   @Id
-  @Column(name = "STAFF_ID")
+  @Column(name = "TRANSFER_REASON_ID")
   var id: Long,
 
-  @Column(name = "OFFICER_CODE", columnDefinition = "CHAR(7)")
+  @Column(name = "CODE", length = 100, nullable = false)
   var code: String,
 )

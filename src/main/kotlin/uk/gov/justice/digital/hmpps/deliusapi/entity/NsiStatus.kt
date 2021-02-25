@@ -4,6 +4,8 @@ import org.hibernate.annotations.Where
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.Id
+import javax.persistence.JoinColumn
+import javax.persistence.ManyToOne
 import javax.persistence.Table
 
 @Entity
@@ -16,4 +18,8 @@ data class NsiStatus(
 
   @Column(name = "CODE")
   var code: String,
+
+  @JoinColumn(name = "CONTACT_TYPE_ID")
+  @ManyToOne
+  var contactType: ContactType? = null,
 )

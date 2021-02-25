@@ -34,5 +34,5 @@ data class Team(
     joinColumns = [JoinColumn(name = "TEAM_ID", referencedColumnName = "TEAM_ID")],
     inverseJoinColumns = [JoinColumn(name = "OFFICE_LOCATION_ID", referencedColumnName = "OFFICE_LOCATION_ID")],
   )
-  val officeLocations: List<OfficeLocation>? = null,
+  var officeLocations: List<OfficeLocation>? = null,
 )

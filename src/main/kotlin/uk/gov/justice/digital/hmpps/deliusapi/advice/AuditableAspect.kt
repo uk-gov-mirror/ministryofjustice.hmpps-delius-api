@@ -6,6 +6,7 @@ import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.annotation.Before
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditContext
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditService
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditableInteraction
@@ -28,8 +29,13 @@ class AuditableAspect(private val auditService: AuditService) {
   @AfterReturning(JOIN_POINT)
   fun auditSuccess(auditable: Auditable) = audit(auditable, true)
 
-  @AfterThrowing(JOIN_POINT)
-  fun auditFailure(auditable: Auditable) = audit(auditable, false)
+  @AfterThrowing(JOIN_POINT, throwing = "exception")
+  fun auditFailure(auditable: Auditable, exception: Throwable) {
+    // do not audit bad requests, this is what delius does
+    if (exception !is BadRequestException) {
+      audit(auditable, false)
+    }
+  }
 
   private fun audit(auditable: Auditable, success: Boolean) {
     val context = AuditContext.get(auditable.interaction)

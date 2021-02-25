@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.deliusapi.entity
 
 import org.hibernate.annotations.Where
+import java.time.LocalDate
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.Id
@@ -15,6 +16,12 @@ data class Event(
   @Id
   @Column(name = "EVENT_ID")
   var id: Long,
+
+  @Column(name = "REFERRAL_DATE", nullable = false)
+  var referralDate: LocalDate,
+
+  @Column(name = "ACTIVE_FLAG", columnDefinition = "NUMBER", nullable = false)
+  var active: Boolean,
 
   @JoinColumn(name = "EVENT_ID")
   @OneToMany

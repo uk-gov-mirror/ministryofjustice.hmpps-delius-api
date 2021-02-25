@@ -19,18 +19,21 @@ class NewContactValidationTest : ValidationTest<NewContact>() {
 
   companion object {
     @JvmStatic
-    private fun validCases() = ValidationTestCaseBuilder.from(NewContact::class, valid = true)
+    fun validCases() = ValidationTestCaseBuilder.fromFake<NewContact>()
+      .setValid()
       .kitchenSink()
       .string(NewContact::outcome) { it.isNull().length(1).length(10) }
       .string(NewContact::officeLocation) { it.isNull() }
-      .time(NewContact::endTime) { it.bothNull(NewContact::startTime).isNull() }
+      .time(NewContact::endTime) { it.isNull() }
+      .allNull(NewContact::startTime, NewContact::endTime)
       .string(NewContact::notes) { it.isNull().empty() }
       .string(NewContact::description) { it.isNull().empty() }
-      .number(NewContact::requirementId) { it.isNull().bothNull(NewContact::eventId) }
+      .number(NewContact::requirementId) { it.isNull() }
+      .allNull(NewContact::requirementId, NewContact::eventId)
       .cases
 
     @JvmStatic
-    private fun invalidCases() = ValidationTestCaseBuilder.from(NewContact::class)
+    fun invalidCases() = ValidationTestCaseBuilder.fromFake<NewContact>()
       .string(NewContact::offenderCrn) { it.empty().blank().value("bacon", "not a valid crn") }
       .string(NewContact::type) { it.empty().blank().value("bacon", "not an allowed contact type") }
       .string(NewContact::outcome) { it.empty().blank().length(11) }

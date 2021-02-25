@@ -15,16 +15,18 @@ class NewNsiValidationTest : ValidationTest<NewNsi>() {
 
   companion object {
     @JvmStatic
-    private fun validCases() = ValidationTestCaseBuilder.from(NewNsi::class, valid = true)
+    fun validCases() = ValidationTestCaseBuilder.fromFake<NewNsi>()
+      .setValid()
       .kitchenSink()
       .string(NewNsi::subType) { it.isNull() }
-      .number(NewNsi::requirementId) { it.isNull().bothNull(NewNsi::eventId) }
-      .string(NewNsi::outcome) { it.bothNull(NewNsi::endDate) }
+      .number(NewNsi::requirementId) { it.isNull() }
+      .allNull(NewNsi::requirementId, NewNsi::eventId)
+      .allNull(NewNsi::outcome, NewNsi::endDate)
       .string(NewNsi::notes) { it.isNull() }
       .cases
 
     @JvmStatic
-    private fun invalidCases() = ValidationTestCaseBuilder.from(NewNsi::class)
+    fun invalidCases() = ValidationTestCaseBuilder.fromFake<NewNsi>()
       .string(NewNsi::type) { it.empty().blank().length(21) }
       .string(NewNsi::subType) { it.empty().blank().length(21) }
       .string(NewNsi::offenderCrn) { it.empty().blank().value("bacon", "not a valid crn") }

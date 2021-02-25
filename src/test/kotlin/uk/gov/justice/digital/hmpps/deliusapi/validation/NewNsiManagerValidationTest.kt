@@ -15,12 +15,13 @@ class NewNsiManagerValidationTest : ValidationTest<NewNsiManager>() {
 
   companion object {
     @JvmStatic
-    private fun validCases() = ValidationTestCaseBuilder.from(NewNsiManager::class, valid = true)
+    fun validCases() = ValidationTestCaseBuilder.fromFake<NewNsiManager>()
+      .setValid()
       .kitchenSink()
       .cases
 
     @JvmStatic
-    private fun invalidCases() = ValidationTestCaseBuilder.from(NewNsiManager::class)
+    fun invalidCases() = ValidationTestCaseBuilder.fromFake<NewNsiManager>()
       .string(NewNsiManager::staff) { it.empty().blank().length(6).length(8) }
       .string(NewNsiManager::team) { it.empty().blank().length(5).length(7) }
       .string(NewNsiManager::provider) { it.empty().blank().length(2).length(4) }

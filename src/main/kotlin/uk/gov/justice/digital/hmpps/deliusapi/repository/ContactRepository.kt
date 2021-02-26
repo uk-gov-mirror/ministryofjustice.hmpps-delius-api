@@ -5,4 +5,6 @@ import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
 
 @Repository
-interface ContactRepository : JpaRepository<Contact, Long>
+interface ContactRepository : JpaRepository<Contact, Long> {
+  fun findAllByNsiId(nsiId: Long): List<Contact>
+}

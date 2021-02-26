@@ -30,6 +30,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.entity.TransferReason
 import uk.gov.justice.digital.hmpps.deliusapi.entity.YesNoBoth.Y
 import uk.gov.justice.digital.hmpps.deliusapi.mapper.ContactMapper
 import uk.gov.justice.digital.hmpps.deliusapi.mapper.NsiMapper
+import uk.gov.justice.digital.hmpps.deliusapi.service.contact.NewSystemContact
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -68,6 +69,8 @@ object Fake {
   fun contactType() = ContactType(
     id = id(),
     code = faker.options().option(*allowedContactTypes),
+    selectable = true,
+    spgOverride = false,
     alertFlag = true,
     outcomeFlag = Y,
     locationFlag = Y,
@@ -125,6 +128,17 @@ object Fake {
 
   fun newContact(): NewContact = contactMapper.toNew(contactDto())
 
+  fun newSystemContact() = NewSystemContact(
+    typeId = id(),
+    offenderId = id(),
+    nsiId = id(),
+    eventId = id(),
+    providerId = id(),
+    teamId = id(),
+    staffId = id(),
+    timestamp = randomLocalDateTime()
+  )
+
   fun auditedInteraction() = AuditedInteraction(
     dateTime = randomLocalDateTime(),
     success = faker.bool().bool(),
@@ -155,12 +169,13 @@ object Fake {
   fun standardReference() = StandardReference(
     id = id(),
     code = faker.lorem().characters(1, 20),
+    description = faker.company().bs(),
   )
 
   fun nsiStatus() = NsiStatus(
     id = id(),
     code = faker.lorem().characters(1, 20),
-    contactType = contactType(),
+    contactTypeId = id(),
   )
 
   fun nsiManager(): NsiManager {

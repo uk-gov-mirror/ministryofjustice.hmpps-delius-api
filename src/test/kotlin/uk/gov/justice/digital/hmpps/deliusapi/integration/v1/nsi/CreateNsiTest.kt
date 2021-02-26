@@ -12,6 +12,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewNsi
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewNsiManager
 import uk.gov.justice.digital.hmpps.deliusapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.NsiRepository
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditableInteraction
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
@@ -23,7 +24,8 @@ import java.time.LocalDateTime
 
 @ActiveProfiles("test-h2")
 class CreateNsiTest @Autowired constructor (
-  private val nsiRepository: NsiRepository
+  private val nsiRepository: NsiRepository,
+  private val contactRepository: ContactRepository,
 ) : IntegrationTestBase() {
 
   companion object {
@@ -100,8 +102,18 @@ class CreateNsiTest @Autowired constructor (
           .comparingDateTimesToNearestSecond()
           .isEqualTo(case.subject)
 
-        shouldAudit(AuditableInteraction.ADMINISTER_NSI, mapOf("offenderId" to entity.offender?.id, "nsiId" to entity.id))
+        shouldAudit(
+          AuditableInteraction.ADMINISTER_NSI,
+          mapOf("offenderId" to entity.offender?.id, "nsiId" to entity.id)
+        )
+
+        shouldCreateSystemGeneratedContact(entity.id, entity.status?.contactTypeId!!)
       }
+  }
+
+  fun shouldCreateSystemGeneratedContact(nsiId: Long, typeId: Long) {
+    val existing = contactRepository.findAllByNsiId(nsiId)
+    assertThat(existing).anyMatch { it.type?.id == typeId }
   }
 
   @ParameterizedTest(name = "[{index}] Invalid nsi ({0})")

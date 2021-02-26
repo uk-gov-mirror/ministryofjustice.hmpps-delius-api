@@ -43,26 +43,26 @@ data class NewContact(
   val staff: String,
 
   @field:OfficeLocationCode
-  val officeLocation: String?,
+  val officeLocation: String? = null,
 
   val date: LocalDate,
 
   @field:StartTime(name = "contact")
-  val startTime: LocalTime?,
+  val startTime: LocalTime? = null,
 
   @field:EndTime(name = "contact")
   @field:DependentFields("startTime")
-  val endTime: LocalTime?,
+  val endTime: LocalTime? = null,
 
   val alert: Boolean = false,
 
   val sensitive: Boolean = false,
 
   @field:Size(max = 4000)
-  val notes: String?,
+  val notes: String? = null,
 
   @field:Size(max = 200)
-  val description: String?,
+  val description: String? = null,
 
   @field:Positive
   val eventId: Long? = null,

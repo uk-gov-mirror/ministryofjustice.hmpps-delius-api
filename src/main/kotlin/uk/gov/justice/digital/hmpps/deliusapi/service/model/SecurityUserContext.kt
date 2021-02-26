@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.deliusapi.service
+package uk.gov.justice.digital.hmpps.deliusapi.service.model
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.context.SecurityContextHolder

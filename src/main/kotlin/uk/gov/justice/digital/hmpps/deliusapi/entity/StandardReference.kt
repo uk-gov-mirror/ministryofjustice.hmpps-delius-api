@@ -11,9 +11,12 @@ import javax.persistence.Table
 @Where(clause = "SELECTABLE = 'Y'")
 data class StandardReference(
   @Id
-  @Column(name = "STANDARD_REFERENCE_LIST_ID")
+  @Column(name = "STANDARD_REFERENCE_LIST_ID", nullable = false)
   var id: Long,
 
-  @Column(name = "CODE_VALUE")
+  @Column(name = "CODE_VALUE", length = 100, nullable = false)
   var code: String,
+
+  @Column(name = "CODE_DESCRIPTION", length = 500, nullable = false)
+  var description: String,
 )

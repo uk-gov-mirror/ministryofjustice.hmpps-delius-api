@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.deliusapi.entity
 
 import org.hibernate.annotations.Type
-import org.hibernate.annotations.Where
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.EnumType
@@ -14,14 +13,20 @@ import javax.persistence.Table
 
 @Entity
 @Table(name = "R_CONTACT_TYPE")
-@Where(clause = "SELECTABLE = 'Y' OR SPG_OVERRIDE = 1")
 data class ContactType(
   @Id
   @Column(name = "CONTACT_TYPE_ID")
   var id: Long,
 
-  @Column(name = "CODE")
+  @Column(name = "CODE", nullable = false)
   var code: String,
+
+  @Column(name = "SELECTABLE", nullable = false)
+  @Type(type = "yes_no")
+  var selectable: Boolean = false,
+
+  @Column(name = "SPG_OVERRIDE", columnDefinition = "NUMBER", nullable = false)
+  var spgOverride: Boolean = false,
 
   @Column(name = "CONTACT_ALERT_FLAG")
   @Type(type = "yes_no")
@@ -29,11 +34,11 @@ data class ContactType(
 
   @Column(name = "CONTACT_OUTCOME_FLAG", columnDefinition = "CHAR(1)", nullable = false)
   @Enumerated(EnumType.STRING)
-  var outcomeFlag: YesNoBoth,
+  var outcomeFlag: YesNoBoth = YesNoBoth.N,
 
   @Column(name = "CONTACT_LOCATION_FLAG", columnDefinition = "CHAR(1)", nullable = false)
   @Enumerated(EnumType.STRING)
-  var locationFlag: YesNoBoth,
+  var locationFlag: YesNoBoth = YesNoBoth.N,
 
   @Column(name = "ATTENDANCE_CONTACT")
   @Type(type = "yes_no")

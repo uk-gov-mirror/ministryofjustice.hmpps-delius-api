@@ -1,5 +1,9 @@
 package uk.gov.justice.digital.hmpps.deliusapi.service
 
+import com.nhaarman.mockitokotlin2.capture
+import com.nhaarman.mockitokotlin2.times
+import com.nhaarman.mockitokotlin2.verify
+import com.nhaarman.mockitokotlin2.verifyZeroInteractions
 import com.nhaarman.mockitokotlin2.whenever
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -34,6 +38,10 @@ import uk.gov.justice.digital.hmpps.deliusapi.repository.ReferenceDataMasterRepo
 import uk.gov.justice.digital.hmpps.deliusapi.repository.TransferReasonRepository
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditContext
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditableInteraction
+import uk.gov.justice.digital.hmpps.deliusapi.service.contact.ContactService
+import uk.gov.justice.digital.hmpps.deliusapi.service.contact.NewSystemContact
+import uk.gov.justice.digital.hmpps.deliusapi.service.contact.WellKnownContactType
+import uk.gov.justice.digital.hmpps.deliusapi.service.nsi.NsiService
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
 
@@ -47,7 +55,9 @@ class NsiServiceTest {
   @Mock private lateinit var providerRepository: ProviderRepository
   @Mock private lateinit var transferReasonRepository: TransferReasonRepository
   @Mock private lateinit var referenceDataMasterRepository: ReferenceDataMasterRepository
-  @Captor private lateinit var entityCaptor: ArgumentCaptor<Nsi>
+  @Mock private lateinit var contactService: ContactService
+  @Captor private lateinit var newNsiCaptor: ArgumentCaptor<Nsi>
+  @Captor private lateinit var statusContactCaptor: ArgumentCaptor<NewSystemContact>
   @InjectMocks private lateinit var subject: NsiService
 
   private lateinit var request: NewNsi
@@ -66,14 +76,33 @@ class NsiServiceTest {
   @Test
   fun `Successfully creating nsi`() {
     havingDependentEntities()
-    val created = Fake.nsi()
-    whenever(nsiRepository.saveAndFlush(entityCaptor.capture())).thenReturn(created)
+
+    val created = Fake.nsi().copy(
+      type = type,
+      subType = subType,
+      status = status,
+      intendedProvider = intendedProvider,
+      outcome = outcome,
+      offender = offender,
+      event = event,
+      requirement = requirement,
+      managers = listOf(
+        Fake.nsiManager().copy(
+          provider = managerProvider,
+          team = managerTeam,
+          staff = managerStaff,
+        )
+      ),
+      statusDate = request.statusDate,
+    )
+    whenever(nsiRepository.saveAndFlush(newNsiCaptor.capture())).thenReturn(created)
+
     val observed = subject.createNsi(request)
     assertThat(observed)
       .isInstanceOf(NsiDto::class.java)
       .hasProperty(NsiDto::id, created.id)
 
-    assertThat(entityCaptor.value)
+    assertThat(newNsiCaptor.value)
       .hasProperty(Nsi::offender, offender)
       .hasProperty(Nsi::event, event)
       .hasProperty(Nsi::type, type)
@@ -94,7 +123,7 @@ class NsiServiceTest {
       .hasProperty(Nsi::intendedProvider, intendedProvider)
       .hasProperty(Nsi::softDeleted, false)
 
-    assertThat(entityCaptor.value.managers)
+    assertThat(newNsiCaptor.value.managers)
       .hasSize(1)
       .element(0)
       .hasProperty(NsiManager::provider, managerProvider)
@@ -102,150 +131,162 @@ class NsiServiceTest {
       .hasProperty(NsiManager::staff, managerStaff)
 
     shouldSetAuditContext(created.id)
+
+    verify(contactService, times(4)).createSystemContact(capture(statusContactCaptor))
+
+    shouldCreateSystemContact(created.id, typeId = status.contactTypeId)
+    shouldCreateSystemContact(created.id, wellKnownType = WellKnownContactType.REFERRAL)
+    shouldCreateSystemContact(created.id, wellKnownType = WellKnownContactType.COMMENCED)
+    shouldCreateSystemContact(
+      created.id,
+      wellKnownType = WellKnownContactType.TERMINATED,
+      notes = "NSI Terminated with Outcome: ${outcome.description}"
+    )
   }
 
   @Test
   fun `Attempting to create offender level nsi on event level only type`() {
     havingDependentEntities(havingOffenderLevel = false)
     request = request.copy(eventId = null, requirementId = null)
-    shouldThrowBadRequest()
+    shouldThrowBadRequestAndNotCreateAnySystemContacts()
   }
 
   @Test
   fun `Attempting to create event level nsi on offender level only type`() {
     havingDependentEntities(havingEventLevel = false)
-    shouldThrowBadRequest()
+    shouldThrowBadRequestAndNotCreateAnySystemContacts()
   }
 
   @Test
   fun `Attempting to create nsi with missing offender`() {
     havingDependentEntities(havingOffender = false)
-    shouldThrowBadRequest()
+    shouldThrowBadRequestAndNotCreateAnySystemContacts()
   }
 
   @Test
   fun `Attempting to create nsi with missing event`() {
     havingDependentEntities(havingEvent = false)
-    shouldThrowBadRequest()
+    shouldThrowBadRequestAndNotCreateAnySystemContacts()
   }
 
   @Test
   fun `Attempting to create nsi with missing requirement`() {
     havingDependentEntities(havingRequirement = false)
-    shouldThrowBadRequest()
+    shouldThrowBadRequestAndNotCreateAnySystemContacts()
   }
 
   @Test
   fun `Attempting to create nsi with missing type`() {
     havingDependentEntities(havingType = false)
-    shouldThrowBadRequest()
+    shouldThrowBadRequestAndNotCreateAnySystemContacts()
   }
 
   @Test
   fun `Attempting to create nsi with missing sub type`() {
     havingDependentEntities(havingSubType = false)
-    shouldThrowBadRequest()
+    shouldThrowBadRequestAndNotCreateAnySystemContacts()
   }
 
   @Test
   fun `Attempting to create nsi with missing status`() {
     havingDependentEntities(havingStatus = false)
-    shouldThrowBadRequest()
+    shouldThrowBadRequestAndNotCreateAnySystemContacts()
   }
 
   @Test
   fun `Attempting to create nsi with missing intended provider`() {
     havingDependentEntities(havingIntendedProvider = false)
-    shouldThrowBadRequest()
+    shouldThrowBadRequestAndNotCreateAnySystemContacts()
   }
 
   @Test
   fun `Attempting to create nsi with missing outcome`() {
     havingDependentEntities(havingOutcome = false)
-    shouldThrowBadRequest()
+    shouldThrowBadRequestAndNotCreateAnySystemContacts()
   }
 
   @Test
   fun `Attempting to create nsi with missing manager provider`() {
     havingDependentEntities(havingManagerProvider = false)
-    shouldThrowBadRequest()
+    shouldThrowBadRequestAndNotCreateAnySystemContacts()
   }
 
   @Test
   fun `Attempting to create nsi with missing manager team`() {
     havingDependentEntities(havingManagerTeam = false)
-    shouldThrowBadRequest()
+    shouldThrowBadRequestAndNotCreateAnySystemContacts()
   }
 
   @Test
   fun `Attempting to create nsi with missing manager staff`() {
     havingDependentEntities(havingManagerStaff = false)
-    shouldThrowBadRequest()
+    shouldThrowBadRequestAndNotCreateAnySystemContacts()
   }
 
   @Test
   fun `Attempting to create nsi when type does not allow active duplicates`() {
     havingDependentEntities(havingActiveDuplicates = false)
     request = request.copy(endDate = null)
-    shouldThrowBadRequest()
+    shouldThrowBadRequestAndNotCreateAnySystemContacts()
   }
 
   @Test
   fun `Attempting to create nsi when type does not allow inactive duplicates`() {
     havingDependentEntities(havingInactiveDuplicates = false)
-    shouldThrowBadRequest()
+    shouldThrowBadRequestAndNotCreateAnySystemContacts()
   }
 
   @Test
   fun `Attempting to create nsi without length when units are required`() {
     havingDependentEntities()
     request = request.copy(length = null)
-    shouldThrowBadRequest()
+    shouldThrowBadRequestAndNotCreateAnySystemContacts()
   }
 
   @Test
   fun `Attempting to create nsi with length larger than maximum`() {
     havingDependentEntities()
     request = request.copy(length = type.maximumLength!! + 1)
-    shouldThrowBadRequest()
+    shouldThrowBadRequestAndNotCreateAnySystemContacts()
   }
 
   @Test
   fun `Attempting to create nsi with length smaller than minimum`() {
     havingDependentEntities()
     request = request.copy(length = type.minimumLength!! - 1)
-    shouldThrowBadRequest()
+    shouldThrowBadRequestAndNotCreateAnySystemContacts()
   }
 
   @Test
   fun `Attempting to create nsi with length when units are not required`() {
     havingDependentEntities(havingUnits = false)
-    shouldThrowBadRequest()
+    shouldThrowBadRequestAndNotCreateAnySystemContacts()
   }
 
   @Test
   fun `Attempting to create nsi with referral date before event date`() {
     havingDependentEntities()
     request = request.copy(referralDate = event.referralDate.minusDays(1))
-    shouldThrowBadRequest()
+    shouldThrowBadRequestAndNotCreateAnySystemContacts()
   }
 
   @Test
   fun `Attempting to create nsi on terminated requirement without end date`() {
     havingDependentEntities()
     request = request.copy(endDate = null)
-    shouldThrowBadRequest()
+    shouldThrowBadRequestAndNotCreateAnySystemContacts()
   }
 
   @Test
   fun `Attempting to create nsi on terminated requirement with end date before requirement termination date`() {
     havingDependentEntities()
     request = request.copy(endDate = requirement.terminationDate!!.minusDays(1))
-    shouldThrowBadRequest()
+    shouldThrowBadRequestAndNotCreateAnySystemContacts()
   }
 
-  fun shouldThrowBadRequest() = assertThrows<BadRequestException> {
-    subject.createNsi(request)
+  fun shouldThrowBadRequestAndNotCreateAnySystemContacts() {
+    assertThrows<BadRequestException> { subject.createNsi(request) }
+    shouldNotCreateSystemContact()
   }
 
   private fun havingDependentEntities(
@@ -334,5 +375,40 @@ class NsiServiceTest {
     assertThat(context)
       .hasProperty(AuditContext::offenderId, offender.id)
       .hasProperty(AuditContext::nsiId, id)
+  }
+
+  private fun shouldCreateSystemContact(
+    nsiId: Long,
+    typeId: Long? = null,
+    wellKnownType: WellKnownContactType? = null,
+    notes: String? = null
+  ) {
+
+    val observed = statusContactCaptor.allValues.find {
+      when {
+        typeId != null -> it.typeId == typeId
+        wellKnownType != null -> it.type == wellKnownType
+        else -> false
+      }
+    }
+    assertThat(observed)
+      .describedAs("should create system contact with typeId = '$typeId' or typeCode = '$wellKnownType'")
+      .isNotNull
+
+    assertThat(observed!!)
+      .hasProperty(NewSystemContact::typeId, typeId)
+      .hasProperty(NewSystemContact::type, wellKnownType)
+      .hasProperty(NewSystemContact::offenderId, offender.id)
+      .hasProperty(NewSystemContact::nsiId, nsiId)
+      .hasProperty(NewSystemContact::eventId, event.id)
+      .hasProperty(NewSystemContact::providerId, managerProvider.id)
+      .hasProperty(NewSystemContact::teamId, managerTeam.id)
+      .hasProperty(NewSystemContact::staffId, managerStaff.id)
+      .hasProperty(NewSystemContact::timestamp, request.statusDate)
+      .hasProperty(NewSystemContact::notes, notes)
+  }
+
+  private fun shouldNotCreateSystemContact() {
+    verifyZeroInteractions(contactService)
   }
 }

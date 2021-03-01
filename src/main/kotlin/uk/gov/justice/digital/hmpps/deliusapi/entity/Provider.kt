@@ -1,6 +1,6 @@
 package uk.gov.justice.digital.hmpps.deliusapi.entity
 
-import org.hibernate.annotations.Where
+import org.hibernate.annotations.Type
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.Id
@@ -10,7 +10,6 @@ import javax.persistence.Table
 
 @Entity
 @Table(name = "PROBATION_AREA")
-@Where(clause = "SELECTABLE = 'Y'")
 data class Provider(
   @Id
   @Column(name = "PROBATION_AREA_ID")
@@ -18,6 +17,10 @@ data class Provider(
 
   @Column(name = "CODE", columnDefinition = "CHAR(3)")
   var code: String,
+
+  @Column(name = "SELECTABLE", nullable = false)
+  @Type(type = "yes_no")
+  var selectable: Boolean = false,
 
   @OneToMany
   @JoinColumn(name = "PROBATION_AREA_ID")

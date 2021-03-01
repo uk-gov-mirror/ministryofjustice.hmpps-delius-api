@@ -357,7 +357,7 @@ class NsiServiceTest {
       code = request.manager.provider,
       teams = if (havingManagerTeam) listOf(managerTeam, Fake.team()) else listOf()
     )
-    whenever(providerRepository.findByCode(request.manager.provider))
+    whenever(providerRepository.findByCodeAndSelectableIsTrue(request.manager.provider))
       .thenReturn(if (havingManagerProvider) managerProvider else null)
 
     whenever(transferReasonRepository.findByCode("NSI"))

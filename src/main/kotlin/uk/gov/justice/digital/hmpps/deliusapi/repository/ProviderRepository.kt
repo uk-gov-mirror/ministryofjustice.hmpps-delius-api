@@ -6,5 +6,5 @@ import uk.gov.justice.digital.hmpps.deliusapi.entity.Provider
 
 @Repository
 interface ProviderRepository : JpaRepository<Provider, Long> {
-  fun findByCode(code: String): Provider?
+  fun findByCodeAndSelectableIsTrue(code: String): Provider?
 }

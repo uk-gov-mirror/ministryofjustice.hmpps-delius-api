@@ -1,8 +1,10 @@
 package uk.gov.justice.digital.hmpps.deliusapi.service.contact
 
 import org.springframework.data.repository.findByIdOrNull
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.deliusapi.advice.Auditable
+import uk.gov.justice.digital.hmpps.deliusapi.config.Authorities
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.ContactDto
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewContact
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
@@ -34,6 +36,7 @@ class ContactService(
   private val nsiRepository: NsiRepository,
 ) {
 
+  @PreAuthorize("hasAuthority('${Authorities.PROVIDER}'.concat(#request.provider))")
   @Auditable(AuditableInteraction.ADD_CONTACT)
   fun createContact(request: NewContact): ContactDto {
     val offender = offenderRepository.findByCrnOrBadRequest(request.offenderCrn)
@@ -65,7 +68,7 @@ class ContactService(
     val requirement = if (event == null || request.requirementId == null) null
     else offender.getRequirementOrBadRequest(event, request.requirementId)
 
-    val provider = providerRepository.findByCode(request.provider)
+    val provider = providerRepository.findByCodeAndSelectableIsTrue(request.provider)
       ?: throw BadRequestException("Provider with code '${request.provider}' does not exist")
 
     val team = provider.getTeamOrBadRequest(request.team)

@@ -297,7 +297,7 @@ class CreateContactTest : ContactServiceTestBase() {
       .thenReturn(if (havingOffender) offender else null)
     whenever(contactTypeRepository.findSelectableByCode(type.code))
       .thenReturn(if (havingType) type else null)
-    whenever(providerRepository.findByCode(provider.code))
+    whenever(providerRepository.findByCodeAndSelectableIsTrue(provider.code))
       .thenReturn(if (havingProvider) provider else null)
     whenever(nsiRepository.findById(nsi.id))
       .thenReturn(if (havingNsi) Optional.of(nsi) else Optional.empty())

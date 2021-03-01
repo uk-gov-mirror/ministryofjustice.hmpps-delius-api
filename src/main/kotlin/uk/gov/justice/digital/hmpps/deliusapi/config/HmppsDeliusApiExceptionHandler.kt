@@ -5,8 +5,10 @@ import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
+import org.springframework.http.HttpStatus.UNAUTHORIZED
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.validation.FieldError
 import org.springframework.web.HttpMediaTypeNotSupportedException
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -62,7 +64,7 @@ class HmppsDeliusApiExceptionHandler {
   @ResponseStatus(BAD_REQUEST)
   @ExceptionHandler(HttpMessageNotReadableException::class)
   fun handleJsonParseException(e: HttpMessageNotReadableException): ErrorResponse {
-    log.info("JSON parse error", e)
+    log.debug("JSON parse error", e)
     val message = when (val cause = e.cause) {
       is MissingKotlinParameterException -> {
         val messages = cause.path.joinToString(", ") { "$it is required" }
@@ -73,6 +75,17 @@ class HmppsDeliusApiExceptionHandler {
     return ErrorResponse(
       status = BAD_REQUEST,
       userMessage = message,
+      developerMessage = e.message
+    )
+  }
+
+  @ResponseStatus(UNAUTHORIZED)
+  @ExceptionHandler(AccessDeniedException::class)
+  fun handleUnauthorized(e: AccessDeniedException): ErrorResponse {
+    log.debug("Unauthorized", e)
+    return ErrorResponse(
+      status = UNAUTHORIZED,
+      userMessage = e.message,
       developerMessage = e.message
     )
   }

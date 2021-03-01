@@ -16,8 +16,7 @@ class ResourceServerConfiguration(
   override fun configure(http: HttpSecurity) {
     http
       .oauth2ResourceServer {
-        it.jwt().jwtAuthenticationConverter(AuthAwareTokenConverter())
-          .authenticationManager(tokenVerifyingAuthManager)
+        it.jwt().authenticationManager(tokenVerifyingAuthManager)
       }
       .authorizeRequests {
         it.antMatchers(

@@ -28,6 +28,8 @@ import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getEventOrBadRe
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getRequirementOrBadRequest
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getStaffOrBadRequest
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getTeamOrBadRequest
+import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getUnallocatedStaff
+import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getUnallocatedTeam
 import java.time.LocalDate
 
 @Service
@@ -172,8 +174,11 @@ class NsiService(
     val provider = providerRepository.findByCode(request.provider)
       ?: throw BadRequestException("Provider with code '${request.provider}' does not exist")
 
-    val team = provider.getTeamOrBadRequest(request.team)
-    val staff = team.getStaffOrBadRequest(request.staff)
+    val team = if (request.team == null) provider.getUnallocatedTeam()
+    else provider.getTeamOrBadRequest(request.team)
+
+    val staff = if (request.staff == null) team.getUnallocatedStaff()
+    else team.getStaffOrBadRequest(request.staff)
 
     return NsiManager(
       startDate = startDate,

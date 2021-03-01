@@ -129,7 +129,13 @@ class ValidationTestCaseBuilder<T : Any>(val factory: (existing: T?, parameters:
   fun <P> allNull(vararg properties: KProperty1<T, P?>) =
     add(properties.joinToString(" & ") { it.name } + " are null", properties.associateBy({ it.name }, { null }))
 
-  fun add(name: String, args: Map<String, Any?>, vararg invalidPaths: String, strict: Boolean = true) =
+  fun add(name: String, vararg invalidPaths: String, strict: Boolean = false, fn: (subject: T) -> T): ValidationTestCaseBuilder<T> {
+    val subject = fn(factory(null, null))
+    cases.add(ValidationTestCase(name, subject, invalidPaths.toList(), strict))
+    return this
+  }
+
+  private fun add(name: String, args: Map<String, Any?>, vararg invalidPaths: String, strict: Boolean = true) =
     add(RawValidationTestCase(name, args, invalidPaths.toList()), strict = strict)
 
   private fun <B : PropertyCaseBuilder<T, *, *>> add(builder: B, delegate: (b: B) -> B, strict: Boolean = true): ValidationTestCaseBuilder<T> {

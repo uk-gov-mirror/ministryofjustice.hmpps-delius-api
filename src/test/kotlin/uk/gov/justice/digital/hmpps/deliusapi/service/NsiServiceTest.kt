@@ -348,9 +348,9 @@ class NsiServiceTest {
     whenever(nsiTypeRepository.findByCode(request.type))
       .thenReturn(if (havingType) type else null)
 
-    managerStaff = Fake.staff().copy(code = request.manager.staff)
+    managerStaff = Fake.staff().copy(code = request.manager.staff!!)
     managerTeam = Fake.team().copy(
-      code = request.manager.team,
+      code = request.manager.team!!,
       staff = if (havingManagerStaff) listOf(managerStaff, Fake.staff()) else listOf()
     )
     managerProvider = Fake.provider().copy(

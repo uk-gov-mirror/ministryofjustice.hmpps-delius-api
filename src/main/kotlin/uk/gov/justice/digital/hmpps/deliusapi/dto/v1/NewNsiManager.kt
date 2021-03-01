@@ -6,15 +6,15 @@ import uk.gov.justice.digital.hmpps.deliusapi.validation.StaffCode
 import uk.gov.justice.digital.hmpps.deliusapi.validation.TeamCode
 
 data class NewNsiManager(
-  @ApiModelProperty("The officer code of the staff managing this intervention")
-  @field:StaffCode
-  val staff: String,
-
-  @ApiModelProperty("The code of the team managing this intervention")
-  @field:TeamCode
-  val team: String,
-
   @ApiModelProperty("The code of the provider managing this intervention")
   @field:ProviderCode
   val provider: String,
+
+  @ApiModelProperty("The code of the team managing this intervention")
+  @field:TeamCode
+  val team: String? = null,
+
+  @ApiModelProperty("The officer code of the staff managing this intervention")
+  @field:StaffCode
+  val staff: String? = null,
 )

@@ -1,6 +1,6 @@
 package uk.gov.justice.digital.hmpps.deliusapi.util
 
-import org.assertj.core.api.ObjectAssert
+import org.assertj.core.api.AbstractObjectAssert
 import org.assertj.core.api.RecursiveComparisonAssert
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -14,5 +14,5 @@ fun RecursiveComparisonAssert<*>.comparingDateTimesToNearest(unit: ChronoUnit, n
 
 fun RecursiveComparisonAssert<*>.comparingDateTimesToNearestSecond() = comparingDateTimesToNearest(ChronoUnit.SECONDS)
 
-fun <T : Any, P> ObjectAssert<T>.hasProperty(property: KProperty1<T, P>, expected: P): ObjectAssert<T> =
-  this.describedAs(property.name).returns(expected) { property.get(it) }
+fun <T : Any, P, Self : AbstractObjectAssert<Self, T>> Self.hasProperty(property: KProperty1<T, P>, expected: P): Self =
+  describedAs(property.name).returns(expected) { property.get(it) }

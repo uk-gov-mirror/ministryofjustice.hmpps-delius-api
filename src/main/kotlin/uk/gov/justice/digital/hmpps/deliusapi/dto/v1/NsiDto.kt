@@ -94,7 +94,7 @@ data class NsiDto(
   val intendedProvider: String,
 
   /**
-   * The managers assigned to this NSI.
+   * The active manager assigned to this NSI.
    */
-  val managers: List<NsiManagerDto>
+  val manager: NsiManagerDto
 )

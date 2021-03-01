@@ -75,6 +75,8 @@ class CreateContactTest : IntegrationTestBase() {
       failureCases.add(of(valid.copy(startTime = null), "Cannot specify endTime without startTime"))
       // Non-selectable contact types with SPG Override set are allowed
       successCases.add(of(valid.copy(type = "TST05")))
+      // Non-selectable contact types without SPG Override set are not allowed
+      failureCases.add(of(valid.copy(type = "SMLI001"), "Contact type with code 'SMLI001' does not exist"))
     }
     @JvmStatic
     fun successCases(): Stream<Arguments> = successCases.stream()

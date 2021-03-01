@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.deliusapi.service
+package uk.gov.justice.digital.hmpps.deliusapi.service.nsi
 
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.deliusapi.advice.Auditable
@@ -20,9 +20,12 @@ import uk.gov.justice.digital.hmpps.deliusapi.repository.findByCodeOrThrow
 import uk.gov.justice.digital.hmpps.deliusapi.repository.findByCrnOrBadRequest
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditContext
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditableInteraction
+import uk.gov.justice.digital.hmpps.deliusapi.service.contact.ContactService
+import uk.gov.justice.digital.hmpps.deliusapi.service.contact.NewSystemContact
+import uk.gov.justice.digital.hmpps.deliusapi.service.contact.WellKnownContactType
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.assertSupportedLevel
-import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getEvent
-import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getRequirement
+import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getEventOrBadRequest
+import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getRequirementOrBadRequest
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getStaffOrBadRequest
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getTeamOrBadRequest
 import java.time.LocalDate
@@ -35,6 +38,7 @@ class NsiService(
   private val providerRepository: ProviderRepository,
   private val transferReasonRepository: TransferReasonRepository,
   private val referenceDataMasterRepository: ReferenceDataMasterRepository,
+  private val contactService: ContactService,
 ) {
   @Auditable(AuditableInteraction.ADMINISTER_NSI)
   fun createNsi(request: NewNsi): NsiDto {
@@ -85,8 +89,9 @@ class NsiService(
       }
     }
 
-    val event = offender.getEvent(request.eventId)
-    val requirement = offender.getRequirement(event, request.requirementId)
+    val event = if (request.eventId == null) null else offender.getEventOrBadRequest(request.eventId)
+    val requirement = if (event == null || request.requirementId == null) null
+    else offender.getRequirementOrBadRequest(event, request.requirementId)
 
     if (event != null && request.referralDate.isBefore(event.referralDate)) {
       throw BadRequestException("Referral date must not be before the event referral date '${event.referralDate}'")
@@ -102,6 +107,7 @@ class NsiService(
       }
     }
 
+    val manager = createNsiManager(request.manager, request.referralDate)
     val nsi = Nsi(
       offender = offender,
       event = event,
@@ -119,16 +125,47 @@ class NsiService(
       outcome = outcome,
       requirement = requirement,
       intendedProvider = intendedProvider,
-      managers = listOf(createNsiManager(request.manager, request.referralDate)),
+      managers = listOf(manager),
       active = active,
       pendingTransfer = false,
     )
 
     val entity = nsiRepository.saveAndFlush(nsi)
-
     audit.nsiId = entity.id
 
+    createSystemContacts(entity, manager)
+
     return NsiMapper.INSTANCE.toDto(entity)
+  }
+
+  private fun createSystemContacts(nsi: Nsi, manager: NsiManager) {
+    val status = NewSystemContact(
+      typeId = nsi.status?.contactTypeId,
+      offenderId = nsi.offender?.id!!,
+      nsiId = nsi.id,
+      eventId = nsi.event?.id,
+      providerId = manager.provider?.id!!,
+      teamId = manager.team?.id!!,
+      staffId = manager.staff?.id!!,
+      timestamp = nsi.statusDate,
+    )
+    this.contactService.createSystemContact(status)
+
+    val referral = status.copy(typeId = null, type = WellKnownContactType.REFERRAL)
+    this.contactService.createSystemContact(referral)
+
+    if (nsi.startDate != null) {
+      val commenced = referral.copy(type = WellKnownContactType.COMMENCED)
+      this.contactService.createSystemContact(commenced)
+    }
+
+    if (nsi.outcome != null) {
+      val terminated = referral.copy(
+        type = WellKnownContactType.TERMINATED,
+        notes = "NSI Terminated with Outcome: ${nsi.outcome?.description}"
+      )
+      this.contactService.createSystemContact(terminated)
+    }
   }
 
   private fun createNsiManager(request: NewNsiManager, startDate: LocalDate): NsiManager {

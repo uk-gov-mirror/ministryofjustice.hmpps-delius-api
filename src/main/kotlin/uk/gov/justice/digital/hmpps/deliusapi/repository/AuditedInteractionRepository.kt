@@ -7,5 +7,9 @@ import java.util.Date
 
 @Repository
 interface AuditedInteractionRepository : JpaRepository<AuditedInteraction, Date> {
-  fun findAllByUserId(userId: Long): List<AuditedInteraction>
+  /**
+   * This is only here for tests.
+   * In delius the audit data has no indexes and is very large so querying it is very slow.
+   */
+  fun findAllByUserIdAndBusinessInteractionCode(userId: Long, businessInteractionCode: String): List<AuditedInteraction>
 }

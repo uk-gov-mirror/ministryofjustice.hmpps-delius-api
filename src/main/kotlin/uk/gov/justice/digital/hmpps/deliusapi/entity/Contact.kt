@@ -41,6 +41,9 @@ data class Contact(
   @ManyToOne
   var offender: Offender,
 
+  @Column(name = "NSI_ID")
+  var nsiId: Long? = null,
+
   @Column(name = "CONTACT_START_TIME")
   var startTime: LocalTime? = null,
 
@@ -89,7 +92,7 @@ data class Contact(
   @LastModifiedDate
   var lastUpdatedDateTime: LocalDateTime? = null,
 
-  @JoinColumn(name = "CONTACT_TYPE_ID")
+  @JoinColumn(name = "CONTACT_TYPE_ID", nullable = false)
   @ManyToOne
   var type: ContactType? = null,
 

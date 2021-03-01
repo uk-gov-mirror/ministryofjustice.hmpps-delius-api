@@ -75,14 +75,14 @@ abstract class IntegrationTestBase {
   }
 
   protected fun shouldNotAudit(interaction: AuditableInteraction) {
-    val interactions = auditedInteractionRepository.findAllByUserId(userId)
+    val interactions = auditedInteractionRepository.findAllByUserIdAndBusinessInteractionCode(userId, interaction.code)
     assertThat(interactions).noneMatch {
       !it.success && it.businessInteraction.code == interaction.code
     }
   }
 
   protected fun shouldAudit(interaction: AuditableInteraction, parameters: Map<String, Any?>) {
-    val interactions = auditedInteractionRepository.findAllByUserId(userId)
+    val interactions = auditedInteractionRepository.findAllByUserIdAndBusinessInteractionCode(userId, interaction.code)
     val expected = parameters.entries.map { "${it.key}='${it.value}'" }.toSet()
 
     assertThat(interactions).anyMatch {

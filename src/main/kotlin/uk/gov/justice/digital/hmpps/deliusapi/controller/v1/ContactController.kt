@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.ContactDto
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewContact
-import uk.gov.justice.digital.hmpps.deliusapi.service.ContactService
+import uk.gov.justice.digital.hmpps.deliusapi.service.contact.ContactService
 import javax.validation.Valid
 import javax.validation.constraints.NotNull
 

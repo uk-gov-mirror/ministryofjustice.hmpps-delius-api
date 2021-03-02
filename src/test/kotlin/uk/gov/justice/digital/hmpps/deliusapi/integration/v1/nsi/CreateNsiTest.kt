@@ -47,7 +47,7 @@ class CreateNsiTest @Autowired constructor (
       length = 1,
       notes = "bacon and eggs",
       manager = NewNsiManager(
-        staff = "C00T02U",
+        staff = "C00P017",
         team = "C00T02",
         provider = "C00",
       )
@@ -63,6 +63,8 @@ class CreateNsiTest @Autowired constructor (
       .allNull(NewNsi::eventId, NewNsi::requirementId)
       .allNull(NewNsi::requirementId, NewNsi::outcome, NewNsi::endDate)
       .allNull(NewNsi::eventId, NewNsi::requirementId, NewNsi::outcome, NewNsi::endDate)
+      .add("Manager team & staff not provided") { it.copy(manager = it.manager.copy(team = null, staff = null)) }
+      .add("Manager staff not provided") { it.copy(manager = it.manager.copy(staff = null)) }
       .cases
 
     @JvmStatic
@@ -86,7 +88,7 @@ class CreateNsiTest @Autowired constructor (
       .cases
   }
 
-  @ParameterizedTest(name = "[{index}] Valid nsi")
+  @ParameterizedTest(name = "[{index}] Valid nsi {arguments}")
   @MethodSource("validTestCases")
   fun `Creating valid nsi`(case: ValidationTestCase<NewNsi>) {
     webTestClient.whenCreatingNsi(case.subject)

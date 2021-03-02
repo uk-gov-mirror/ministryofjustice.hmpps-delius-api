@@ -13,27 +13,27 @@ private typealias NsiTypeLevels = Set<NsiTypeLevel>
 
 private fun NsiType.getSupportedLevels(): NsiTypeLevels {
   val levels = mutableSetOf<NsiTypeLevel>()
-  if (this.offenderLevel) {
+  if (offenderLevel) {
     levels.add(NsiTypeLevel.OFFENDER)
   }
-  if (this.eventLevel) {
+  if (eventLevel) {
     levels.add(NsiTypeLevel.EVENT)
   }
   return levels.toSet()
 }
 
-private fun NewNsi.getLevel() = if (this.eventId == null) NsiTypeLevel.OFFENDER else NsiTypeLevel.EVENT
+private fun NewNsi.getLevel() = if (eventId == null) NsiTypeLevel.OFFENDER else NsiTypeLevel.EVENT
 
 fun NsiType.assertSupportedLevel(newNsi: NewNsi) {
   val level = newNsi.getLevel()
-  val supported = this.getSupportedLevels()
+  val supported = getSupportedLevels()
   if (supported.contains(level)) {
     return
   }
 
   val names = supported.joinToString(" or ") { it.name.toLowerCase() }
   throw BadRequestException(
-    "NSI type with code ${this.code} supports association to $names only " +
+    "NSI type with code '$code' supports association to $names only " +
       "& this request is attempting to associate to ${level.name.toLowerCase()}"
   )
 }

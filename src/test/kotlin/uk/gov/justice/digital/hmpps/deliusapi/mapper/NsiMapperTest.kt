@@ -2,37 +2,62 @@ package uk.gov.justice.digital.hmpps.deliusapi.mapper
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NsiDto
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NsiManagerDto
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
+import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
 
 class NsiMapperTest {
   @Test
-  fun `Mapping from entity to dto`() {
-    val source = Fake.nsi()
+  fun `Mapping from nsi to nsi dto`() {
+    val manager = Fake.nsiManager()
+    val source = Fake.nsi().copy(managers = listOf(manager))
     val observed = NsiMapper.INSTANCE.toDto(source)
 
-    assertThat(observed.id).isEqualTo(source.id)
-    assertThat(observed.type).isEqualTo(source.type?.code)
-    assertThat(observed.subType).isEqualTo(source.subType?.code)
-    assertThat(observed.offenderCrn).isEqualTo(source.offender?.crn)
-    assertThat(observed.eventId).isEqualTo(source.event?.id)
-    assertThat(observed.requirementId).isEqualTo(source.requirement?.id)
-    assertThat(observed.referralDate).isEqualTo(source.referralDate)
-    assertThat(observed.expectedStartDate).isEqualTo(source.expectedStartDate)
-    assertThat(observed.expectedEndDate).isEqualTo(source.expectedEndDate)
-    assertThat(observed.startDate).isEqualTo(source.startDate)
-    assertThat(observed.endDate).isEqualTo(source.endDate)
-    assertThat(observed.length).isEqualTo(source.length)
-    assertThat(observed.status).isEqualTo(source.status?.code)
-    assertThat(observed.statusDate).isEqualTo(source.statusDate)
-    assertThat(observed.outcome).isEqualTo(source.outcome?.code)
-    assertThat(observed.notes).isEqualTo(source.notes)
-    assertThat(observed.intendedProvider).isEqualTo(source.intendedProvider?.code)
+    assertThat(observed)
+      .hasProperty(NsiDto::id, source.id)
+      .hasProperty(NsiDto::type, source.type?.code)
+      .hasProperty(NsiDto::subType, source.subType?.code)
+      .hasProperty(NsiDto::offenderCrn, source.offender?.crn)
+      .hasProperty(NsiDto::eventId, source.event?.id)
+      .hasProperty(NsiDto::requirementId, source.requirement?.id)
+      .hasProperty(NsiDto::referralDate, source.referralDate)
+      .hasProperty(NsiDto::expectedStartDate, source.expectedStartDate)
+      .hasProperty(NsiDto::expectedEndDate, source.expectedEndDate)
+      .hasProperty(NsiDto::startDate, source.startDate)
+      .hasProperty(NsiDto::endDate, source.endDate)
+      .hasProperty(NsiDto::length, source.length)
+      .hasProperty(NsiDto::status, source.status?.code)
+      .hasProperty(NsiDto::statusDate, source.statusDate)
+      .hasProperty(NsiDto::outcome, source.outcome?.code)
+      .hasProperty(NsiDto::notes, source.notes)
+      .hasProperty(NsiDto::intendedProvider, source.intendedProvider?.code)
+      .extracting { it.manager }
+      .isNotNull
+  }
 
-    val managers = source.managers?.map {
-      NsiManagerDto(it.id, it.staff?.code ?: "", it.team?.code ?: "", it.provider?.code ?: "")
-    }
+  @Test
+  fun `Mapping from nsi manager to nsi manager dto`() {
+    val source = Fake.nsiManager()
+    val observed = NsiMapper.INSTANCE.toDto(source)
+    assertThat(observed)
+      .hasProperty(NsiManagerDto::id, source.id)
+      .hasProperty(NsiManagerDto::provider, source.provider?.code)
+      .hasProperty(NsiManagerDto::team, source.team?.code)
+      .hasProperty(NsiManagerDto::staff, source.staff?.code)
+  }
 
-    assertThat(observed.managers).usingRecursiveComparison().ignoringCollectionOrder().isEqualTo(managers)
+  @Test
+  fun `Mapping from nsi manager to nsi manager dto with unallocated team & staff`() {
+    val source = Fake.nsiManager().copy(
+      team = Fake.team().copy(code = Fake.faker.bothify("?##UAT")),
+      staff = Fake.staff().copy(code = "?##?##U")
+    )
+    val observed = NsiMapper.INSTANCE.toDto(source)
+    assertThat(observed)
+      .hasProperty(NsiManagerDto::id, source.id)
+      .hasProperty(NsiManagerDto::provider, source.provider?.code)
+      .hasProperty(NsiManagerDto::team, null)
+      .hasProperty(NsiManagerDto::staff, null)
   }
 }

@@ -82,12 +82,12 @@ object Fake {
   fun provider() = Provider(id = id(), code = faker.lorem().characters(3), teams = listOf(team()))
   fun team() = Team(
     id = id(),
-    code = faker.lorem().characters(6),
+    code = faker.bothify("?##?##"),
     staff = listOf(staff()),
     officeLocations = listOf(officeLocation())
   )
   fun officeLocation() = OfficeLocation(id = id(), code = faker.lorem().characters(7))
-  fun staff() = Staff(id = id(), code = faker.lorem().characters(7))
+  fun staff() = Staff(id = id(), code = faker.bothify("?##?###"))
   fun requirement() = Requirement(id = id(), offenderId = id(), active = true)
   fun disposal() = Disposal(id = id(), requirements = listOf(requirement()))
   fun event() = Event(id = id(), disposals = listOf(disposal()), referralDate = randomPastLocalDate(), active = true)
@@ -179,14 +179,15 @@ object Fake {
   )
 
   fun nsiManager(): NsiManager {
-    val team = team()
+    val staff = staff()
+    val team = team().copy(staff = listOf(staff))
     val provider = provider().copy(teams = listOf(team))
     return NsiManager(
       id = id(),
       startDate = randomPastLocalDate(),
       provider = provider,
       team = team,
-      staff = staff(),
+      staff = staff,
       active = true,
       createdDateTime = randomLocalDateTime(),
       lastUpdatedDateTime = randomLocalDateTime(),

@@ -10,14 +10,14 @@ Accepted
 
 Within the HMPPS application environment we are able to use HMPPS-Auth as a
 OAuth2 provider. Using HMPPS-Auth we have the ability to identify a user using
-Delius as an Identity Provider, which enables passing the authenticated
-username as a custom claim in the access token if required. For users with
-Delius accounts this would enable us to apply fine-grained access control
-based on the user. There are a number of reasons why this is not a viable
-strategy, primarily that not all of our user base has an nDelius account. In
+Delius as an Identity Provider, with the authenticated user details passed in
+the user\_name and user\_id fields of the access token. For users with Delius
+accounts this enables us to apply fine-grained access control based on the
+user. There are a number of reasons, however, why this is not a viable
+strategy, primarily that our user base do not all have nDelius accounts. In
 fact, many end-users of the services that will rely on the Delius API are
-external to the MoJ organisation entirely. In cases where users do have an
-nDelius account they may also have a NOMIS account and we cannot guarantee
+external to the MoJ organisation. In cases where users do have an nDelius
+account they may also have a NOMIS account and we cannot guarantee
 that they will use the nDelius identity when authenticating with a particular
 service.
 

@@ -48,6 +48,9 @@ abstract class PropertyCaseBuilder<T : Any, P, Me : PropertyCaseBuilder<T, P, Me
   fun dependent(other: KProperty1<T, *>) =
     add("$name is dependent on ${other.name}", mapOf(other.name to null), name)
 
+  fun exclusive(value: P, otherValue: P, other: KProperty1<T, *>) =
+    add("$name can't be present with ${other.name}", mapOf(name to value, other.name to otherValue), name)
+
   protected fun add(name: String, args: Map<String, Any?>, vararg invalidPaths: String): Me {
     cases.add(RawValidationTestCase(name, args, if (builder.valid) listOf() else invalidPaths.toList()))
     @Suppress("UNCHECKED_CAST") return this as Me

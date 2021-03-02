@@ -46,6 +46,7 @@ class NewContactValidationTest : ValidationTest<NewContact>() {
       .string(NewContact::description) { it.length(201) }
       .number(NewContact::eventId) { it.zero().negative() }
       .number(NewContact::requirementId) { it.zero().negative().dependent(NewContact::eventId) }
+      .number(NewContact::nsiId) { it.zero().negative().exclusive(34563, 12345, NewContact::requirementId) }
       .cases
   }
 }

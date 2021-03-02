@@ -99,7 +99,6 @@ object Fake {
     return Contact(
       id = id(),
       offender = offender(),
-      nsi = nsi(),
       type = contactType().copy(outcomeTypes = listOf(contactOutcomeType)),
       outcome = contactOutcomeType,
       provider = provider,

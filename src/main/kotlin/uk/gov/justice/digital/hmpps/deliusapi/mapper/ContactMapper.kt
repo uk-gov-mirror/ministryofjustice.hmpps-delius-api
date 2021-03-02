@@ -22,6 +22,7 @@ interface ContactMapper {
     Mapping(source = "officeLocation.code", target = "officeLocation"),
     Mapping(source = "event.id", target = "eventId"),
     Mapping(source = "requirement.id", target = "requirementId"),
+    Mapping(source = "nsi.id", target = "nsiId"),
   )
   fun toDto(src: Contact): ContactDto
 

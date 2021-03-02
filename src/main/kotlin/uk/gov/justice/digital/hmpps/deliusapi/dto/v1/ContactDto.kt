@@ -8,6 +8,7 @@ import java.time.LocalTime
 data class ContactDto(
   val id: Long,
   val offenderCrn: String,
+  val nsiId: Long? = null,
   val type: String,
   val outcome: String?,
   val provider: String,

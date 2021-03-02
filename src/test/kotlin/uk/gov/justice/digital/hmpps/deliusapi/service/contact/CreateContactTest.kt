@@ -14,11 +14,11 @@ import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewContact
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
 import uk.gov.justice.digital.hmpps.deliusapi.entity.YesNoBoth
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
-import uk.gov.justice.digital.hmpps.deliusapi.service.ContactServiceTestBase
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditContext
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditableInteraction
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
+import java.util.Optional
 
 class CreateContactTest : ContactServiceTestBase() {
   @Captor
@@ -278,9 +278,11 @@ class CreateContactTest : ContactServiceTestBase() {
     havingOffender: Boolean = true,
     havingType: Boolean = true,
     havingProvider: Boolean = true,
+    havingNsi: Boolean = true,
   ) {
     request = Fake.newContact().copy(
       offenderCrn = offender.crn,
+      nsiId = nsi.id,
       type = type.code,
       eventId = event.id,
       requirementId = requirement.id,
@@ -297,6 +299,8 @@ class CreateContactTest : ContactServiceTestBase() {
       .thenReturn(if (havingType) type else null)
     whenever(providerRepository.findByCode(provider.code))
       .thenReturn(if (havingProvider) provider else null)
+    whenever(nsiRepository.findById(nsi.id))
+      .thenReturn(if (havingNsi) Optional.of(nsi) else Optional.empty())
   }
 
   private fun shouldThrowBadRequest() {

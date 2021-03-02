@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.deliusapi.service
+package uk.gov.justice.digital.hmpps.deliusapi.service.contact
 
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.InjectMocks
@@ -9,6 +9,7 @@ import org.mockito.quality.Strictness
 import uk.gov.justice.digital.hmpps.deliusapi.entity.ContactOutcomeType
 import uk.gov.justice.digital.hmpps.deliusapi.entity.ContactType
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Event
+import uk.gov.justice.digital.hmpps.deliusapi.entity.Nsi
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Offender
 import uk.gov.justice.digital.hmpps.deliusapi.entity.OfficeLocation
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Provider
@@ -17,9 +18,9 @@ import uk.gov.justice.digital.hmpps.deliusapi.entity.Staff
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Team
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactTypeRepository
+import uk.gov.justice.digital.hmpps.deliusapi.repository.NsiRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.OffenderRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ProviderRepository
-import uk.gov.justice.digital.hmpps.deliusapi.service.contact.ContactService
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 
 @ExtendWith(MockitoExtension::class)
@@ -29,6 +30,7 @@ abstract class ContactServiceTestBase {
   @Mock protected lateinit var offenderRepository: OffenderRepository
   @Mock protected lateinit var contactTypeRepository: ContactTypeRepository
   @Mock protected lateinit var providerRepository: ProviderRepository
+  @Mock protected lateinit var nsiRepository: NsiRepository
   @InjectMocks protected lateinit var subject: ContactService
 
   protected lateinit var type: ContactType
@@ -40,6 +42,7 @@ abstract class ContactServiceTestBase {
   protected lateinit var officeLocation: OfficeLocation
   protected lateinit var event: Event
   protected lateinit var requirement: Requirement
+  protected lateinit var nsi: Nsi
 
   protected fun havingDependentEntities(
     havingEvent: Boolean = true,
@@ -74,5 +77,7 @@ abstract class ContactServiceTestBase {
     val teams = if (havingTeam) listOf(team, Fake.team()) else listOf()
 
     provider = Fake.provider().copy(teams = teams)
+
+    nsi = Fake.nsi()
   }
 }

@@ -8,7 +8,10 @@ import uk.gov.justice.digital.hmpps.deliusapi.config.Authorities
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.ContactDto
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewContact
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
+import uk.gov.justice.digital.hmpps.deliusapi.entity.ContactType
+import uk.gov.justice.digital.hmpps.deliusapi.entity.Offender
 import uk.gov.justice.digital.hmpps.deliusapi.entity.YesNoBoth.B
+import uk.gov.justice.digital.hmpps.deliusapi.entity.YesNoBoth.N
 import uk.gov.justice.digital.hmpps.deliusapi.entity.YesNoBoth.Y
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import uk.gov.justice.digital.hmpps.deliusapi.mapper.ContactMapper
@@ -24,6 +27,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getEventOrBadRe
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getRequirementOrBadRequest
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getStaffOrBadRequest
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getTeamOrBadRequest
+import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.isPermissibleAbsence
 import java.lang.IllegalArgumentException
 import java.time.LocalDate
 
@@ -60,7 +64,7 @@ class ContactService(
         ?: throw BadRequestException("Contact type with code '${request.type}' does not support outcome code '${request.outcome}'")
     else null
 
-    if (outcome != null && request.date.isAfter(LocalDate.now()) && !(outcome.compliantAcceptable == true && outcome.attendance == false)) {
+    if (outcome != null && request.date.isAfter(LocalDate.now()) && !outcome.isPermissibleAbsence()) {
       throw BadRequestException("Outcome code '${request.outcome}' not a permissible absence - only permissible absences can be recorded for a future attendance")
     }
 
@@ -78,6 +82,10 @@ class ContactService(
       throw BadRequestException("Location is required for contact type '${request.type}'")
     }
 
+    if (type.locationFlag == N && request.officeLocation != null) {
+      throw BadRequestException("Contact type '${request.type}' does not support a location")
+    }
+
     val officeLocation =
       when {
         request.officeLocation != null && (type.locationFlag == Y || type.locationFlag == B) ->
@@ -89,17 +97,44 @@ class ContactService(
       throw BadRequestException("Team with code '${request.team}' does not exist at office location '${request.officeLocation}'")
     }
 
-    if (type.attendanceContact && request.startTime == null) {
-      throw BadRequestException("Contact type '${type.code}' requires a start time")
-    }
-
-    if (type.recordedHoursCredited && outcome != null && request.endTime == null) {
-      throw BadRequestException("Contact type '${type.code}' requires an end time when an outcome is provided")
+    if (type.recordedHoursCredited && request.endTime == null) {
+      throw BadRequestException("Contact type '${type.code}' requires an end time")
     }
 
     val nsi = if (request.nsiId == null) null
     else nsiRepository.findByIdOrNull(request.nsiId)
       ?: throw IllegalArgumentException("NSI with id '${request.nsiId}' does not exist")
+
+    if (requirement != null) {
+      // Contact is at "Whole Order" level - type must be whole order level OR have matching requirement type category.
+      if (!type.wholeOrderLevel && type.requirementTypeCategories?.any { it.id == requirement.typeCategory?.id } != true) {
+        throw BadRequestException("Contact type '${type.code}' is not appropriate for an requirement in category '${requirement.typeCategory?.code}'")
+      }
+    } else if (event != null) {
+      // Contact is at event level - type must support relevant pre/post CJA 2003 status of event.
+      // It looks like in Delius that these are not mutually exclusive!
+      val isLegacy = event.disposals?.any { it.type?.legacyOrder == true } ?: false
+      if (isLegacy && !type.legacyOrderLevel) {
+        throw BadRequestException("Contact type '${type.code}' is not appropriate for a pre CJA 2003 event")
+      }
+      val isCja = event.disposals?.any { it.type?.cja2003Order == true } ?: false
+      if (isCja && !type.cjaOrderLevel) {
+        throw BadRequestException("Contact type '${type.code}' is not appropriate for a CJA 2003 event")
+      }
+    } else if (nsi != null) {
+      // Contact is at nsi level - contact type must support nsi type
+      if (type.nsiTypes?.any { it.id == nsi.type?.id } != true) {
+        throw BadRequestException("Contact type '${type.code}' is not appropriate for an NSI with type '${nsi.type?.code}'")
+      }
+    } else {
+      // Contact is at offender level
+      if (!type.offenderLevel) {
+        throw BadRequestException("Contact type '${type.code}' is not appropriate at offender level")
+      }
+    }
+
+    // If contact is an attendance contact & has a start & end time then check for appointment clashes
+    assertFutureAppointmentClashes(type, offender, request)
 
     val contact = Contact(
       offender = offender,
@@ -158,8 +193,8 @@ class ContactService(
           ?: throw IllegalArgumentException("Contact type with id '${request.typeId}' does not exist")
       request.type != null ->
         contactTypeRepository.findByCode(request.type.code)
-          ?: throw IllegalArgumentException("Contact type with code '${request.type}' does not exist")
-      else -> throw IllegalArgumentException("Must provider type id or code")
+          ?: throw IllegalArgumentException("Contact type with code '${request.type.code}' does not exist")
+      else -> throw IllegalArgumentException("Must provide type id or code")
     }
 
     val contact = Contact(
@@ -181,5 +216,26 @@ class ContactService(
     )
 
     contactRepository.saveAndFlush(contact)
+  }
+
+  private fun assertFutureAppointmentClashes(type: ContactType, offender: Offender, request: NewContact) {
+    if (!type.attendanceContact || request.endTime == null || !request.date.isAfter(LocalDate.now())) {
+      return
+    }
+
+    val clashes = contactRepository.findClashingAttendanceContacts(
+      offender.id,
+      request.date,
+      request.startTime,
+      request.endTime,
+    )
+
+    if (clashes.isNotEmpty()) {
+      val ids = clashes.joinToString(", ") { "'${it.id}'" }
+      throw BadRequestException(
+        "Contact type '${type.code}' is an attendance type so must not clash with any other " +
+          "attendance contacts but clashes with contacts with ids $ids"
+      )
+    }
   }
 }

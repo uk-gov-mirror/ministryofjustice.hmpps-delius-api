@@ -5,7 +5,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.exactly
 import com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import com.nhaarman.mockitokotlin2.whenever
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -26,18 +26,20 @@ import wiremock.org.eclipse.jetty.http.HttpHeader
 
 @ExtendWith(MockitoExtension::class, TokenVerificationExtension::class)
 class TokenVerifyingAuthManagerTest {
-  @Mock
-  private lateinit var decoder: JwtDecoder
+  @Mock private lateinit var decoder: JwtDecoder
+  @Mock private lateinit var converter: AuthAwareTokenConverter
   private lateinit var client: WebClient
-  private lateinit var token: Jwt
+  private lateinit var jwt: Jwt
+  private lateinit var token: AuthAwareAuthenticationToken
 
   @BeforeEach
   fun beforeEach() {
-    token = Jwt.withTokenValue("dummy-token-value")
+    client = WebClient.create(TokenVerificationMockServer.URL)
+    jwt = Jwt.withTokenValue("dummy-token-value")
       .claim(JwtClaimNames.SUB, "some-subject-id")
       .header("dummy-header", "dummy-header-value")
       .build()
-    client = WebClient.create(TokenVerificationMockServer.URL)
+    token = AuthAwareAuthenticationToken(jwt, authorities = emptyList(), 1)
   }
 
   @Test
@@ -68,24 +70,25 @@ class TokenVerifyingAuthManagerTest {
   }
 
   private fun havingTokenDecode() {
-    whenever(decoder.decode(token.tokenValue)).thenReturn(token)
+    whenever(decoder.decode(jwt.tokenValue)).thenReturn(jwt)
+    whenever(converter.convert(jwt)).thenReturn(token)
   }
 
   private fun whenVerifyingToken(tokenVerificationEnabled: Boolean = true): Authentication {
-    val subject = TokenVerifyingAuthManager(decoder, client, tokenVerificationEnabled)
-    val authentication = BearerTokenAuthenticationToken(token.tokenValue)
+    val subject = TokenVerifyingAuthManager(decoder, client, tokenVerificationEnabled, converter)
+    val authentication = BearerTokenAuthenticationToken(jwt.tokenValue)
     return subject.authenticate(authentication)
   }
 
   private fun shouldReturnValidToken(observed: Authentication) {
-    Assertions.assertThat(observed).isNotNull.isInstanceOf(AuthAwareAuthenticationToken::class.java)
+    assertThat(observed).isSameAs(token)
   }
 
   private fun shouldAttemptTokenVerification(should: Boolean = true) {
     if (should) {
       tokenVerificationApi.verify(
         postRequestedFor(urlEqualTo("/token/verify"))
-          .withHeader(HttpHeader.AUTHORIZATION.asString(), equalTo("Bearer ${token.tokenValue}"))
+          .withHeader(HttpHeader.AUTHORIZATION.asString(), equalTo("Bearer ${jwt.tokenValue}"))
       )
     } else {
       tokenVerificationApi.verify(exactly(0), postRequestedFor(urlEqualTo("/token/verify")))

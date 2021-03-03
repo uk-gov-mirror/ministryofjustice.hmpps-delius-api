@@ -14,5 +14,5 @@ fun RecursiveComparisonAssert<*>.comparingDateTimesToNearest(unit: ChronoUnit, n
 
 fun RecursiveComparisonAssert<*>.comparingDateTimesToNearestSecond() = comparingDateTimesToNearest(ChronoUnit.SECONDS)
 
-fun <T : Any, P, Self : AbstractObjectAssert<Self, T>> Self.hasProperty(property: KProperty1<T, P>, expected: P): Self =
+fun <T, P, Self : AbstractObjectAssert<Self, T>> Self.hasProperty(property: KProperty1<T, P>, expected: P): Self =
   describedAs(property.name).returns(expected) { property.get(it) }

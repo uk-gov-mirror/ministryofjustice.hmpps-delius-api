@@ -16,14 +16,17 @@ import org.springframework.web.reactive.function.client.WebClient
 class TokenVerifyingAuthManager(
   jwtDecoderByIssuerUri: JwtDecoder,
   private val tokenVerificationApiWebClient: WebClient,
-  @Value("\${tokenverification.enabled:false}") private val tokenVerificationEnabled: Boolean
+  @Suppress("SpringJavaInjectionPointsAutowiringInspection")
+  @Value("\${tokenverification.enabled:false}")
+  private val tokenVerificationEnabled: Boolean,
+  private val authAwareTokenConverter: AuthAwareTokenConverter,
 ) :
   AuthenticationManager {
 
   private val jwtAuthenticationProvider = JwtAuthenticationProvider(jwtDecoderByIssuerUri)
 
   init {
-    jwtAuthenticationProvider.setJwtAuthenticationConverter(AuthAwareTokenConverter())
+    jwtAuthenticationProvider.setJwtAuthenticationConverter(authAwareTokenConverter)
   }
 
   override fun authenticate(authentication: Authentication): Authentication {

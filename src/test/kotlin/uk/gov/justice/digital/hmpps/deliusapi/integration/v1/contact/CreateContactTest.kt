@@ -16,7 +16,6 @@ import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewContact
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
 import uk.gov.justice.digital.hmpps.deliusapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
-import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditableInteraction
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 import uk.gov.justice.digital.hmpps.deliusapi.util.comparingDateTimesToNearestSecond
 import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
@@ -94,8 +93,6 @@ class CreateContactTest : IntegrationTestBase() {
     webTestClient.whenCreatingContact(request)
       .expectStatus().isBadRequest
       .expectBody().shouldReturnValidationError(expectedResult)
-
-    shouldNotAudit(AuditableInteraction.ADD_CONTACT)
   }
 
   @ParameterizedTest(name = "[{index}] Valid contact")
@@ -109,12 +106,19 @@ class CreateContactTest : IntegrationTestBase() {
       .shouldReturnCreatedContact(request)
       // And it should save the entity to the database with the correct details
       .shouldSaveContact(request)
-
-    shouldAudit(AuditableInteraction.ADD_CONTACT, mapOf("offenderId" to 2500343964L))
   }
 
   @Test
-  fun `Attempting to create contact without authentication`() {
+  fun `Attempting to create contact for unauthorized provider`() {
+    userId = 11
+    val subject = valid.copy(provider = "ACI")
+    webTestClient.whenCreatingContact(subject)
+      .expectStatus().isUnauthorized
+      .expectBody().shouldReturnAccessDenied()
+  }
+
+  @Test
+  fun `Attempting to create contact with unauthenticated request`() {
     webTestClient.post().uri("/v1/contact")
       .whenSendingUnauthenticatedRequest()
       .expectStatus().isUnauthorized

@@ -1,7 +1,9 @@
 package uk.gov.justice.digital.hmpps.deliusapi.service.nsi
 
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.deliusapi.advice.Auditable
+import uk.gov.justice.digital.hmpps.deliusapi.config.Authorities
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewNsi
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewNsiManager
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NsiDto
@@ -42,6 +44,11 @@ class NsiService(
   private val referenceDataMasterRepository: ReferenceDataMasterRepository,
   private val contactService: ContactService,
 ) {
+
+  @PreAuthorize(
+    "hasAuthority('${Authorities.PROVIDER}'.concat(#request.intendedProvider)) " +
+      "and hasAuthority('${Authorities.PROVIDER}'.concat(#request.manager.provider))"
+  )
   @Auditable(AuditableInteraction.ADMINISTER_NSI)
   fun createNsi(request: NewNsi): NsiDto {
     val active = request.endDate == null
@@ -171,7 +178,7 @@ class NsiService(
   }
 
   private fun createNsiManager(request: NewNsiManager, startDate: LocalDate): NsiManager {
-    val provider = providerRepository.findByCode(request.provider)
+    val provider = providerRepository.findByCodeAndSelectableIsTrue(request.provider)
       ?: throw BadRequestException("Provider with code '${request.provider}' does not exist")
 
     val team = if (request.team == null) provider.getUnallocatedTeam()

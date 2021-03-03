@@ -14,7 +14,6 @@ import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewNsiManager
 import uk.gov.justice.digital.hmpps.deliusapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.NsiRepository
-import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditableInteraction
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 import uk.gov.justice.digital.hmpps.deliusapi.util.comparingDateTimesToNearestSecond
 import uk.gov.justice.digital.hmpps.deliusapi.validation.ValidationTestCase
@@ -104,11 +103,6 @@ class CreateNsiTest @Autowired constructor (
           .comparingDateTimesToNearestSecond()
           .isEqualTo(case.subject)
 
-        shouldAudit(
-          AuditableInteraction.ADMINISTER_NSI,
-          mapOf("offenderId" to entity.offender?.id, "nsiId" to entity.id)
-        )
-
         shouldCreateSystemGeneratedContact(entity.id, entity.status?.contactTypeId!!)
       }
   }
@@ -124,12 +118,29 @@ class CreateNsiTest @Autowired constructor (
     webTestClient.whenCreatingNsi(case.subject)
       .expectStatus().isBadRequest
       .expectBody().shouldReturnValidationError(*case.invalidPaths.toTypedArray())
-
-    shouldNotAudit(AuditableInteraction.ADMINISTER_NSI)
   }
 
   @Test
-  fun `Attempting to create nsi without authentication`() {
+  fun `Attempting to create nsi for unauthorized intended provider`() {
+    userId = 11
+    val subject = validNsiFactory()
+    webTestClient.whenCreatingNsi(subject)
+      .expectStatus().isUnauthorized
+      .expectBody().shouldReturnAccessDenied()
+  }
+
+  @Test
+  fun `Attempting to create nsi for unauthorized manager provider`() {
+    val subject = validNsiFactory().copy(
+      manager = NewNsiManager(provider = "ACI")
+    )
+    webTestClient.whenCreatingNsi(subject)
+      .expectStatus().isUnauthorized
+      .expectBody().shouldReturnAccessDenied()
+  }
+
+  @Test
+  fun `Attempting to create nsi with unauthenticated request`() {
     webTestClient.post().uri("/v1/nsi")
       .whenSendingUnauthenticatedRequest()
       .expectStatus().isUnauthorized

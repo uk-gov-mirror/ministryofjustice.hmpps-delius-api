@@ -14,9 +14,9 @@ import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.deliusapi.repository.AuditedInteractionRepository
-import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditableInteraction
-import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 import java.lang.RuntimeException
+
+const val DEFAULT_INTEGRATION_TEST_USER_ID = 10L
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
@@ -32,30 +32,33 @@ abstract class IntegrationTestBase {
   @Autowired
   protected lateinit var auditedInteractionRepository: AuditedInteractionRepository
 
-  protected var userId = 0L
+  protected var userId = DEFAULT_INTEGRATION_TEST_USER_ID
 
   @BeforeEach
   fun beforeEach() {
-    userId = Fake.faker.number().randomNumber()
+    userId = DEFAULT_INTEGRATION_TEST_USER_ID
   }
 
-  protected fun WebTestClient.RequestBodySpec.whenSendingUnauthenticatedRequest(): WebTestClient.ResponseSpec = this
-    .contentType(MediaType.APPLICATION_JSON)
-    .bodyValue("{}")
-    .exchange()
+  protected fun WebTestClient.RequestBodySpec.whenSendingUnauthenticatedRequest(): WebTestClient.ResponseSpec =
+    contentType(MediaType.APPLICATION_JSON)
+      .bodyValue("{}")
+      .exchange()
 
-  protected fun WebTestClient.RequestBodySpec.whenSendingMalformedJson(): WebTestClient.ResponseSpec = this
-    .havingAuthentication()
-    .contentType(MediaType.APPLICATION_JSON)
-    .accept(MediaType.APPLICATION_JSON)
-    .bodyValue("{,}")
-    .exchange()
+  protected fun WebTestClient.RequestBodySpec.whenSendingMalformedJson(): WebTestClient.ResponseSpec =
+    havingAuthentication()
+      .contentType(MediaType.APPLICATION_JSON)
+      .accept(MediaType.APPLICATION_JSON)
+      .bodyValue("{,}")
+      .exchange()
 
-  protected fun WebTestClient.BodyContentSpec.shouldReturnJsonParseError() = this
-    .jsonPath("$.userMessage").value(startsWith("JSON parse error: "))
+  protected fun WebTestClient.BodyContentSpec.shouldReturnJsonParseError() =
+    jsonPath("$.userMessage").value(startsWith("JSON parse error: "))
 
-  protected fun WebTestClient.BodyContentSpec.shouldReturnValidationError(vararg invalidPaths: String) = this
-    .jsonPath("$.userMessage").value(allOf(invalidPaths.map { containsString(it) }))
+  protected fun WebTestClient.BodyContentSpec.shouldReturnValidationError(vararg invalidPaths: String) =
+    jsonPath("$.userMessage").value(allOf(invalidPaths.map { containsString(it) }))
+
+  protected fun WebTestClient.BodyContentSpec.shouldReturnAccessDenied() =
+    jsonPath("$.userMessage").value(startsWith("Access is denied"))
 
   protected fun <T : WebTestClient.RequestHeadersSpec<T>> T.havingAuthentication(
     scope: List<String>? = listOf(),
@@ -72,24 +75,6 @@ abstract class IntegrationTestBase {
       deliusUser = deliusUser
     )
     return this.header("Authorization", "Bearer $token")
-  }
-
-  protected fun shouldNotAudit(interaction: AuditableInteraction) {
-    val interactions = auditedInteractionRepository.findAllByUserIdAndBusinessInteractionCode(userId, interaction.code)
-    assertThat(interactions).noneMatch {
-      !it.success && it.businessInteraction.code == interaction.code
-    }
-  }
-
-  protected fun shouldAudit(interaction: AuditableInteraction, parameters: Map<String, Any?>) {
-    val interactions = auditedInteractionRepository.findAllByUserIdAndBusinessInteractionCode(userId, interaction.code)
-    val expected = parameters.entries.map { "${it.key}='${it.value}'" }.toSet()
-
-    assertThat(interactions).anyMatch {
-      it.success &&
-        it.businessInteraction.code == interaction.code &&
-        it.parameters.split(",").map { p -> p.trim() }.toSet().containsAll(expected)
-    }
   }
 
   protected fun <T> WebTestClient.BodyContentSpec.shouldCreateEntityById(repository: CrudRepository<T, Long>, assertion: (entity: T) -> Unit): WebTestClient.BodyContentSpec =

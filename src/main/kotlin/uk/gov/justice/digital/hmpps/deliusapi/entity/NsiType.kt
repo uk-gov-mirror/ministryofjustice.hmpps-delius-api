@@ -73,5 +73,6 @@ data class NsiType(
     joinColumns = [JoinColumn(name = "NSI_TYPE_ID")],
     inverseJoinColumns = [JoinColumn(name = "PROBATION_AREA_ID")],
   )
+  @Where(clause = "SELECTABLE = 'Y'")
   var providers: List<Provider>? = null,
 )

@@ -5,7 +5,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.entity.AuditedInteraction
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import uk.gov.justice.digital.hmpps.deliusapi.repository.AuditedInteractionRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.BusinessInteractionRepository
-import uk.gov.justice.digital.hmpps.deliusapi.service.model.SecurityUserContext
+import uk.gov.justice.digital.hmpps.deliusapi.service.security.SecurityUserContext
 import java.time.LocalDateTime
 
 @Service

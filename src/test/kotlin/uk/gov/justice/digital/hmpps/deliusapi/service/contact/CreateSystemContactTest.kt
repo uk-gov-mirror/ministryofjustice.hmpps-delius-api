@@ -7,7 +7,6 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.ArgumentCaptor
 import org.mockito.Captor
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
-import uk.gov.justice.digital.hmpps.deliusapi.service.ContactServiceTestBase
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
 import java.lang.IllegalArgumentException
@@ -116,12 +115,14 @@ class CreateSystemContactTest : ContactServiceTestBase() {
     havingTypeById: Boolean? = true,
     havingTypeByCode: Boolean? = null,
     havingProvider: Boolean = true,
+    havingNsi: Boolean = true,
   ) {
     request = Fake.newSystemContact().copy(
       typeId = if (havingTypeById == null) null else type.id,
       type = if (havingTypeByCode == null) null
       else Fake.faker.options().option(WellKnownContactType::class.java),
       offenderId = offender.id,
+      nsiId = if (havingNsi) nsi.id else null,
       eventId = event.id,
       providerId = provider.id,
       teamId = team.id,
@@ -143,6 +144,9 @@ class CreateSystemContactTest : ContactServiceTestBase() {
 
     whenever(providerRepository.findById(provider.id))
       .thenReturn(if (havingProvider) Optional.of(provider) else Optional.empty())
+
+    whenever(nsiRepository.findById(nsi.id))
+      .thenReturn(if (havingNsi) Optional.of(nsi) else Optional.empty())
   }
 
   private fun whenCreatingSystemContactShouldThrowIllegalArgumentException() {

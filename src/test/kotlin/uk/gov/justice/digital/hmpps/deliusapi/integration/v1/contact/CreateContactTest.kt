@@ -32,6 +32,7 @@ class CreateContactTest : IntegrationTestBase() {
       offenderCrn = "X320741",
       type = "TST01", // Simple contact
       outcome = "CO22", // No Action Required
+      nsiId = null,
       provider = "C00",
       team = "C00T01",
       staff = "C00T01U",
@@ -58,6 +59,7 @@ class CreateContactTest : IntegrationTestBase() {
           of(valid.copy(officeLocation = "123456"), "officeLocation"),
           of(valid.copy(officeLocation = "12345678"), "officeLocation"),
           of(valid.copy(requirementId = 1L, eventId = null), "Cannot specify requirementId without eventId"),
+          of(valid.copy(requirementId = 2500083652, nsiId = 2500018597), "Only one of nsiId, requirementId can have a value"),
         )
       )
       // DAPI-70 Contact types should be restricted to allowed values
@@ -77,6 +79,8 @@ class CreateContactTest : IntegrationTestBase() {
       successCases.add(of(valid.copy(type = "TST05")))
       // Non-selectable contact types without SPG Override set are not allowed
       failureCases.add(of(valid.copy(type = "SMLI001"), "Contact type with code 'SMLI001' does not exist"))
+      // NSI and event supplied, requirement left blank
+      successCases.add(of(valid.copy(nsiId = 2500018597, eventId = 2500295343, requirementId = null)))
     }
     @JvmStatic
     fun successCases(): Stream<Arguments> = successCases.stream()
@@ -132,10 +136,19 @@ class CreateContactTest : IntegrationTestBase() {
     .bodyValue(request)
     .exchange()
 
-  private fun WebTestClient.BodyContentSpec.shouldReturnCreatedContact(request: NewContact) = this
-    .jsonPath("$.eventId").value(equalTo(request.eventId))
-    .jsonPath("$.requirementId").value(equalTo(request.requirementId))
-    .jsonPath("$.id").value(greaterThan(0L))
+  private fun WebTestClient.BodyContentSpec.shouldReturnCreatedContact(request: NewContact): WebTestClient.BodyContentSpec {
+    jsonPath("$.eventId").value(equalTo(request.eventId))
+    jsonPath("$.id").value(greaterThan(0L))
+
+    if (request.requirementId != null) {
+      jsonPath("$.requirementId").value(equalTo(request.requirementId))
+    }
+
+    if (request.nsiId != null) {
+      jsonPath("$.nsiId").value(equalTo(request.nsiId))
+    }
+    return this
+  }
 
   private fun WebTestClient.BodyContentSpec.shouldSaveContact(request: NewContact) = this
     .shouldCreateEntityById(contactRepository) { entity ->

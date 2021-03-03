@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import uk.gov.justice.digital.hmpps.deliusapi.mapper.ContactMapper
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactTypeRepository
+import uk.gov.justice.digital.hmpps.deliusapi.repository.NsiRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.OffenderRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ProviderRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.findByCrnOrBadRequest
@@ -30,6 +31,7 @@ class ContactService(
   private val offenderRepository: OffenderRepository,
   private val contactTypeRepository: ContactTypeRepository,
   private val providerRepository: ProviderRepository,
+  private val nsiRepository: NsiRepository,
 ) {
 
   @Auditable(AuditableInteraction.ADD_CONTACT)
@@ -92,8 +94,13 @@ class ContactService(
       throw BadRequestException("Contact type '${type.code}' requires an end time when an outcome is provided")
     }
 
+    val nsi = if (request.nsiId == null) null
+    else nsiRepository.findByIdOrNull(request.nsiId)
+      ?: throw IllegalArgumentException("NSI with id '${request.nsiId}' does not exist")
+
     val contact = Contact(
       offender = offender,
+      nsi = nsi,
       type = type,
       outcome = outcome,
       provider = provider,
@@ -138,6 +145,10 @@ class ContactService(
     else offender.events?.find { it.id == request.eventId }
       ?: throw IllegalArgumentException("Event with id '${request.eventId}' does not exist on offender '${offender.id}'")
 
+    val nsi = if (request.nsiId == null) null
+    else nsiRepository.findByIdOrNull(request.nsiId)
+      ?: throw IllegalArgumentException("NSI with id '${request.nsiId}' does not exist")
+
     val type = when {
       request.typeId != null ->
         contactTypeRepository.findByIdOrNull(request.typeId)
@@ -151,7 +162,7 @@ class ContactService(
     val contact = Contact(
       type = type,
       offender = offender,
-      nsiId = request.nsiId,
+      nsi = nsi,
       provider = provider,
       team = team,
       staff = staff,

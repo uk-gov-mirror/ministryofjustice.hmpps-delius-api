@@ -4,6 +4,8 @@ import uk.gov.justice.digital.hmpps.deliusapi.validation.AllowedValues
 import uk.gov.justice.digital.hmpps.deliusapi.validation.Crn
 import uk.gov.justice.digital.hmpps.deliusapi.validation.DependentFields
 import uk.gov.justice.digital.hmpps.deliusapi.validation.EndTime
+import uk.gov.justice.digital.hmpps.deliusapi.validation.Exclusive
+import uk.gov.justice.digital.hmpps.deliusapi.validation.ExclusiveField
 import uk.gov.justice.digital.hmpps.deliusapi.validation.FieldGroups
 import uk.gov.justice.digital.hmpps.deliusapi.validation.NotBlankWhenProvided
 import uk.gov.justice.digital.hmpps.deliusapi.validation.OfficeLocationCode
@@ -20,9 +22,14 @@ import javax.validation.constraints.Size
 
 @TimeRanges
 @FieldGroups
+@Exclusive
 data class NewContact(
   @field:Crn
   val offenderCrn: String,
+
+  @ExclusiveField
+  @field:Positive
+  val nsiId: Long? = null,
 
   @field:NotBlank
   @field:Size(max = 10)
@@ -67,6 +74,7 @@ data class NewContact(
   @field:Positive
   val eventId: Long? = null,
 
+  @ExclusiveField
   @field:Positive
   @field:DependentFields("eventId")
   val requirementId: Long? = null,

@@ -55,10 +55,9 @@ data class NewContact(
   val date: LocalDate,
 
   @field:StartTime(name = "contact")
-  val startTime: LocalTime? = null,
+  val startTime: LocalTime,
 
   @field:EndTime(name = "contact")
-  @field:DependentFields("startTime")
   val endTime: LocalTime? = null,
 
   val alert: Boolean = false,

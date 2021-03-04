@@ -19,6 +19,8 @@ import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 import uk.gov.justice.digital.hmpps.deliusapi.util.comparingDateTimesToNearestSecond
 import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
+import java.time.LocalDate
+import java.time.LocalTime
 import java.util.stream.Stream
 
 @ActiveProfiles("test-h2")
@@ -29,7 +31,7 @@ class CreateContactTest : IntegrationTestBase() {
   companion object {
     private val valid = Fake.newContact().copy(
       offenderCrn = "X320741",
-      type = "TST01", // Simple contact
+      type = "EAP0", // AP Register - INCIDENT
       outcome = "CO22", // No Action Required
       nsiId = null,
       provider = "C00",
@@ -61,6 +63,7 @@ class CreateContactTest : IntegrationTestBase() {
           of(valid.copy(requirementId = 2500083652, nsiId = 2500018597), "Only one of nsiId, requirementId can have a value"),
         )
       )
+      successCases.add(of(valid))
       // DAPI-70 Contact types should be restricted to allowed values
       successCases.add(of(valid.copy(type = "TST01")))
       failureCases.add(of(valid.copy(type = "TST04"), "type must match one of the following values"))
@@ -70,16 +73,40 @@ class CreateContactTest : IntegrationTestBase() {
       // DAPI-74 Office location should only be mandatory if required by contact type
       successCases.add(of(valid.copy(type = "TST03")))
       failureCases.add(of(valid.copy(type = "TST03", officeLocation = null), "Location is required for contact type 'TST03'"))
-      // DAPI-77 Start time only mandatory for attendance contacts
-      successCases.add(of(valid.copy(type = "TST02")))
-      failureCases.add(of(valid.copy(type = "TST02", startTime = null, endTime = null), "Contact type 'TST02' requires a start time"))
-      failureCases.add(of(valid.copy(startTime = null), "Cannot specify endTime without startTime"))
       // Non-selectable contact types with SPG Override set are allowed
       successCases.add(of(valid.copy(type = "TST05")))
       // Non-selectable contact types without SPG Override set are not allowed
       failureCases.add(of(valid.copy(type = "SMLI001"), "Contact type with code 'SMLI001' does not exist"))
       // NSI and event supplied, requirement left blank
-      successCases.add(of(valid.copy(nsiId = 2500018597, eventId = 2500295343, requirementId = null)))
+      successCases.add(of(valid.copy(nsiId = 2500018597, requirementId = null)))
+
+      // Clashing appointments in the future is not ok
+      failureCases.add(
+        of(
+          valid.copy(
+            type = "CCCS", // Counselling
+            outcome = null,
+            officeLocation = null,
+            date = LocalDate.of(2100, 1, 1),
+            startTime = LocalTime.NOON,
+            endTime = LocalTime.NOON.plusHours(1),
+          ),
+          "must not clash with any other attendance contacts"
+        )
+      )
+      // Clashing appointment in the past is ok
+      successCases.add(
+        of(
+          valid.copy(
+            type = "CCCS", // Counselling
+            outcome = "ATTC", // Attended
+            officeLocation = null,
+            date = LocalDate.of(1990, 1, 1),
+            startTime = LocalTime.NOON,
+            endTime = LocalTime.NOON.plusHours(1),
+          )
+        )
+      )
     }
     @JvmStatic
     fun successCases(): Stream<Arguments> = successCases.stream()
@@ -95,7 +122,7 @@ class CreateContactTest : IntegrationTestBase() {
       .expectBody().shouldReturnValidationError(expectedResult)
   }
 
-  @ParameterizedTest(name = "[{index}] Valid contact")
+  @ParameterizedTest(name = "[{index}] Valid contact {arguments}")
   @MethodSource("successCases")
   fun `should successfully create and audit a new contact`(request: NewContact) {
     webTestClient.whenCreatingContact(request)

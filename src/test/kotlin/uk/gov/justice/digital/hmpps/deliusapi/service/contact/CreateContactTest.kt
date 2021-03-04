@@ -67,11 +67,10 @@ class CreateContactTest : ContactServiceTestBase() {
   @Test
   fun `Creating future contact with acceptable absence outcome`() {
     havingDependentEntities()
+    type = type.copy(outcomeTypes = listOf(outcome.copy(attendance = false, compliantAcceptable = true)))
+
     havingRepositories()
     request = request.copy(date = Fake.randomFutureLocalDate())
-
-    whenever(contactTypeRepository.findSelectableByCode(request.type))
-      .thenReturn(type.copy(outcomeTypes = listOf(outcome.copy(attendance = false, compliantAcceptable = true))))
 
     passesValidation()
   }
@@ -88,11 +87,10 @@ class CreateContactTest : ContactServiceTestBase() {
   @Test
   fun `Creating historic contact with no outcome when outcome not required`() {
     havingDependentEntities()
+    type = type.copy(outcomeFlag = YesNoBoth.N)
+
     havingRepositories()
     request = request.copy(date = Fake.randomPastLocalDate(), outcome = null)
-
-    whenever(contactTypeRepository.findSelectableByCode(request.type))
-      .thenReturn(type.copy(outcomeFlag = YesNoBoth.N))
 
     passesValidation()
   }
@@ -100,11 +98,10 @@ class CreateContactTest : ContactServiceTestBase() {
   @Test
   fun `Creating contact with no location when location not required`() {
     havingDependentEntities()
+    type = type.copy(locationFlag = YesNoBoth.N)
+
     havingRepositories()
     request = request.copy(officeLocation = null)
-
-    whenever(contactTypeRepository.findSelectableByCode(request.type))
-      .thenReturn(type.copy(locationFlag = YesNoBoth.N))
 
     passesValidation()
   }
@@ -112,11 +109,10 @@ class CreateContactTest : ContactServiceTestBase() {
   @Test
   fun `Creating contact with no location when location optional`() {
     havingDependentEntities()
+    type = type.copy(locationFlag = YesNoBoth.B)
+
     havingRepositories()
     request = request.copy(officeLocation = null)
-
-    whenever(contactTypeRepository.findSelectableByCode(request.type))
-      .thenReturn(type.copy(locationFlag = YesNoBoth.B))
 
     passesValidation()
   }
@@ -124,55 +120,30 @@ class CreateContactTest : ContactServiceTestBase() {
   @Test
   fun `Creating contact with location when location optional`() {
     havingDependentEntities()
+    type = type.copy(locationFlag = YesNoBoth.B)
+
     havingRepositories()
-    whenever(contactTypeRepository.findSelectableByCode(request.type))
-      .thenReturn(type.copy(locationFlag = YesNoBoth.B))
 
     passesValidation()
   }
 
   @Test
-  fun `Creating non-attendance and non-recordedHoursCredited contact without times`() {
+  fun `Creating non-recordedHoursCredited contact without end time`() {
     havingDependentEntities()
+    type = type.copy(recordedHoursCredited = false)
+
     havingRepositories()
-
-    request = request.copy(startTime = null, endTime = null)
-
-    whenever(contactTypeRepository.findSelectableByCode(request.type))
-      .thenReturn(type.copy(attendanceContact = false, recordedHoursCredited = false))
+    request = request.copy(endTime = null)
 
     passesValidation()
   }
 
   @Test
-  fun `Creating outcomed non-recordedHoursCredited contact without end time`() {
+  fun `Attempting to create recordedHoursCredited contact without end time`() {
     havingDependentEntities()
     havingRepositories()
 
     request = request.copy(endTime = null)
-
-    whenever(contactTypeRepository.findSelectableByCode(request.type))
-      .thenReturn(type.copy(recordedHoursCredited = false))
-
-    passesValidation()
-  }
-
-  @Test
-  fun `Attempting to create outcomed recordedHoursCredited contact without end time`() {
-    havingDependentEntities()
-    havingRepositories()
-
-    request = request.copy(endTime = null)
-
-    shouldThrowBadRequest()
-  }
-
-  @Test
-  fun `Attempting to create attendance contact without start time`() {
-    havingDependentEntities()
-    havingRepositories()
-
-    request = request.copy(startTime = null, endTime = null)
 
     shouldThrowBadRequest()
   }
@@ -274,15 +245,76 @@ class CreateContactTest : ContactServiceTestBase() {
     shouldThrowBadRequest()
   }
 
+  @Test
+  fun `Attempting to create requirement contact against non-whole order contact type`() {
+    havingDependentEntities()
+    type = type.copy(wholeOrderLevel = false, requirementTypeCategories = emptyList())
+    havingRepositories()
+    shouldThrowBadRequest()
+  }
+
+  @Test
+  fun `Creating requirement contact against contact type with matching requirement category`() {
+    havingDependentEntities()
+    val category = Fake.requirementTypeCategory().copy(id = requirement.typeCategory?.id!!)
+    type = type.copy(wholeOrderLevel = false, requirementTypeCategories = listOf(category))
+    havingRepositories()
+    passesValidation()
+  }
+
+  @Test
+  fun `Attempting to create event contact against non-cja2003 type`() {
+    havingDependentEntities()
+    type = type.copy(cjaOrderLevel = false)
+    havingRepositories()
+    request = request.copy(requirementId = null)
+    shouldThrowBadRequest()
+  }
+
+  @Test
+  fun `Attempting to create event contact against non-legacy order type`() {
+    havingDependentEntities()
+    type = type.copy(legacyOrderLevel = false)
+    havingRepositories()
+    request = request.copy(requirementId = null)
+    shouldThrowBadRequest()
+  }
+
+  @Test
+  fun `Attempting to create nsi contact against type without matching nsi type`() {
+    havingDependentEntities()
+    havingRepositories(havingNsi = true)
+    request = request.copy(requirementId = null, eventId = null)
+    shouldThrowBadRequest()
+  }
+
+  @Test
+  fun `Creating nsi contact`() {
+    havingDependentEntities()
+    type = type.copy(nsiTypes = listOf(nsi.type?.copy()!!))
+    havingRepositories(havingNsi = true)
+    request = request.copy(requirementId = null, eventId = null)
+    passesValidation()
+  }
+
+  @Test
+  fun `Attempting to create offender contact against non-offender level type`() {
+    havingDependentEntities()
+    type = type.copy(offenderLevel = false)
+    havingRepositories()
+    request = request.copy(requirementId = null, eventId = null)
+    shouldThrowBadRequest()
+  }
+
   private fun havingRepositories(
     havingOffender: Boolean = true,
     havingType: Boolean = true,
     havingProvider: Boolean = true,
-    havingNsi: Boolean = true,
+    havingNsi: Boolean? = null,
   ) {
     request = Fake.newContact().copy(
       offenderCrn = offender.crn,
-      nsiId = nsi.id,
+      nsiId = if (havingNsi == null) null else nsi.id,
       type = type.code,
       eventId = event.id,
       requirementId = requirement.id,
@@ -300,7 +332,7 @@ class CreateContactTest : ContactServiceTestBase() {
     whenever(providerRepository.findByCodeAndSelectableIsTrue(provider.code))
       .thenReturn(if (havingProvider) provider else null)
     whenever(nsiRepository.findById(nsi.id))
-      .thenReturn(if (havingNsi) Optional.of(nsi) else Optional.empty())
+      .thenReturn(if (havingNsi == true) Optional.of(nsi) else Optional.empty())
   }
 
   private fun shouldThrowBadRequest() {

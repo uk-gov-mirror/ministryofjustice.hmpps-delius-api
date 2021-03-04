@@ -79,7 +79,7 @@ data class Contact(
 
   @Column(name = "ALERT_ACTIVE")
   @Type(type = "yes_no")
-  var alert: Boolean = false,
+  var alert: Boolean? = false,
 
   @Column(name = "CREATED_DATETIME", nullable = false)
   @CreatedDate
@@ -87,7 +87,7 @@ data class Contact(
 
   @Column(name = "SENSITIVE")
   @Type(type = "yes_no")
-  var sensitive: Boolean = false,
+  var sensitive: Boolean? = false,
 
   @Column(name = "LAST_UPDATED_DATETIME", nullable = false)
   @LastModifiedDate

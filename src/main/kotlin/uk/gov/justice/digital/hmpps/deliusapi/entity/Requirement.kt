@@ -5,6 +5,8 @@ import java.time.LocalDate
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.Id
+import javax.persistence.JoinColumn
+import javax.persistence.ManyToOne
 import javax.persistence.Table
 
 @Entity
@@ -23,4 +25,8 @@ data class Requirement(
 
   @Column(name = "ACTIVE_FLAG", columnDefinition = "NUMBER", nullable = false)
   var active: Boolean,
+
+  @JoinColumn(name = "RQMNT_TYPE_MAIN_CATEGORY_ID")
+  @ManyToOne
+  var typeCategory: RequirementTypeCategory? = null,
 )

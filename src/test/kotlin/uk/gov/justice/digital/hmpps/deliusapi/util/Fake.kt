@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
 import uk.gov.justice.digital.hmpps.deliusapi.entity.ContactOutcomeType
 import uk.gov.justice.digital.hmpps.deliusapi.entity.ContactType
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Disposal
+import uk.gov.justice.digital.hmpps.deliusapi.entity.DisposalType
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Event
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Nsi
 import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiManager
@@ -23,6 +24,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.entity.OfficeLocation
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Provider
 import uk.gov.justice.digital.hmpps.deliusapi.entity.ReferenceDataMaster
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Requirement
+import uk.gov.justice.digital.hmpps.deliusapi.entity.RequirementTypeCategory
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Staff
 import uk.gov.justice.digital.hmpps.deliusapi.entity.StandardReference
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Team
@@ -45,7 +47,7 @@ object Fake {
   val nsiMapper: NsiMapper = NsiMapper.INSTANCE
 
   const val ALLOWED_CONTACT_TYPES = "TST01,TST02,TST03"
-  val allowedContactTypes = ALLOWED_CONTACT_TYPES.split(',').toTypedArray()
+  private val allowedContactTypes = ALLOWED_CONTACT_TYPES.split(',').toTypedArray()
 
   private fun Date.toLocalTime(): LocalTime = this.toInstant().atZone(ZoneId.systemDefault()).toLocalTime()
   private fun Date.toLocalDate(): LocalDate = this.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
@@ -76,7 +78,14 @@ object Fake {
     locationFlag = Y,
     attendanceContact = true,
     recordedHoursCredited = true,
+    cjaOrderLevel = true,
+    legacyOrderLevel = true,
+    offenderLevel = true,
+    wholeOrderLevel = true,
+    scheduleFutureAppointments = true,
     outcomeTypes = listOf(contactOutcomeType()),
+    requirementTypeCategories = listOf(requirementTypeCategory()),
+    nsiTypes = listOf(nsiType()),
   )
   fun contactOutcomeType() = ContactOutcomeType(id = id(), code = faker.lorem().characters(1, 10), compliantAcceptable = true, attendance = true)
   fun provider() = Provider(id = id(), code = faker.lorem().characters(3), teams = listOf(team()))
@@ -88,9 +97,37 @@ object Fake {
   )
   fun officeLocation() = OfficeLocation(id = id(), code = faker.lorem().characters(7))
   fun staff() = Staff(id = id(), code = faker.bothify("?##?###"))
-  fun requirement() = Requirement(id = id(), offenderId = id(), active = true)
-  fun disposal() = Disposal(id = id(), requirements = listOf(requirement()))
-  fun event() = Event(id = id(), disposals = listOf(disposal()), referralDate = randomPastLocalDate(), active = true)
+
+  fun requirementTypeCategory() = RequirementTypeCategory(
+    id = id(),
+    code = faker.lorem().characters(1, 20),
+  )
+  fun requirement() = Requirement(
+    id = id(),
+    offenderId = id(),
+    active = true,
+    typeCategory = requirementTypeCategory(),
+    terminationDate = null,
+  )
+
+  fun disposalType() = DisposalType(
+    id = id(),
+    cja2003Order = true,
+    legacyOrder = true,
+  )
+
+  fun disposal() = Disposal(
+    id = id(),
+    requirements = listOf(requirement()),
+    type = disposalType(),
+  )
+
+  fun event() = Event(
+    id = id(),
+    disposals = listOf(disposal()),
+    referralDate = randomPastLocalDate(),
+    active = true
+  )
 
   fun contact(): Contact {
     val contactOutcomeType = contactOutcomeType()

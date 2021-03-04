@@ -25,7 +25,6 @@ class NewContactValidationTest : ValidationTest<NewContact>() {
       .string(NewContact::outcome) { it.isNull().length(1).length(10) }
       .string(NewContact::officeLocation) { it.isNull() }
       .time(NewContact::endTime) { it.isNull() }
-      .allNull(NewContact::startTime, NewContact::endTime)
       .string(NewContact::notes) { it.isNull().empty() }
       .string(NewContact::description) { it.isNull().empty() }
       .number(NewContact::requirementId) { it.isNull() }
@@ -41,7 +40,7 @@ class NewContactValidationTest : ValidationTest<NewContact>() {
       .string(NewContact::team) { it.empty().blank().length(5).length(7) }
       .string(NewContact::staff) { it.empty().blank().length(6).length(8) }
       .string(NewContact::officeLocation) { it.empty().blank().length(6).length(8) }
-      .time(NewContact::endTime) { it.dependent(NewContact::startTime).before(NewContact::startTime) }
+      .time(NewContact::endTime) { it.before(NewContact::startTime) }
       .string(NewContact::notes) { it.length(4001) }
       .string(NewContact::description) { it.length(201) }
       .number(NewContact::eventId) { it.zero().negative() }

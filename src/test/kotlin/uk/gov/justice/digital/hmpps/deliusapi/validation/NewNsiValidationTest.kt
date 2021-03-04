@@ -27,8 +27,19 @@ class NewNsiValidationTest : ValidationTest<NewNsi>() {
       .string(NewNsi::notes) { it.isNull() }
       .add("status date and referral date can be on same day") {
         it.copy(
-          statusDate = LocalDateTime.now(),
-          referralDate = LocalDate.now(),
+          statusDate = LocalDateTime.of(2021, 3, 4, 0, 0, 1),
+          referralDate = LocalDate.of(2021, 3, 4),
+          startDate = null,
+          endDate = null,
+          expectedStartDate = null,
+          expectedEndDate = null,
+          outcome = null,
+        )
+      }
+      .add("status date and referral date can be exactly same") {
+        it.copy(
+          statusDate = LocalDateTime.of(2021, 3, 4, 0, 0),
+          referralDate = LocalDate.of(2021, 3, 4),
           startDate = null,
           endDate = null,
           expectedStartDate = null,

@@ -10,8 +10,8 @@ import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
 class NsiMapperTest {
   @Test
   fun `Mapping from nsi to nsi dto`() {
-    val manager = Fake.nsiManager()
-    val source = Fake.nsi().copy(managers = listOf(manager))
+    val source = Fake.nsi()
+    source.managers.add(Fake.nsiManager(source))
     val observed = NsiMapper.INSTANCE.toDto(source)
 
     assertThat(observed)

@@ -116,7 +116,6 @@ class NsiService(
       }
     }
 
-    val manager = createNsiManager(request.manager, request.referralDate)
     val nsi = Nsi(
       offender = offender,
       event = event,
@@ -134,10 +133,13 @@ class NsiService(
       outcome = outcome,
       requirement = requirement,
       intendedProvider = intendedProvider,
-      managers = listOf(manager),
       active = active,
       pendingTransfer = false,
     )
+
+    val manager = createNsiManager(request.manager, request.referralDate, nsi)
+
+    nsi.managers.add(manager)
 
     val entity = nsiRepository.saveAndFlush(nsi)
     audit.nsiId = entity.id
@@ -177,7 +179,7 @@ class NsiService(
     }
   }
 
-  private fun createNsiManager(request: NewNsiManager, startDate: LocalDate): NsiManager {
+  private fun createNsiManager(request: NewNsiManager, startDate: LocalDate, nsi: Nsi): NsiManager {
     val provider = providerRepository.findByCodeAndSelectableIsTrue(request.provider)
       ?: throw BadRequestException("Provider with code '${request.provider}' does not exist")
 
@@ -188,6 +190,7 @@ class NsiService(
     else team.getStaffOrBadRequest(request.staff)
 
     return NsiManager(
+      nsi = nsi,
       startDate = startDate,
       provider = provider,
       team = team,

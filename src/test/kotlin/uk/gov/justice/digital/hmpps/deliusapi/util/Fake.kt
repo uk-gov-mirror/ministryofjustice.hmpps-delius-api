@@ -178,12 +178,13 @@ object Fake {
     contactTypeId = id(),
   )
 
-  fun nsiManager(): NsiManager {
+  fun nsiManager(nsi: Nsi = nsi()): NsiManager {
     val staff = staff()
     val team = team().copy(staff = listOf(staff))
     val provider = provider().copy(teams = listOf(team))
     return NsiManager(
       id = id(),
+      nsi = nsi,
       startDate = randomPastLocalDate(),
       provider = provider,
       team = team,
@@ -200,32 +201,37 @@ object Fake {
 
   fun newNsiManager(): NewNsiManager = nsiMapper.toNew(nsiManagerDto())
 
-  fun nsi() = Nsi(
-    id = id(),
-    offender = offender(),
-    event = event(),
-    type = nsiType(),
-    subType = standardReference(),
-    length = faker.number().numberBetween(25L, 75L),
-    referralDate = faker.date().past(100, 20, TimeUnit.DAYS).toLocalDate(),
-    expectedStartDate = randomPastLocalDate(),
-    expectedEndDate = randomFutureLocalDate(),
-    startDate = randomPastLocalDate(),
-    endDate = LocalDate.now(),
-    status = nsiStatus(),
-    statusDate = randomLocalDateTime(),
-    notes = faker.lorem().paragraph(),
-    outcome = standardReference(),
-    active = false, // end date is provided here
-    pendingTransfer = false,
-    requirement = requirement(),
-    intendedProvider = provider(),
-    createdDateTime = randomLocalDateTime(),
-    lastUpdatedDateTime = randomLocalDateTime(),
-    createdByUserId = id(),
-    lastUpdatedUserId = id(),
-    managers = listOf(nsiManager()),
-  )
+  fun nsi(): Nsi {
+    val nsi = Nsi(
+      id = id(),
+      offender = offender(),
+      event = event(),
+      type = nsiType(),
+      subType = standardReference(),
+      length = faker.number().numberBetween(25L, 75L),
+      referralDate = faker.date().past(100, 20, TimeUnit.DAYS).toLocalDate(),
+      expectedStartDate = randomPastLocalDate(),
+      expectedEndDate = randomFutureLocalDate(),
+      startDate = randomPastLocalDate(),
+      endDate = LocalDate.now(),
+      status = nsiStatus(),
+      statusDate = randomLocalDateTime(),
+      notes = faker.lorem().paragraph(),
+      outcome = standardReference(),
+      active = false, // end date is provided here
+      pendingTransfer = false,
+      requirement = requirement(),
+      intendedProvider = provider(),
+      createdDateTime = randomLocalDateTime(),
+      lastUpdatedDateTime = randomLocalDateTime(),
+      createdByUserId = id(),
+      lastUpdatedUserId = id(),
+    )
+
+    nsi.managers.add(nsiManager(nsi))
+
+    return nsi
+  }
 
   fun nsiDto(): NsiDto = nsiMapper.toDto(nsi())
 

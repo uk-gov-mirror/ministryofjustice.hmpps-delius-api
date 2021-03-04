@@ -41,7 +41,7 @@ private data class ComparableDateTime(override val value: LocalDateTime) : Compa
   override val name = "date time"
   override fun compareTo(other: ComparableTemporal) = when (other) {
     is ComparableDateTime -> value.compareTo(other.value)
-    is ComparableDate -> value.toLocalDate().compareTo(other.value)
+    is ComparableDate -> value.compareTo(LocalDateTime.of(other.value, LocalTime.MIDNIGHT))
     else -> throw RuntimeException("Cannot compare ${other.value.javaClass.name} to LocalDateTime")
   }
 }

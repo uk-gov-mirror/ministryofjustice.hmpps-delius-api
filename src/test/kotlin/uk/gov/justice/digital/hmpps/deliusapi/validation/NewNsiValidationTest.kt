@@ -3,6 +3,8 @@ package uk.gov.justice.digital.hmpps.deliusapi.validation
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewNsi
+import java.time.LocalDate
+import java.time.LocalDateTime
 
 class NewNsiValidationTest : ValidationTest<NewNsi>() {
   @ParameterizedTest
@@ -23,6 +25,17 @@ class NewNsiValidationTest : ValidationTest<NewNsi>() {
       .allNull(NewNsi::requirementId, NewNsi::eventId)
       .allNull(NewNsi::outcome, NewNsi::endDate)
       .string(NewNsi::notes) { it.isNull() }
+      .add("status date and referral date can be on same day") {
+        it.copy(
+          statusDate = LocalDateTime.now(),
+          referralDate = LocalDate.now(),
+          startDate = null,
+          endDate = null,
+          expectedStartDate = null,
+          expectedEndDate = null,
+          outcome = null,
+        )
+      }
       .cases
 
     @JvmStatic

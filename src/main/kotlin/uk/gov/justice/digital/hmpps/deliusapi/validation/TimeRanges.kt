@@ -32,13 +32,9 @@ annotation class EndTimes(vararg val values: EndTime)
 
 private interface ComparableTemporal : Comparable<ComparableTemporal> {
   val value: Any
-  val name: String
-
-  fun isAfter(other: ComparableTemporal) = compareTo(other) > 0
 }
 
-private data class ComparableDateTime(override val value: LocalDateTime) : ComparableTemporal {
-  override val name = "date time"
+private class ComparableDateTime(override val value: LocalDateTime) : ComparableTemporal {
   override fun compareTo(other: ComparableTemporal) = when (other) {
     is ComparableDateTime -> value.compareTo(other.value)
     is ComparableDate -> value.compareTo(LocalDateTime.of(other.value, LocalTime.MIDNIGHT))
@@ -46,8 +42,7 @@ private data class ComparableDateTime(override val value: LocalDateTime) : Compa
   }
 }
 
-private data class ComparableDate(override val value: LocalDate) : ComparableTemporal {
-  override val name = "date"
+private class ComparableDate(override val value: LocalDate) : ComparableTemporal {
   override fun compareTo(other: ComparableTemporal) = when (other) {
     is ComparableDate -> value.compareTo(other.value)
     is ComparableDateTime -> value.compareTo(other.value.toLocalDate())
@@ -55,8 +50,7 @@ private data class ComparableDate(override val value: LocalDate) : ComparableTem
   }
 }
 
-private data class ComparableTime(override val value: LocalTime) : ComparableTemporal {
-  override val name = "time"
+private class ComparableTime(override val value: LocalTime) : ComparableTemporal {
   override fun compareTo(other: ComparableTemporal) = when (other) {
     is ComparableTime -> value.compareTo(other.value)
     else -> throw RuntimeException("Cannot compare ${other.value.javaClass.name} to LocalTime")
@@ -123,18 +117,17 @@ class TimeRangesValidator : ConstraintValidator<TimeRanges, Any> {
   }
 
   private fun isValid(context: ConstraintValidatorContext, group: TimeRangeGroup): Boolean {
-    val isValid = group.start == group.end || group.end.isAfter(group.start)
-
-    if (!isValid) {
-      val message = "${group.endMember} must be after or equal to ${group.startMember}"
-      for (member in listOf(group.startMember, group.endMember)) {
-        context
-          .buildConstraintViolationWithTemplate(message)
-          .addPropertyNode(member)
-          .addConstraintViolation()
-      }
+    if (group.end >= group.start) {
+      return true
     }
 
-    return isValid
+    val message = "${group.endMember} must be after or equal to ${group.startMember}"
+    for (member in listOf(group.startMember, group.endMember)) {
+      context
+        .buildConstraintViolationWithTemplate(message)
+        .addPropertyNode(member)
+        .addConstraintViolation()
+    }
+    return false
   }
 }

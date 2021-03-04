@@ -124,5 +124,5 @@ data class Nsi(
   @JoinColumn(name = "NSI_ID")
   @OneToMany(cascade = [CascadeType.PERSIST], fetch = FetchType.EAGER)
   @Where(clause = "ACTIVE_FLAG = 1")
-  var managers: List<NsiManager>? = null,
+  var managers: MutableList<NsiManager> = ArrayList(),
 )

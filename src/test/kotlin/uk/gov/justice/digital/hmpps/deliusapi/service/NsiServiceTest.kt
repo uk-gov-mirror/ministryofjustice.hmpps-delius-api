@@ -86,7 +86,7 @@ class NsiServiceTest {
       offender = offender,
       event = event,
       requirement = requirement,
-      managers = listOf(
+      managers = mutableListOf(
         Fake.nsiManager().copy(
           provider = managerProvider,
           team = managerTeam,
@@ -129,6 +129,7 @@ class NsiServiceTest {
       .hasProperty(NsiManager::provider, managerProvider)
       .hasProperty(NsiManager::team, managerTeam)
       .hasProperty(NsiManager::staff, managerStaff)
+      .hasProperty(NsiManager::nsi, newNsiCaptor.value)
 
     shouldSetAuditContext(created.id)
 

@@ -31,8 +31,9 @@ data class NsiManager(
   @Column(name = "NSI_MANAGER_ID", nullable = false)
   var id: Long = 0,
 
-  @Column(name = "NSI_ID", nullable = false)
-  var nsiId: Long = 0,
+  @JoinColumn(name = "NSI_ID", nullable = false)
+  @ManyToOne
+  var nsi: Nsi,
 
   @Column(name = "START_DATE", nullable = false)
   var startDate: LocalDate,

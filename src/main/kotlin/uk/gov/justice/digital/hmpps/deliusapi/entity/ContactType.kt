@@ -8,6 +8,7 @@ import javax.persistence.Enumerated
 import javax.persistence.Id
 import javax.persistence.JoinColumn
 import javax.persistence.JoinTable
+import javax.persistence.Lob
 import javax.persistence.ManyToMany
 import javax.persistence.Table
 
@@ -67,6 +68,14 @@ data class ContactType(
   @Column(name = "FUTURE_SCHEDULED_CONTACTS_FLAG", nullable = false, length = 1)
   @Type(type = "yes_no")
   var scheduleFutureAppointments: Boolean,
+
+  @Column(name = "EDITABLE", length = 1)
+  @Type(type = "yes_no")
+  var editable: Boolean?,
+
+  @Column(name = "DEFAULT_HEADINGS")
+  @Lob
+  var defaultHeadings: String?,
 
   @ManyToMany
   @JoinTable(

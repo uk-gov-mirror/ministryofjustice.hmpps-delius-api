@@ -16,8 +16,7 @@ import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.junit.jupiter.MockitoSettings
 import org.mockito.quality.Strictness
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewNsi
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NsiDto
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsi
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Event
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Nsi
 import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiManager
@@ -30,6 +29,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.entity.Staff
 import uk.gov.justice.digital.hmpps.deliusapi.entity.StandardReference
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Team
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
+import uk.gov.justice.digital.hmpps.deliusapi.mapper.NsiMapper
 import uk.gov.justice.digital.hmpps.deliusapi.repository.NsiRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.NsiTypeRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.OffenderRepository
@@ -56,6 +56,7 @@ class NsiServiceTest {
   @Mock private lateinit var transferReasonRepository: TransferReasonRepository
   @Mock private lateinit var referenceDataMasterRepository: ReferenceDataMasterRepository
   @Mock private lateinit var contactService: ContactService
+  @Mock private lateinit var mapper: NsiMapper
   @Captor private lateinit var newNsiCaptor: ArgumentCaptor<Nsi>
   @Captor private lateinit var statusContactCaptor: ArgumentCaptor<NewSystemContact>
   @InjectMocks private lateinit var subject: NsiService
@@ -95,12 +96,13 @@ class NsiServiceTest {
       ),
       statusDate = request.statusDate,
     )
+    val expectedResult = Fake.nsiDto()
+
     whenever(nsiRepository.saveAndFlush(newNsiCaptor.capture())).thenReturn(created)
+    whenever(mapper.toDto(created)).thenReturn(expectedResult)
 
     val observed = subject.createNsi(request)
-    assertThat(observed)
-      .isInstanceOf(NsiDto::class.java)
-      .hasProperty(NsiDto::id, created.id)
+    assertThat(observed).isSameAs(expectedResult)
 
     assertThat(newNsiCaptor.value)
       .hasProperty(Nsi::offender, offender)

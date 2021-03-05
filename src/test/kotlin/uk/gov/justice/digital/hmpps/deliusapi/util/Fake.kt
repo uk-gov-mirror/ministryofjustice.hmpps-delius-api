@@ -1,12 +1,13 @@
 package uk.gov.justice.digital.hmpps.deliusapi.util
 
 import com.github.javafaker.Faker
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.ContactDto
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewContact
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewNsi
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewNsiManager
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NsiDto
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NsiManagerDto
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.ContactDto
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.NewContact
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.UpdateContact
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsi
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsiManager
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NsiDto
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NsiManagerDto
 import uk.gov.justice.digital.hmpps.deliusapi.entity.AuditedInteraction
 import uk.gov.justice.digital.hmpps.deliusapi.entity.BusinessInteraction
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
@@ -84,6 +85,8 @@ object Fake {
     offenderLevel = true,
     wholeOrderLevel = true,
     scheduleFutureAppointments = true,
+    editable = true,
+    defaultHeadings = faker.company().bs(),
     outcomeTypes = listOf(contactOutcomeType()),
     requirementTypeCategories = listOf(requirementTypeCategory()),
     nsiTypes = listOf(nsiType()),
@@ -165,6 +168,32 @@ object Fake {
   fun contactDto(): ContactDto = contactMapper.toDto(contact())
 
   fun newContact(): NewContact = contactMapper.toNew(contactDto())
+
+  /**
+   * A request to create a new contact that will succeed against the test data.
+   */
+  fun validNewContact() = NewContact(
+    offenderCrn = "X320741",
+    type = "EAP0", // AP Register - INCIDENT
+    outcome = "CO22", // No Action Required
+    nsiId = null,
+    provider = "C00",
+    team = "C00T01",
+    staff = "C00T01U",
+    officeLocation = "C00OFFA",
+    alert = false,
+    eventId = 2500295343,
+    requirementId = 2500083652,
+    date = randomPastLocalDate(),
+    startTime = localTimeBetween(0, 12),
+    endTime = localTimeBetween(12, 23),
+    sensitive = faker.bool().bool(),
+    notes = faker.lorem().paragraph(),
+    description = faker.company().bs(),
+  )
+
+  fun updateContact(): UpdateContact = contactMapper.toUpdate(contact())
+    .copy(notes = faker.company().bs())
 
   fun newSystemContact() = NewSystemContact(
     typeId = id(),

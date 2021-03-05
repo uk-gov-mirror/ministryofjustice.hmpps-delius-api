@@ -95,7 +95,7 @@ data class Contact(
 
   @JoinColumn(name = "CONTACT_TYPE_ID", nullable = false)
   @ManyToOne
-  var type: ContactType? = null,
+  var type: ContactType,
 
   @JoinColumn(name = "CONTACT_OUTCOME_TYPE_ID")
   @ManyToOne

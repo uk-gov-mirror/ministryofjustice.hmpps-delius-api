@@ -2,7 +2,10 @@ package uk.gov.justice.digital.hmpps.deliusapi.mapper
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.ContactDto
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.UpdateContact
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
+import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
 
 class ContactMapperTest {
 
@@ -11,22 +14,43 @@ class ContactMapperTest {
     val source = Fake.contact()
     val observed = ContactMapper.INSTANCE.toDto(source)
 
-    assertThat(observed.id).isEqualTo(source.id)
-    assertThat(observed.offenderCrn).isEqualTo(source.offender.crn)
-    assertThat(observed.type).isEqualTo(source.type?.code)
-    assertThat(observed.outcome).isEqualTo(source.outcome?.code)
-    assertThat(observed.provider).isEqualTo(source.provider?.code)
-    assertThat(observed.team).isEqualTo(source.team?.code)
-    assertThat(observed.staff).isEqualTo(source.staff?.code)
-    assertThat(observed.officeLocation).isEqualTo(source.officeLocation?.code)
-    assertThat(observed.date).isEqualTo(source.date)
-    assertThat(observed.startTime).isEqualTo(source.startTime)
-    assertThat(observed.endTime).isEqualTo(source.endTime)
-    assertThat(observed.alert).isEqualTo(source.alert)
-    assertThat(observed.sensitive).isEqualTo(source.sensitive)
-    assertThat(observed.notes).isEqualTo(source.notes)
-    assertThat(observed.description).isEqualTo(source.description)
-    assertThat(observed.eventId).isNotNull.isEqualTo(source.event?.id)
-    assertThat(observed.requirementId).isNotNull.isEqualTo(source.requirement?.id)
+    assertThat(observed)
+      .hasProperty(ContactDto::id, source.id)
+      .hasProperty(ContactDto::offenderCrn, source.offender.crn)
+      .hasProperty(ContactDto::type, source.type.code)
+      .hasProperty(ContactDto::outcome, source.outcome?.code)
+      .hasProperty(ContactDto::provider, source.provider?.code)
+      .hasProperty(ContactDto::team, source.team?.code)
+      .hasProperty(ContactDto::staff, source.staff?.code)
+      .hasProperty(ContactDto::officeLocation, source.officeLocation?.code)
+      .hasProperty(ContactDto::date, source.date)
+      .hasProperty(ContactDto::startTime, source.startTime)
+      .hasProperty(ContactDto::endTime, source.endTime)
+      .hasProperty(ContactDto::alert, source.alert)
+      .hasProperty(ContactDto::sensitive, source.sensitive)
+      .hasProperty(ContactDto::notes, source.notes)
+      .hasProperty(ContactDto::description, source.description)
+      .hasProperty(ContactDto::eventId, source.event?.id!!)
+      .hasProperty(ContactDto::requirementId, source.requirement?.id!!)
+  }
+
+  @Test
+  fun `Mapping from entity to update`() {
+    val source = Fake.contact()
+    val observed = ContactMapper.INSTANCE.toUpdate(source)
+
+    assertThat(observed)
+      .hasProperty(UpdateContact::outcome, source.outcome?.code)
+      .hasProperty(UpdateContact::provider, source.provider?.code)
+      .hasProperty(UpdateContact::team, source.team?.code)
+      .hasProperty(UpdateContact::staff, source.staff?.code)
+      .hasProperty(UpdateContact::officeLocation, source.officeLocation?.code)
+      .hasProperty(UpdateContact::date, source.date)
+      .hasProperty(UpdateContact::startTime, source.startTime)
+      .hasProperty(UpdateContact::endTime, source.endTime)
+      .hasProperty(UpdateContact::alert, source.alert)
+      .hasProperty(UpdateContact::sensitive, source.sensitive)
+      .hasProperty(UpdateContact::notes, null)
+      .hasProperty(UpdateContact::description, source.description)
   }
 }

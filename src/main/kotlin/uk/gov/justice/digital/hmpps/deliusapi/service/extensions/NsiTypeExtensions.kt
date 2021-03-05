@@ -1,6 +1,6 @@
 package uk.gov.justice.digital.hmpps.deliusapi.service.extensions
 
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewNsi
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsi
 import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiType
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 

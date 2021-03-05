@@ -62,7 +62,7 @@ class StringPropertyCaseBuilder<T : Any>(property: KProperty1<T, String?>, build
 
   fun empty() = value("", "empty")
   fun blank() = value(" ", "blank")
-  fun length(n: Int) = value(Fake.faker.lorem().characters(n), "long")
+  fun length(n: Int) = value(Fake.faker.lorem().characters(n), "with length $n")
 }
 
 class LongPropertyCaseBuilder<T : Any>(property: KProperty1<T, Long?>, builder: ValidationTestCaseBuilder<T>) :

@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.entity.Provider
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Requirement
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Staff
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Team
+import uk.gov.justice.digital.hmpps.deliusapi.mapper.ContactMapper
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactTypeRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.NsiRepository
@@ -31,6 +32,8 @@ abstract class ContactServiceTestBase {
   @Mock protected lateinit var contactTypeRepository: ContactTypeRepository
   @Mock protected lateinit var providerRepository: ProviderRepository
   @Mock protected lateinit var nsiRepository: NsiRepository
+  @Mock protected lateinit var mapper: ContactMapper
+  @Mock protected lateinit var validationService: ContactValidationService
   @InjectMocks protected lateinit var subject: ContactService
 
   protected lateinit var type: ContactType
@@ -47,8 +50,6 @@ abstract class ContactServiceTestBase {
   protected fun havingDependentEntities(
     havingEvent: Boolean = true,
     havingRequirement: Boolean = true,
-    havingOutcome: Boolean = true,
-    havingOfficeLocation: Boolean = true,
     havingTeam: Boolean = true,
     havingStaff: Boolean = true,
   ) {
@@ -63,17 +64,13 @@ abstract class ContactServiceTestBase {
     offender = Fake.offender().copy(id = offenderId, events = events)
 
     outcome = Fake.contactOutcomeType()
-    type = Fake.contactType().copy(
-      outcomeTypes = if (havingOutcome) listOf(outcome, Fake.contactOutcomeType()) else listOf()
-    )
+    type = Fake.contactType()
 
     this.staff = Fake.staff()
     val staff = if (havingStaff) listOf(this.staff, Fake.staff()) else listOf()
 
     officeLocation = Fake.officeLocation()
-    val officeLocations = if (havingOfficeLocation) listOf(officeLocation, Fake.officeLocation()) else listOf()
-
-    team = Fake.team().copy(staff = staff, officeLocations = officeLocations)
+    team = Fake.team().copy(staff = staff)
     val teams = if (havingTeam) listOf(team, Fake.team()) else listOf()
 
     provider = Fake.provider().copy(teams = teams)

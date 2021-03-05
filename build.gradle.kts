@@ -19,6 +19,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
   implementation("io.springfox:springfox-boot-starter:3.0.0")
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.11.4")
+  implementation("com.github.java-json-tools:json-patch:1.13")
 
   implementation("org.flywaydb:flyway-core:7.5.2")
   implementation("com.zaxxer:HikariCP:4.0.1")

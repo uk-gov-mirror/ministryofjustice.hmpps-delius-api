@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType.APPLICATION_JSON
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.reactive.server.WebTestClient
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewContact
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.NewContact
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
 import uk.gov.justice.digital.hmpps.deliusapi.integration.DEFAULT_INTEGRATION_TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.deliusapi.integration.IntegrationTestBase
@@ -30,19 +30,7 @@ class CreateContactTest : IntegrationTestBase() {
   private lateinit var contactRepository: ContactRepository
 
   companion object {
-    private val valid = Fake.newContact().copy(
-      offenderCrn = "X320741",
-      type = "EAP0", // AP Register - INCIDENT
-      outcome = "CO22", // No Action Required
-      nsiId = null,
-      provider = "C00",
-      team = "C00T01",
-      staff = "C00T01U",
-      officeLocation = "C00OFFA",
-      alert = false,
-      eventId = 2500295343,
-      requirementId = 2500083652,
-    )
+    private val valid = Fake.validNewContact()
     private val successCases: MutableList<Arguments> = mutableListOf()
     private val failureCases: MutableList<Arguments> = mutableListOf()
     init {
@@ -56,8 +44,8 @@ class CreateContactTest : IntegrationTestBase() {
           of(valid.copy(team = "1234567"), "team"),
           of(valid.copy(staff = "12345678"), "staff"),
           of(valid.copy(officeLocation = "12345678"), "officeLocation"),
-          of(valid.copy(requirementId = 1L, eventId = null), "Cannot specify requirementId without eventId"),
-          of(valid.copy(requirementId = 2500083652, nsiId = 2500018597), "Only one of nsiId, requirementId can have a value"),
+          of(valid.copy(requirementId = 1L, eventId = null), "requirementId cannot be provided without also providing eventId"),
+          of(valid.copy(requirementId = 2500083652, nsiId = 2500018597), "nsiId cannot be provided when requirementId is also provided"),
         )
       )
       successCases.add(of(valid))
@@ -190,14 +178,6 @@ class CreateContactTest : IntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody().shouldReturnJsonParseError()
   }
-
-  private fun WebTestClient.whenCreatingContact(request: NewContact) = this
-    .post().uri("/v1/contact")
-    .havingAuthentication()
-    .contentType(APPLICATION_JSON)
-    .accept(APPLICATION_JSON)
-    .bodyValue(request)
-    .exchange()
 
   private fun WebTestClient.BodyContentSpec.shouldReturnCreatedContact(request: NewContact): WebTestClient.BodyContentSpec {
     jsonPath("$.eventId").value(equalTo(request.eventId))

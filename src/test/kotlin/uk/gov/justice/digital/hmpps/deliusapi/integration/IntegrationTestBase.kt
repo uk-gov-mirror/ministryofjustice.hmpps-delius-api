@@ -13,6 +13,7 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.reactive.server.WebTestClient
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.NewContact
 import uk.gov.justice.digital.hmpps.deliusapi.repository.AuditedInteractionRepository
 import java.lang.RuntimeException
 
@@ -50,6 +51,14 @@ abstract class IntegrationTestBase {
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue("{,}")
       .exchange()
+
+  protected fun WebTestClient.whenCreatingContact(request: NewContact) = this
+    .post().uri("/v1/contact")
+    .havingAuthentication()
+    .contentType(MediaType.APPLICATION_JSON)
+    .accept(MediaType.APPLICATION_JSON)
+    .bodyValue(request)
+    .exchange()
 
   protected fun WebTestClient.BodyContentSpec.shouldReturnJsonParseError() =
     jsonPath("$.userMessage").value(startsWith("JSON parse error: "))

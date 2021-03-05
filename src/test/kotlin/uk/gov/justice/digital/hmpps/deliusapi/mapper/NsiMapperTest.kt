@@ -2,8 +2,8 @@ package uk.gov.justice.digital.hmpps.deliusapi.mapper
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NsiDto
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NsiManagerDto
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NsiDto
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NsiManagerDto
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
 

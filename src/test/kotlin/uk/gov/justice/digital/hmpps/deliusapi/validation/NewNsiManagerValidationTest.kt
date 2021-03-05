@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.deliusapi.validation
 
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewNsiManager
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsiManager
 
 class NewNsiManagerValidationTest : ValidationTest<NewNsiManager>() {
   @ParameterizedTest

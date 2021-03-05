@@ -3,7 +3,7 @@ package uk.gov.justice.digital.hmpps.deliusapi.validation
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.test.context.TestPropertySource
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewContact
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.NewContact
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 
 @TestPropertySource(properties = ["contacts.allowed-types=${Fake.ALLOWED_CONTACT_TYPES}"])

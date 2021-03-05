@@ -74,8 +74,5 @@ logging:
     uk.gov.justice.digital.hmpps: DEBUG
     com.microsoft.applicationinsights: INFO
 
-auditing:
-  default-staff-id: 1
-
 contacts:
   allowed-types: ~ # Allow all types. Update this once the reference data is ready (DAPI-44).

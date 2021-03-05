@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.entity.Staff
 import uk.gov.justice.digital.hmpps.deliusapi.entity.StandardReference
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Team
 import uk.gov.justice.digital.hmpps.deliusapi.entity.TransferReason
+import uk.gov.justice.digital.hmpps.deliusapi.entity.User
 import uk.gov.justice.digital.hmpps.deliusapi.entity.YesNoBoth.Y
 import uk.gov.justice.digital.hmpps.deliusapi.mapper.ContactMapper
 import uk.gov.justice.digital.hmpps.deliusapi.mapper.NsiMapper
@@ -273,6 +274,12 @@ object Fake {
   fun nsiDto(): NsiDto = nsiMapper.toDto(nsi())
 
   fun newNsi(): NewNsi = nsiMapper.toNew(nsiDto())
+
+  fun user(): User = User(
+    id = id(),
+    distinguishedName = faker.esports().player(),
+    providers = listOf(provider())
+  )
 
   fun transferReason() = TransferReason(
     id = id(),

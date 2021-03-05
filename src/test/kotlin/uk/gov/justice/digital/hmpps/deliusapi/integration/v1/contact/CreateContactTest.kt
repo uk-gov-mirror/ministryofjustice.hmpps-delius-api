@@ -137,7 +137,7 @@ class CreateContactTest : IntegrationTestBase() {
 
   @Test
   fun `Attempting to create contact for unauthorized provider`() {
-    userId = 11
+    userName = "automation-testzxcvbn"
     val subject = valid.copy(provider = "ACI")
     webTestClient.whenCreatingContact(subject)
       .expectStatus().isUnauthorized

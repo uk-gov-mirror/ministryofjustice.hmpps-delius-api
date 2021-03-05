@@ -122,7 +122,7 @@ class CreateNsiTest @Autowired constructor (
 
   @Test
   fun `Attempting to create nsi for unauthorized intended provider`() {
-    userId = 11
+    userName = "automation-testzxcvbn"
     val subject = validNsiFactory()
     webTestClient.whenCreatingNsi(subject)
       .expectStatus().isUnauthorized

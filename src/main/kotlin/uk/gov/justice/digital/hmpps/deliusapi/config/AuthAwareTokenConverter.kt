@@ -8,12 +8,14 @@ import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.deliusapi.entity.User
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import uk.gov.justice.digital.hmpps.deliusapi.service.security.DeliusSecurityService
+import javax.transaction.Transactional
 
 @Component
 class AuthAwareTokenConverter(
   private val deliusSecurity: DeliusSecurityService,
 ) : Converter<Jwt, AbstractAuthenticationToken> {
 
+  @Transactional
   override fun convert(jwt: Jwt): AbstractAuthenticationToken {
     val user: User = when (jwt.getClaimAsString(ClaimNames.AUTH_SOURCE)) {
       "delius" -> deliusSecurity.getUser(jwt.getClaimAsString(ClaimNames.USER_NAME))

@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.deliusapi.entity
 
+import org.hibernate.annotations.Where
 import java.time.LocalDate
 import javax.persistence.Column
 import javax.persistence.Entity
@@ -27,6 +28,7 @@ data class User(
     joinColumns = [JoinColumn(name = "USER_ID")],
     inverseJoinColumns = [JoinColumn(name = "PROBATION_AREA_ID")],
   )
+  @Where(clause = "SELECTABLE = 'Y'")
   @OneToMany
   val providers: List<Provider> = mutableListOf(),
 )

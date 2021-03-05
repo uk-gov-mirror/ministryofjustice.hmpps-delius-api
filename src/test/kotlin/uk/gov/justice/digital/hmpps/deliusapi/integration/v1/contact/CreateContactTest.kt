@@ -14,6 +14,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewContact
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
+import uk.gov.justice.digital.hmpps.deliusapi.integration.DEFAULT_INTEGRATION_TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.deliusapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
@@ -136,9 +137,44 @@ class CreateContactTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `should successfully create a new contact using client credentials and database_username`() {
+    // set the subject and username to an unknown value to prove this is not used when database_username set
+    userName = "DOESNT_EXIST"
+    webTestClient.post().uri("/v1/contact")
+      .havingAuthentication(authSource = "none", databaseUsername = DEFAULT_INTEGRATION_TEST_USER_NAME)
+      .contentType(APPLICATION_JSON)
+      .accept(APPLICATION_JSON)
+      .bodyValue(valid)
+      .exchange()
+      // Then it should return successfully
+      .expectStatus().isCreated
+      .expectBody()
+      // And it should return the correct details
+      .shouldReturnCreatedContact(valid)
+      // And it should save the entity to the database with the correct details
+      .shouldSaveContact(valid)
+  }
+
+  @Test
   fun `Attempting to create contact for unauthorized provider`() {
     userName = "automation-testzxcvbn"
     val subject = valid.copy(provider = "ACI")
+    webTestClient.whenCreatingContact(subject)
+      .expectStatus().isUnauthorized
+      .expectBody().shouldReturnAccessDenied()
+  }
+
+  @Test
+  fun `Attempting to create contact with deactivated user`() {
+    // user has access to the provider, however is deactivated
+    userName = "NDelius1010"
+    webTestClient.whenCreatingContact(valid)
+      .expectStatus().isUnauthorized
+  }
+
+  @Test
+  fun `Attempting to create contact with associated but deselected provider`() {
+    val subject = valid.copy(provider = "ASP")
     webTestClient.whenCreatingContact(subject)
       .expectStatus().isUnauthorized
       .expectBody().shouldReturnAccessDenied()

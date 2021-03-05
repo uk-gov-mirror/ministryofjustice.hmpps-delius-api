@@ -64,14 +64,16 @@ abstract class IntegrationTestBase {
     scope: List<String>? = listOf(),
     roles: List<String>? = listOf(),
     expired: Boolean = false,
-    deliusUser: Boolean = true,
+    authSource: String = "delius",
+    databaseUsername: String? = null
   ): T {
     val token = jwtAuthHelper.createJwt(
       userName,
       scope = scope,
       roles = roles,
       expired = expired,
-      deliusUser = deliusUser
+      authSource = authSource,
+      databaseUsername = databaseUsername
     )
     return this.header("Authorization", "Bearer $token")
   }

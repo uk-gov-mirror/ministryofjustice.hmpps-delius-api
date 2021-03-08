@@ -166,7 +166,7 @@ class CreateContactTest : IntegrationTestBase() {
 
   @Test
   fun `Attempting to create contact with deactivated user`() {
-    // user has access to the provider, however is deactivated
+    // user has access to the provider, however the user is deactivated
     userName = "NDelius1010"
     webTestClient.whenCreatingContact(valid)
       .expectStatus().isUnauthorized

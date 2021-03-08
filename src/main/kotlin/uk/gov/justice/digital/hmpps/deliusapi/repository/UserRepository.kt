@@ -8,6 +8,6 @@ import java.time.LocalDate
 
 @Repository
 interface UserRepository : JpaRepository<User, Long> {
-  @Query("select u from User u where u.distinguishedName = ?1 and ( ?2 < u.endDate or u.endDate = null)")
+  @Query("select u from User u where UPPER(u.distinguishedName) = UPPER(?1) and ( ?2 < u.endDate or u.endDate = null)")
   fun findByActiveUserByName(distinguishedName: String, currentDate: LocalDate): User?
 }

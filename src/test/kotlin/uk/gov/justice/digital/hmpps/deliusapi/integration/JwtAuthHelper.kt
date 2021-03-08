@@ -33,17 +33,18 @@ class JwtAuthHelper {
     roles: List<String>? = listOf(),
     expired: Boolean = false,
     jwtId: String = UUID.randomUUID().toString(),
-    deliusUser: Boolean = true,
+    authSource: String = "delius",
+    databaseUsername: String? = null
   ): String {
     val claims = mutableMapOf<String, Any?>(
       "user_name" to subject,
       "client_id" to "elite2apiclient",
       "user_id" to userId,
-      "auth_source" to if (deliusUser) "delius" else "hmpps"
+      "auth_source" to authSource
     )
     roles?.let { claims["authorities"] = roles }
     scope?.let { claims["scope"] = scope }
-
+    databaseUsername?.let { claims["database_username"] = databaseUsername }
     val expiration = if (expired)
       Fake.faker.date().past(12, 1, TimeUnit.HOURS)
     else Fake.faker.date().future(12, 1, TimeUnit.HOURS)

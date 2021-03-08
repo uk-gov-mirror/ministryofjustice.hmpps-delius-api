@@ -16,7 +16,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.deliusapi.repository.AuditedInteractionRepository
 import java.lang.RuntimeException
 
-const val DEFAULT_INTEGRATION_TEST_USER_ID = 10L
+const val DEFAULT_INTEGRATION_TEST_USER_NAME = "NationalUser"
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
@@ -32,11 +32,11 @@ abstract class IntegrationTestBase {
   @Autowired
   protected lateinit var auditedInteractionRepository: AuditedInteractionRepository
 
-  protected var userId = DEFAULT_INTEGRATION_TEST_USER_ID
+  protected var userName = DEFAULT_INTEGRATION_TEST_USER_NAME
 
   @BeforeEach
   fun beforeEach() {
-    userId = DEFAULT_INTEGRATION_TEST_USER_ID
+    userName = DEFAULT_INTEGRATION_TEST_USER_NAME
   }
 
   protected fun WebTestClient.RequestBodySpec.whenSendingUnauthenticatedRequest(): WebTestClient.ResponseSpec =
@@ -64,15 +64,16 @@ abstract class IntegrationTestBase {
     scope: List<String>? = listOf(),
     roles: List<String>? = listOf(),
     expired: Boolean = false,
-    deliusUser: Boolean = true,
+    authSource: String = "delius",
+    databaseUsername: String? = null
   ): T {
     val token = jwtAuthHelper.createJwt(
-      "bob",
-      userId = userId,
+      userName,
       scope = scope,
       roles = roles,
       expired = expired,
-      deliusUser = deliusUser
+      authSource = authSource,
+      databaseUsername = databaseUsername
     )
     return this.header("Authorization", "Bearer $token")
   }

@@ -22,9 +22,9 @@ class NewNsiManagerValidationTest : ValidationTest<NewNsiManager>() {
 
     @JvmStatic
     fun invalidCases() = ValidationTestCaseBuilder.fromFake<NewNsiManager>()
-      .string(NewNsiManager::staff) { it.empty().blank().length(6).length(8) }
-      .string(NewNsiManager::team) { it.empty().blank().length(5).length(7) }
-      .string(NewNsiManager::provider) { it.empty().blank().length(2).length(4) }
+      .string(NewNsiManager::staff) { it.empty().blank().length(8) }
+      .string(NewNsiManager::team) { it.empty().blank().length(7) }
+      .string(NewNsiManager::provider) { it.empty().blank().length(4) }
       .cases
   }
 }

@@ -3,7 +3,7 @@ package uk.gov.justice.digital.hmpps.deliusapi.validation
 import javax.validation.Constraint
 import javax.validation.Payload
 import javax.validation.ReportAsSingleViolation
-import javax.validation.constraints.Pattern
+import javax.validation.constraints.Size
 import kotlin.reflect.KClass
 
 @Target(AnnotationTarget.FIELD)
@@ -11,7 +11,7 @@ import kotlin.reflect.KClass
 @Constraint(validatedBy = [])
 @ReportAsSingleViolation
 @NotBlankWhenProvided
-@Pattern(regexp = "^[a-zA-Z0-9]{3}\$")
+@Size(max = 3)
 annotation class ProviderCode(
   val message: String = "must be a valid provider code",
   val groups: Array<KClass<*>> = [],

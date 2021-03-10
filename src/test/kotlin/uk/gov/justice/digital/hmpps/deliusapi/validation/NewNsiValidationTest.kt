@@ -67,7 +67,7 @@ class NewNsiValidationTest : ValidationTest<NewNsi>() {
       .dateTime(NewNsi::statusDate) { it.beforeDate(NewNsi::referralDate).tomorrow() }
       .string(NewNsi::outcome) { it.empty().blank().length(101).dependent(NewNsi::endDate) }
       .string(NewNsi::notes) { it.length(4001) }
-      .string(NewNsi::intendedProvider) { it.empty().blank().length(2).length(4) }
+      .string(NewNsi::intendedProvider) { it.empty().blank().length(4) }
       .cases
   }
 }

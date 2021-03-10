@@ -36,10 +36,10 @@ class NewContactValidationTest : ValidationTest<NewContact>() {
       .string(NewContact::offenderCrn) { it.empty().blank().value("bacon", "not a valid crn") }
       .string(NewContact::type) { it.empty().blank().value("bacon", "not an allowed contact type") }
       .string(NewContact::outcome) { it.empty().blank().length(11) }
-      .string(NewContact::provider) { it.empty().blank().length(2).length(4) }
-      .string(NewContact::team) { it.empty().blank().length(5).length(7) }
-      .string(NewContact::staff) { it.empty().blank().length(6).length(8) }
-      .string(NewContact::officeLocation) { it.empty().blank().length(6).length(8) }
+      .string(NewContact::provider) { it.empty().blank().length(4) }
+      .string(NewContact::team) { it.empty().blank().length(7) }
+      .string(NewContact::staff) { it.empty().blank().length(8) }
+      .string(NewContact::officeLocation) { it.empty().blank().length(8) }
       .time(NewContact::endTime) { it.before(NewContact::startTime) }
       .string(NewContact::notes) { it.length(4001) }
       .string(NewContact::description) { it.length(201) }

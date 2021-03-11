@@ -4,9 +4,9 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.deliusapi.advice.Auditable
 import uk.gov.justice.digital.hmpps.deliusapi.config.Authorities
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewNsi
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewNsiManager
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NsiDto
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsi
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsiManager
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NsiDto
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Nsi
 import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiManager
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
@@ -43,6 +43,7 @@ class NsiService(
   private val transferReasonRepository: TransferReasonRepository,
   private val referenceDataMasterRepository: ReferenceDataMasterRepository,
   private val contactService: ContactService,
+  private val mapper: NsiMapper,
 ) {
 
   @PreAuthorize(
@@ -146,7 +147,7 @@ class NsiService(
 
     createSystemContacts(entity, manager)
 
-    return NsiMapper.INSTANCE.toDto(entity)
+    return mapper.toDto(entity)
   }
 
   private fun createSystemContacts(nsi: Nsi, manager: NsiManager) {

@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.deliusapi.dto.v1
+package uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi
 
 data class NsiManagerDto(
   val id: Long,

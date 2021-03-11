@@ -5,6 +5,7 @@ import kotlin.concurrent.getOrSet
 data class AuditContext(
   var offenderId: Long? = null,
   var nsiId: Long? = null,
+  var contactId: Long? = null,
 ) {
 
   companion object {

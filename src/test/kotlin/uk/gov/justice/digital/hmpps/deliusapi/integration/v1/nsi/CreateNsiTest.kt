@@ -9,8 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.reactive.server.WebTestClient
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewNsi
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewNsiManager
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsi
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsiManager
 import uk.gov.justice.digital.hmpps.deliusapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.NsiRepository
@@ -109,7 +109,7 @@ class CreateNsiTest @Autowired constructor (
 
   fun shouldCreateSystemGeneratedContact(nsiId: Long, typeId: Long) {
     val existing = contactRepository.findAllByNsiId(nsiId)
-    assertThat(existing).anyMatch { it.type?.id == typeId }
+    assertThat(existing).anyMatch { it.type.id == typeId }
   }
 
   @ParameterizedTest(name = "[{index}] Invalid nsi ({0})")

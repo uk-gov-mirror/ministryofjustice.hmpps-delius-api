@@ -1,22 +1,37 @@
 package uk.gov.justice.digital.hmpps.deliusapi.controller.v1
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.TextNode
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.github.fge.jackson.jsonpointer.JsonPointer
+import com.github.fge.jsonpatch.JsonPatch
+import com.github.fge.jsonpatch.ReplaceOperation
+import com.nhaarman.mockitokotlin2.capture
 import com.nhaarman.mockitokotlin2.whenever
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.ArgumentCaptor
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.eq
+import org.mockito.Captor
 import org.mockito.InjectMocks
 import org.mockito.Mock
+import org.mockito.Spy
 import org.mockito.junit.jupiter.MockitoExtension
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.UpdateContact
 import uk.gov.justice.digital.hmpps.deliusapi.service.contact.ContactService
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
+import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
+import javax.validation.Validator
 
 @ExtendWith(MockitoExtension::class)
 class ContactControllerTest {
-  @Mock
-  private lateinit var service: ContactService
-
-  @InjectMocks
-  private lateinit var subject: ContactController
+  @Mock private lateinit var service: ContactService
+  @Spy private var mapper: ObjectMapper = jacksonObjectMapper().findAndRegisterModules()
+  @Mock private lateinit var validator: Validator
+  @Captor private lateinit var updateCaptor: ArgumentCaptor<UpdateContact>
+  @InjectMocks private lateinit var subject: ContactController
 
   @Test
   fun `Creating contact`() {
@@ -26,6 +41,35 @@ class ContactControllerTest {
     whenever(service.createContact(request)).thenReturn(contact)
 
     val observed = subject.create(request).body
-    Assertions.assertThat(observed).isSameAs(contact)
+    assertThat(observed).isSameAs(contact)
+  }
+
+  @Test
+  fun `Patching contact`() {
+    val id = Fake.faker.number().randomNumber()
+    val existing = Fake.updateContact()
+    val dto = Fake.contactDto()
+
+    val op = ReplaceOperation(JsonPointer.of("outcome"), TextNode("next-outcome"))
+    val patch = JsonPatch(listOf(op))
+    whenever(service.getUpdateContact(id)).thenReturn(existing)
+    whenever(validator.validate<UpdateContact>(any())).thenReturn(emptySet())
+    whenever(service.updateContact(eq(id), capture(updateCaptor))).thenReturn(dto)
+
+    val observed = subject.patch(id, patch)
+    assertThat(observed).isSameAs(dto)
+    assertThat(updateCaptor.value)
+      .hasProperty(UpdateContact::outcome, "next-outcome")
+      .hasProperty(UpdateContact::provider, existing.provider)
+      .hasProperty(UpdateContact::team, existing.team)
+      .hasProperty(UpdateContact::staff, existing.staff)
+      .hasProperty(UpdateContact::officeLocation, existing.officeLocation)
+      .hasProperty(UpdateContact::date, existing.date)
+      .hasProperty(UpdateContact::startTime, existing.startTime)
+      .hasProperty(UpdateContact::endTime, existing.endTime)
+      .hasProperty(UpdateContact::alert, existing.alert)
+      .hasProperty(UpdateContact::sensitive, existing.sensitive)
+      .hasProperty(UpdateContact::notes, existing.notes)
+      .hasProperty(UpdateContact::description, existing.description)
   }
 }

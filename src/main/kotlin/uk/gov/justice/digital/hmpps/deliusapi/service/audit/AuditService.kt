@@ -24,7 +24,8 @@ class AuditService(
   fun createAuditedInteraction(interaction: AuditableInteraction, success: Boolean, context: AuditContext) {
     val parameterMap = mapOf(
       AuditParameter.OFFENDER_ID to (context.offenderId ?: -1),
-      AuditParameter.NSI_ID to (context.nsiId ?: -1)
+      AuditParameter.NSI_ID to (context.nsiId ?: -1),
+      AuditParameter.CONTACT_ID to (context.contactId ?: -1),
     ).filter { e -> e.value > 0 }
 
     val userId = securityUserContext.getCurrentDeliusUserId()

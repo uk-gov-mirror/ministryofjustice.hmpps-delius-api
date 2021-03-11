@@ -9,10 +9,8 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.AdditionalAnswers
 import org.mockito.ArgumentCaptor
 import org.mockito.Captor
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.ContactDto
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewContact
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.NewContact
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
-import uk.gov.justice.digital.hmpps.deliusapi.entity.YesNoBoth
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditContext
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditableInteraction
@@ -28,17 +26,18 @@ class CreateContactTest : ContactServiceTestBase() {
   @Test
   fun `Successfully creating contact`() {
     val savedContact = Fake.contact()
+    val expectedResult = Fake.contactDto()
 
     havingDependentEntities()
     havingRepositories()
+    havingValidation()
 
     whenever(contactRepository.saveAndFlush(entityCaptor.capture()))
       .thenReturn(savedContact)
+    whenever(mapper.toDto(savedContact)).thenReturn(expectedResult)
 
     val observed = subject.createContact(request)
-    assertThat(observed)
-      .isInstanceOf(ContactDto::class.java)
-      .hasFieldOrPropertyWithValue("id", savedContact.id)
+    assertThat(observed).isSameAs(expectedResult)
 
     assertThat(entityCaptor.value)
       .hasProperty(Contact::offender, offender)
@@ -55,7 +54,7 @@ class CreateContactTest : ContactServiceTestBase() {
       .hasProperty(Contact::endTime, request.endTime)
       .hasProperty(Contact::alert, request.alert)
       .hasProperty(Contact::sensitive, request.sensitive)
-      .hasProperty(Contact::notes, request.notes)
+      .hasProperty(Contact::notes, type.defaultHeadings + ContactService.NOTES_SEPARATOR + request.notes)
       .hasProperty(Contact::description, request.description)
       .hasProperty(Contact::partitionAreaId, 0)
       .hasProperty(Contact::staffEmployeeId, 1)
@@ -65,105 +64,13 @@ class CreateContactTest : ContactServiceTestBase() {
   }
 
   @Test
-  fun `Creating future contact with acceptable absence outcome`() {
+  fun `Creating nsi contact`() {
     havingDependentEntities()
-    type = type.copy(outcomeTypes = listOf(outcome.copy(attendance = false, compliantAcceptable = true)))
-
-    havingRepositories()
-    request = request.copy(date = Fake.randomFutureLocalDate())
-
+    type = type.copy(nsiTypes = listOf(nsi.type?.copy()!!))
+    havingRepositories(havingNsi = true)
+    request = request.copy(requirementId = null, eventId = null)
+    havingValidation()
     passesValidation()
-  }
-
-  @Test
-  fun `Creating future contact with no outcome`() {
-    havingDependentEntities()
-    havingRepositories()
-    request = request.copy(date = Fake.randomFutureLocalDate(), outcome = null)
-
-    passesValidation()
-  }
-
-  @Test
-  fun `Creating historic contact with no outcome when outcome not required`() {
-    havingDependentEntities()
-    type = type.copy(outcomeFlag = YesNoBoth.N)
-
-    havingRepositories()
-    request = request.copy(date = Fake.randomPastLocalDate(), outcome = null)
-
-    passesValidation()
-  }
-
-  @Test
-  fun `Creating contact with no location when location not required`() {
-    havingDependentEntities()
-    type = type.copy(locationFlag = YesNoBoth.N)
-
-    havingRepositories()
-    request = request.copy(officeLocation = null)
-
-    passesValidation()
-  }
-
-  @Test
-  fun `Creating contact with no location when location optional`() {
-    havingDependentEntities()
-    type = type.copy(locationFlag = YesNoBoth.B)
-
-    havingRepositories()
-    request = request.copy(officeLocation = null)
-
-    passesValidation()
-  }
-
-  @Test
-  fun `Creating contact with location when location optional`() {
-    havingDependentEntities()
-    type = type.copy(locationFlag = YesNoBoth.B)
-
-    havingRepositories()
-
-    passesValidation()
-  }
-
-  @Test
-  fun `Creating non-recordedHoursCredited contact without end time`() {
-    havingDependentEntities()
-    type = type.copy(recordedHoursCredited = false)
-
-    havingRepositories()
-    request = request.copy(endTime = null)
-
-    passesValidation()
-  }
-
-  @Test
-  fun `Attempting to create recordedHoursCredited contact without end time`() {
-    havingDependentEntities()
-    havingRepositories()
-
-    request = request.copy(endTime = null)
-
-    shouldThrowBadRequest()
-  }
-
-  @Test
-  fun `Attempting to creating contact with no location when location required`() {
-    havingDependentEntities()
-    havingRepositories()
-    request = request.copy(officeLocation = null)
-
-    shouldThrowBadRequest()
-  }
-
-  @Test
-  fun `Attempting to create historic contact with no outcome when outcome required`() {
-    havingDependentEntities()
-    havingRepositories()
-    request = request.copy(date = Fake.randomPastLocalDate(), outcome = null)
-
-    shouldThrowBadRequest()
   }
 
   @Test
@@ -181,16 +88,10 @@ class CreateContactTest : ContactServiceTestBase() {
   }
 
   @Test
-  fun `Attempting to create historic contact with missing outcome`() {
-    havingDependentEntities(havingOutcome = false)
-    havingRepositories()
-    shouldThrowBadRequest()
-  }
-
-  @Test
   fun `Attempting to create contact with missing provider`() {
     havingDependentEntities()
     havingRepositories(havingProvider = false)
+    havingValidation()
     shouldThrowBadRequest()
   }
 
@@ -198,6 +99,7 @@ class CreateContactTest : ContactServiceTestBase() {
   fun `Attempting to create contact with missing team`() {
     havingDependentEntities(havingTeam = false)
     havingRepositories()
+    havingValidation()
     shouldThrowBadRequest()
   }
 
@@ -205,13 +107,15 @@ class CreateContactTest : ContactServiceTestBase() {
   fun `Attempting to create contact with missing staff`() {
     havingDependentEntities(havingStaff = false)
     havingRepositories()
+    havingValidation()
     shouldThrowBadRequest()
   }
 
   @Test
   fun `Attempting to create contact with missing office location`() {
-    havingDependentEntities(havingOfficeLocation = false)
+    havingDependentEntities()
     havingRepositories()
+    havingValidation(havingValidOfficeLocation = false)
     shouldThrowBadRequest()
   }
 
@@ -219,6 +123,7 @@ class CreateContactTest : ContactServiceTestBase() {
   fun `Attempting to create contact with missing event`() {
     havingDependentEntities(havingEvent = false)
     havingRepositories()
+    havingValidation()
     shouldThrowBadRequest()
   }
 
@@ -226,83 +131,47 @@ class CreateContactTest : ContactServiceTestBase() {
   fun `Attempting to create contact with missing requirement`() {
     havingDependentEntities(havingRequirement = false)
     havingRepositories()
+    havingValidation()
     shouldThrowBadRequest()
   }
 
   @Test
-  fun `Attempting to create contact with type not matching outcome`() {
+  fun `Attempting to create contact with invalid type`() {
     havingDependentEntities()
     havingRepositories()
-    request = request.copy(outcome = "INVALID")
+    havingValidation(havingValidType = false)
     shouldThrowBadRequest()
   }
 
   @Test
-  fun `Attempting to create contact with date in past and no contact outcome`() {
+  fun `Attempting to create contact with invalid outcome type`() {
     havingDependentEntities()
     havingRepositories()
-    request = request.copy(date = Fake.randomPastLocalDate(), outcome = null)
+    havingValidation(havingValidOutcomeType = false)
     shouldThrowBadRequest()
   }
 
   @Test
-  fun `Attempting to create requirement contact against non-whole order contact type`() {
+  fun `Attempting to create contact with invalid office location`() {
     havingDependentEntities()
-    type = type.copy(wholeOrderLevel = false, requirementTypeCategories = emptyList())
     havingRepositories()
+    havingValidation(havingValidOfficeLocation = false)
     shouldThrowBadRequest()
   }
 
   @Test
-  fun `Creating requirement contact against contact type with matching requirement category`() {
+  fun `Attempting to create contact with clashing appointment`() {
     havingDependentEntities()
-    val category = Fake.requirementTypeCategory().copy(id = requirement.typeCategory?.id!!)
-    type = type.copy(wholeOrderLevel = false, requirementTypeCategories = listOf(category))
     havingRepositories()
-    passesValidation()
-  }
-
-  @Test
-  fun `Attempting to create event contact against non-cja2003 type`() {
-    havingDependentEntities()
-    type = type.copy(cjaOrderLevel = false)
-    havingRepositories()
-    request = request.copy(requirementId = null)
+    havingValidation(havingValidFutureAppointment = false)
     shouldThrowBadRequest()
   }
 
   @Test
-  fun `Attempting to create event contact against non-legacy order type`() {
+  fun `Attempting to create contact with invalid associated entity`() {
     havingDependentEntities()
-    type = type.copy(legacyOrderLevel = false)
     havingRepositories()
-    request = request.copy(requirementId = null)
-    shouldThrowBadRequest()
-  }
-
-  @Test
-  fun `Attempting to create nsi contact against type without matching nsi type`() {
-    havingDependentEntities()
-    havingRepositories(havingNsi = true)
-    request = request.copy(requirementId = null, eventId = null)
-    shouldThrowBadRequest()
-  }
-
-  @Test
-  fun `Creating nsi contact`() {
-    havingDependentEntities()
-    type = type.copy(nsiTypes = listOf(nsi.type?.copy()!!))
-    havingRepositories(havingNsi = true)
-    request = request.copy(requirementId = null, eventId = null)
-    passesValidation()
-  }
-
-  @Test
-  fun `Attempting to create offender contact against non-offender level type`() {
-    havingDependentEntities()
-    type = type.copy(offenderLevel = false)
-    havingRepositories()
-    request = request.copy(requirementId = null, eventId = null)
+    havingValidation(havingValidAssociatedEntity = false)
     shouldThrowBadRequest()
   }
 
@@ -333,6 +202,43 @@ class CreateContactTest : ContactServiceTestBase() {
       .thenReturn(if (havingProvider) provider else null)
     whenever(nsiRepository.findById(nsi.id))
       .thenReturn(if (havingNsi == true) Optional.of(nsi) else Optional.empty())
+  }
+
+  private fun havingValidation(
+    havingValidType: Boolean = true,
+    havingValidOutcomeType: Boolean = true,
+    havingValidOfficeLocation: Boolean = true,
+    havingValidFutureAppointment: Boolean = true,
+    havingValidAssociatedEntity: Boolean = true,
+  ) {
+    if (!havingValidType) {
+      whenever(validationService.validateContactType(request, type))
+        .thenThrow(BadRequestException("bad request"))
+    }
+
+    val outcomeMock = whenever(validationService.validateOutcomeType(request, type))
+    if (havingValidOutcomeType) {
+      outcomeMock.thenReturn(outcome)
+    } else {
+      outcomeMock.thenThrow(BadRequestException("bad request"))
+    }
+
+    val officeLocationMock = whenever(validationService.validateOfficeLocation(request, type, team))
+    if (havingValidOfficeLocation) {
+      officeLocationMock.thenReturn(officeLocation)
+    } else {
+      officeLocationMock.thenThrow(BadRequestException("bad request"))
+    }
+
+    if (!havingValidFutureAppointment) {
+      whenever(validationService.validateFutureAppointmentClashes(request, type, offender, null))
+        .thenThrow(BadRequestException("bad request"))
+    }
+
+    if (!havingValidAssociatedEntity) {
+      whenever(validationService.validateAssociatedEntity(type, requirement, event, null))
+        .thenThrow(BadRequestException("bad request"))
+    }
   }
 
   private fun shouldThrowBadRequest() {

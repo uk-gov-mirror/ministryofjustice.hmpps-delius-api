@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.deliusapi.validation
 
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewNsi
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsi
 import java.time.LocalDate
 import java.time.LocalDateTime
 

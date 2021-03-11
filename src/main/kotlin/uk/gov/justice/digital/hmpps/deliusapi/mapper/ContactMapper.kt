@@ -4,8 +4,9 @@ import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import org.mapstruct.Mappings
 import org.mapstruct.factory.Mappers
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.ContactDto
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.NewContact
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.ContactDto
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.NewContact
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.UpdateContact
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
 
 @Mapper
@@ -25,6 +26,16 @@ interface ContactMapper {
     Mapping(source = "nsi.id", target = "nsiId"),
   )
   fun toDto(src: Contact): ContactDto
+
+  @Mappings(
+    Mapping(source = "outcome.code", target = "outcome"),
+    Mapping(source = "provider.code", target = "provider"),
+    Mapping(source = "team.code", target = "team"),
+    Mapping(source = "staff.code", target = "staff"),
+    Mapping(source = "officeLocation.code", target = "officeLocation"),
+    Mapping(target = "notes", ignore = true), // notes are immutable
+  )
+  fun toUpdate(contact: Contact): UpdateContact
 
   companion object {
     val INSTANCE = Mappers.getMapper(ContactMapper::class.java)

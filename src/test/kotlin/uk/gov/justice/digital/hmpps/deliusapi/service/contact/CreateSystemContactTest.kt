@@ -103,7 +103,7 @@ class CreateSystemContactTest : ContactServiceTestBase() {
       .hasProperty(Contact::endTime, null)
       .hasProperty(Contact::alert, false)
       .hasProperty(Contact::sensitive, false)
-      .hasProperty(Contact::notes, request.notes)
+      .hasProperty(Contact::notes, type.defaultHeadings)
       .hasProperty(Contact::description, null)
       .hasProperty(Contact::partitionAreaId, 0)
       .hasProperty(Contact::staffEmployeeId, 1)

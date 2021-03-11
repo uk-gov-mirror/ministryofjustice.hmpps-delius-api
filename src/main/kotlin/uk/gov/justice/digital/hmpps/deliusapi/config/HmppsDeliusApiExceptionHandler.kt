@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.deliusapi.config
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException
 import com.fasterxml.jackson.module.kotlin.MissingKotlinParameterException
+import com.github.fge.jsonpatch.JsonPatchException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatus.BAD_REQUEST
@@ -15,6 +17,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import uk.gov.justice.digital.hmpps.deliusapi.exception.BadJsonPatchException
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import javax.validation.ValidationException
 
@@ -37,7 +40,7 @@ class HmppsDeliusApiExceptionHandler {
   @ResponseStatus(BAD_REQUEST)
   @ExceptionHandler(MethodArgumentNotValidException::class)
   fun handleValidationException(e: MethodArgumentNotValidException): ErrorResponse {
-    log.debug("Validation exception: {}", e.message)
+    log.debug("Validation exception", e)
     val errors = e.bindingResult.allErrors.mapNotNull {
       if (it is FieldError) {
         "${it.field} ${it.defaultMessage}"
@@ -62,14 +65,19 @@ class HmppsDeliusApiExceptionHandler {
   }
 
   @ResponseStatus(BAD_REQUEST)
-  @ExceptionHandler(HttpMessageNotReadableException::class)
-  fun handleJsonParseException(e: HttpMessageNotReadableException): ErrorResponse {
+  @ExceptionHandler(HttpMessageNotReadableException::class, BadJsonPatchException::class)
+  fun handleJsonParseException(e: Exception): ErrorResponse {
     log.debug("JSON parse error", e)
     val message = when (val cause = e.cause) {
       is MissingKotlinParameterException -> {
-        val messages = cause.path.joinToString(", ") { "$it is required" }
+        val messages = cause.path.joinToString(", ") { "${it.fieldName} is required" }
         "Validation failure: $messages"
       }
+      is InvalidFormatException -> {
+        val messages = cause.path.joinToString(", ") { "${it.fieldName} is not a valid ${cause.targetType.simpleName}" }
+        "Validation failure: $messages"
+      }
+      is JsonPatchException -> "Invalid JSON patch document: ${cause.message}"
       else -> e.message
     }
     return ErrorResponse(

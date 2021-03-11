@@ -43,6 +43,7 @@ class CreateContactTest : ContactServiceTestBase() {
       .hasProperty(Contact::offender, offender)
       .hasProperty(Contact::type, type)
       .hasProperty(Contact::outcome, outcome)
+      .hasProperty(Contact::enforcements, listOf(enforcement))
       .hasProperty(Contact::provider, provider)
       .hasProperty(Contact::team, team)
       .hasProperty(Contact::staff, staff)
@@ -152,6 +153,14 @@ class CreateContactTest : ContactServiceTestBase() {
   }
 
   @Test
+  fun `Attempting to create contact with invalid enforcement`() {
+    havingDependentEntities()
+    havingRepositories()
+    havingValidation(havingValidEnforcement = false)
+    shouldThrowBadRequest()
+  }
+
+  @Test
   fun `Attempting to create contact with invalid office location`() {
     havingDependentEntities()
     havingRepositories()
@@ -207,37 +216,45 @@ class CreateContactTest : ContactServiceTestBase() {
   private fun havingValidation(
     havingValidType: Boolean = true,
     havingValidOutcomeType: Boolean = true,
+    havingValidEnforcement: Boolean = true,
     havingValidOfficeLocation: Boolean = true,
     havingValidFutureAppointment: Boolean = true,
     havingValidAssociatedEntity: Boolean = true,
   ) {
     if (!havingValidType) {
       whenever(validationService.validateContactType(request, type))
-        .thenThrow(BadRequestException("bad request"))
+        .thenThrow(BadRequestException("bad contact type"))
     }
 
     val outcomeMock = whenever(validationService.validateOutcomeType(request, type))
     if (havingValidOutcomeType) {
       outcomeMock.thenReturn(outcome)
     } else {
-      outcomeMock.thenThrow(BadRequestException("bad request"))
+      outcomeMock.thenThrow(BadRequestException("bad outcome"))
+    }
+
+    val enforcementMock = whenever(validationService.validateEnforcement(request, type, outcome))
+    if (havingValidEnforcement) {
+      enforcementMock.thenReturn(enforcement)
+    } else {
+      enforcementMock.thenThrow(BadRequestException("bad enforcement"))
     }
 
     val officeLocationMock = whenever(validationService.validateOfficeLocation(request, type, team))
     if (havingValidOfficeLocation) {
       officeLocationMock.thenReturn(officeLocation)
     } else {
-      officeLocationMock.thenThrow(BadRequestException("bad request"))
+      officeLocationMock.thenThrow(BadRequestException("bad office location"))
     }
 
     if (!havingValidFutureAppointment) {
       whenever(validationService.validateFutureAppointmentClashes(request, type, offender, null))
-        .thenThrow(BadRequestException("bad request"))
+        .thenThrow(BadRequestException("bad future appointment"))
     }
 
     if (!havingValidAssociatedEntity) {
       whenever(validationService.validateAssociatedEntity(type, requirement, event, null))
-        .thenThrow(BadRequestException("bad request"))
+        .thenThrow(BadRequestException("bad associated entity"))
     }
   }
 

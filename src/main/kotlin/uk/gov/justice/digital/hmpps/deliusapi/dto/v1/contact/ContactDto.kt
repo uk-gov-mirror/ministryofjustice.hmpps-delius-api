@@ -11,6 +11,7 @@ data class ContactDto(
   val nsiId: Long? = null,
   val type: String,
   val outcome: String?,
+  val enforcement: String?,
   val provider: String,
   val team: String,
   val staff: String,

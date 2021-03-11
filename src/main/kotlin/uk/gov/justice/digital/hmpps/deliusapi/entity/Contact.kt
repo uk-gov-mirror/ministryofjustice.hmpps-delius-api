@@ -10,6 +10,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import javax.persistence.CascadeType
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.EntityListeners
@@ -19,6 +20,7 @@ import javax.persistence.Id
 import javax.persistence.JoinColumn
 import javax.persistence.Lob
 import javax.persistence.ManyToOne
+import javax.persistence.OneToMany
 import javax.persistence.SequenceGenerator
 import javax.persistence.Table
 import javax.persistence.Version
@@ -37,6 +39,14 @@ data class Contact(
   @Column(name = "CONTACT_DATE", nullable = false)
   var date: LocalDate,
 
+  @Column(name = "ATTENDED")
+  @Type(type = "yes_no")
+  var attended: Boolean? = null,
+
+  @Column(name = "COMPLIED")
+  @Type(type = "yes_no")
+  var complied: Boolean? = null,
+
   @JoinColumn(name = "OFFENDER_ID", nullable = false)
   @ManyToOne
   var offender: Offender,
@@ -50,6 +60,9 @@ data class Contact(
 
   @Column(name = "CONTACT_END_TIME")
   var endTime: LocalTime? = null,
+
+  @Column(name = "HOURS_CREDITED")
+  var hoursCredited: Double? = null,
 
   @Column(name = "NOTES")
   @Lob
@@ -100,6 +113,9 @@ data class Contact(
   @JoinColumn(name = "CONTACT_OUTCOME_TYPE_ID")
   @ManyToOne
   var outcome: ContactOutcomeType? = null,
+
+  @OneToMany(cascade = [CascadeType.ALL], mappedBy = "contact", orphanRemoval = true)
+  var enforcements: MutableList<Enforcement> = mutableListOf(),
 
   @Column(name = "CREATED_BY_USER_ID", nullable = false)
   @CreatedBy

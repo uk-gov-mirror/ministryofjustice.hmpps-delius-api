@@ -9,10 +9,13 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
+import uk.gov.justice.digital.hmpps.deliusapi.entity.Enforcement
 import uk.gov.justice.digital.hmpps.deliusapi.entity.YesNoBoth
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
+import uk.gov.justice.digital.hmpps.deliusapi.util.comparingDateTimesToNearestSecond
+import java.time.LocalDate
 import java.time.LocalTime
 
 @ExtendWith(MockitoExtension::class)
@@ -164,6 +167,46 @@ class ContactValidationServiceTest {
     assertDoesNotThrow { subject.validateAssociatedEntity(type, nsi = nsi) }
   }
 
+  @Test
+  fun `Attempting to validate enforcement without outcome`() =
+    attemptingToValidateEnforcement(success = false, havingOutcome = false)
+
+  @Test
+  fun `Successfully validating null enforcement without outcome`() =
+    attemptingToValidateEnforcement(success = true, havingEnforcement = false, havingOutcome = false)
+
+  @Test
+  fun `Attempting to validate enforcement with compliant outcome`() =
+    attemptingToValidateEnforcement(success = false, compliantAcceptable = true)
+
+  @Test
+  fun `Attempting to validate enforcement with non-enforceable outcome`() =
+    attemptingToValidateEnforcement(success = false, enforceable = false)
+
+  @Test
+  fun `Successfully validating null enforcement with compliant outcome`() =
+    attemptingToValidateEnforcement(success = true, havingEnforcement = false, compliantAcceptable = true)
+
+  @Test
+  fun `Successfully validating null enforcement with non-enforceable outcome`() =
+    attemptingToValidateEnforcement(success = true, havingEnforcement = false, enforceable = false)
+
+  @Test
+  fun `Successfully validating enforcement with non-action required outcome`() =
+    attemptingToValidateEnforcement(success = true, actionRequired = false)
+
+  @Test
+  fun `Attempting to validate null enforcement with action required outcome`() =
+    attemptingToValidateEnforcement(success = false, havingEnforcement = false)
+
+  @Test
+  fun `Attempting to validate enforcement with not supported enforcement type`() =
+    attemptingToValidateEnforcement(success = false, havingEnforcementAction = false)
+
+  @Test
+  fun `Successfully validating enforcement`() =
+    attemptingToValidateEnforcement(success = true)
+
   private fun attemptingToValidateContactType(
     success: Boolean,
     alert: Boolean = true,
@@ -274,6 +317,50 @@ class ContactValidationServiceTest {
       assertDoesNotThrow { subject.validateFutureAppointmentClashes(request, type, offender, existing.id) }
     } else {
       assertThrows<BadRequestException> { subject.validateFutureAppointmentClashes(request, type, offender, existing.id) }
+    }
+  }
+
+  private fun attemptingToValidateEnforcement(
+    success: Boolean,
+    havingEnforcement: Boolean = true,
+    havingOutcome: Boolean = true,
+    compliantAcceptable: Boolean = false,
+    enforceable: Boolean = true,
+    actionRequired: Boolean = true,
+    havingEnforcementAction: Boolean = true,
+  ) {
+    val request = Fake.newContact().copy(
+      enforcement = if (havingEnforcement) "some-enforcement" else null
+    )
+    val action = Fake.enforcementAction().copy(code = "some-enforcement", responseByPeriod = 7)
+    val type = Fake.contactType().copy(
+      enforcementActions = if (havingEnforcementAction) listOf(action) else emptyList()
+    )
+    val outcome = if (havingOutcome) Fake.contactOutcomeType().copy(
+      compliantAcceptable = compliantAcceptable,
+      enforceable = enforceable,
+      actionRequired = actionRequired,
+    ) else null
+
+    if (success) {
+      val observed = subject.validateEnforcement(request, type, outcome)
+      if (havingEnforcement) {
+        assertThat(observed)
+          .usingRecursiveComparison()
+          .comparingDateTimesToNearestSecond()
+          .isEqualTo(
+            Enforcement(
+              actionTakenDate = LocalDate.now(),
+              actionTakenTime = LocalTime.now(),
+              action = if (actionRequired) action else null,
+              responseDate = if (actionRequired) LocalDate.now().plusDays(7) else null
+            )
+          )
+      } else {
+        assertThat(observed).isEqualTo(null)
+      }
+    } else {
+      assertThrows<BadRequestException> { subject.validateEnforcement(request, type, outcome) }
     }
   }
 }

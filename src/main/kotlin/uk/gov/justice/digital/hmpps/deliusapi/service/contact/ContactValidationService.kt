@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.CreateOrUpdateContact
 import uk.gov.justice.digital.hmpps.deliusapi.entity.ContactOutcomeType
 import uk.gov.justice.digital.hmpps.deliusapi.entity.ContactType
+import uk.gov.justice.digital.hmpps.deliusapi.entity.Enforcement
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Event
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Nsi
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Offender
@@ -30,31 +31,74 @@ class ContactValidationService(private val contactRepository: ContactRepository)
   }
 
   fun validateOutcomeType(request: CreateOrUpdateContact, type: ContactType): ContactOutcomeType? {
-    if (type.outcomeFlag == YesNoBoth.Y && request.outcome == null && request.date.isBefore(LocalDate.now())) {
-      throw BadRequestException("Contact type '${type.code}' requires an outcome type")
+    fun get() = type.outcomeTypes?.find { it.code == request.outcome }
+      ?: throw BadRequestException("Contact type with code '${type.code}' does not support outcome code '${request.outcome}'")
+
+    // The cases here seem odd but logic has been ported from Delius where:
+    // Y -> Outcome Mandatory (if contact date is in the past)
+    // N -> Outcome Optional
+    // B -> Outcome Not Allowed
+    val outcome = when (type.outcomeFlag) {
+      YesNoBoth.Y -> {
+        if (request.outcome == null) {
+          if (request.date.isBefore(LocalDate.now())) {
+            throw BadRequestException("Contact type '${type.code}' requires an outcome type")
+          } else null
+        } else get()
+      }
+      YesNoBoth.N -> if (request.outcome == null) null else get()
+      YesNoBoth.B -> if (request.outcome == null) null
+      else throw BadRequestException("Contact type '${type.code}' does not support an outcome type")
     }
 
-    val outcome = if (request.outcome != null)
-      type.outcomeTypes?.find { it.code == request.outcome }
-        ?: throw BadRequestException("Contact type with code '${type.code}' does not support outcome code '${request.outcome}'")
-    else null
-
     if (outcome?.isPermissibleAbsence() == false && request.date.isAfter(LocalDate.now())) {
-      throw BadRequestException("Outcome code '${request.outcome}' not a permissible absence - only permissible absences can be recorded for a future attendance")
+      throw BadRequestException("Outcome code '${outcome.code}' not a permissible absence - only permissible absences can be recorded for a future attendance")
     }
 
     return outcome
   }
 
+  fun validateEnforcement(request: CreateOrUpdateContact, type: ContactType, outcome: ContactOutcomeType?): Enforcement? {
+    if (outcome == null) {
+      return if (request.enforcement == null) null
+      else throw BadRequestException("Enforcement cannot be provided without an outcome")
+    }
+
+    if (outcome.compliantAcceptable != false || outcome.enforceable != true) {
+      return if (request.enforcement == null) null
+      else throw BadRequestException("Outcome '${outcome.code}' is not non-compliant & enforceable, enforcement action is not supported")
+    }
+
+    val enforcement = Enforcement(
+      actionTakenDate = LocalDate.now(),
+      actionTakenTime = LocalTime.now(),
+    )
+
+    if (outcome.actionRequired) {
+      if (request.enforcement == null) {
+        throw BadRequestException("Outcome '${outcome.code}' requires an enforcement action")
+      }
+      val action = type.enforcementActions?.find { it.code == request.enforcement }
+        ?: throw BadRequestException("Contact type '${type.code}' does not support enforcement action '${request.enforcement}'")
+      enforcement.action = action
+      if (action.responseByPeriod != null) {
+        enforcement.responseDate = LocalDate.now().plusDays(action.responseByPeriod!!)
+      }
+    }
+
+    return enforcement
+  }
+
   fun validateOfficeLocation(request: CreateOrUpdateContact, type: ContactType, team: Team): OfficeLocation? {
     fun get() = team.officeLocations?.find { it.code == request.officeLocation }
+      ?: throw BadRequestException("Team with code '${request.team}' does not exist at office location '${request.officeLocation}'")
 
     return when (type.locationFlag) {
       YesNoBoth.Y -> {
         if (request.officeLocation == null) {
           throw BadRequestException("Location is required for contact type '${type.code}'")
         }
-        get() ?: throw BadRequestException("Team with code '${request.team}' does not exist at office location '${request.officeLocation}'")
+        get()
       }
       YesNoBoth.N -> {
         if (request.officeLocation != null) {
@@ -62,7 +106,7 @@ class ContactValidationService(private val contactRepository: ContactRepository)
         }
         null
       }
-      YesNoBoth.B -> get()
+      YesNoBoth.B -> if (request.officeLocation == null) null else get()
     }
   }
 

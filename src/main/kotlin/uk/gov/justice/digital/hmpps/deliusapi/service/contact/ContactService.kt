@@ -74,6 +74,9 @@ class ContactService(
     validation.validateFutureAppointmentClashes(request, entity.type, entity.offender, entity.id)
 
     entity.outcome = validation.validateOutcomeType(request, entity.type)
+    entity.attended = entity.outcome?.attendance
+    entity.complied = entity.outcome?.compliantAcceptable
+
     entity.officeLocation = validation.validateOfficeLocation(request, entity.type, team)
 
     entity.provider = provider
@@ -86,6 +89,15 @@ class ContactService(
     entity.sensitive = request.sensitive
     entity.description = request.description
     entity.notes = getNotes(entity.notes, request.notes)
+
+    if (request.enforcement != entity.enforcements.getOrNull(0)?.action?.code) {
+      val enforcement = validation.validateEnforcement(request, entity.type, entity.outcome)
+      entity.enforcements.clear()
+      if (enforcement != null) {
+        enforcement.contact = entity
+        entity.enforcements.add(enforcement)
+      }
+    }
 
     contactRepository.saveAndFlush(entity)
     return mapper.toDto(entity)
@@ -105,6 +117,7 @@ class ContactService(
 
     validation.validateContactType(request, type)
     val outcome = validation.validateOutcomeType(request, type)
+    val enforcement = validation.validateEnforcement(request, type, outcome)
 
     val (provider, team, staff) = getProviderTeamStaff(request)
     val officeLocation = validation.validateOfficeLocation(request, type, team)
@@ -137,6 +150,8 @@ class ContactService(
       date = request.date,
       startTime = request.startTime,
       endTime = request.endTime,
+      attended = outcome?.attendance,
+      complied = outcome?.compliantAcceptable,
       alert = request.alert,
       sensitive = request.sensitive,
       notes = getNotes(type.defaultHeadings, request.notes),
@@ -147,6 +162,11 @@ class ContactService(
       staffEmployeeId = 1, // <- not actually sure what this is it should reference a PROVIDER_EMPLOYEE
       teamProviderId = 1,
     )
+
+    if (enforcement != null) {
+      enforcement.contact = contact
+      contact.enforcements.add(enforcement)
+    }
 
     val entity = contactRepository.saveAndFlush(contact)
     return mapper.toDto(entity)

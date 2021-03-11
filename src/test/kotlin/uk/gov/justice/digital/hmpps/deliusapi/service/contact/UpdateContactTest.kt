@@ -87,6 +87,16 @@ class UpdateContactTest : ContactServiceTestBase() {
   }
 
   @Test
+  fun `Attempting to update contact with invalid enforcement`() {
+    havingDependentEntities()
+    havingContact()
+    havingProvider()
+    havingOutcomeType()
+    havingEnforcement(having = false)
+    assertThrows<BadRequestException>("bad enforcement") { whenUpdatingContact() }
+  }
+
+  @Test
   fun `Attempting to update contact with invalid office location`() {
     havingDependentEntities()
     havingContact()
@@ -104,6 +114,7 @@ class UpdateContactTest : ContactServiceTestBase() {
     havingContact()
     havingProvider()
     havingOutcomeType()
+    havingEnforcement()
     havingOfficeLocation()
 
     whenever(contactRepository.saveAndFlush(entityCaptor.capture())).thenReturn(contact)
@@ -117,6 +128,7 @@ class UpdateContactTest : ContactServiceTestBase() {
     assertThat(entityCaptor.value)
       .isSameAs(contact)
       .hasProperty(Contact::outcome, outcome)
+      .hasProperty(Contact::enforcements, listOf(enforcement))
       .hasProperty(Contact::officeLocation, officeLocation)
       .hasProperty(Contact::provider, provider)
       .hasProperty(Contact::team, team)
@@ -150,6 +162,15 @@ class UpdateContactTest : ContactServiceTestBase() {
   private fun havingOutcomeType(having: Boolean = true) {
     val mock = whenever(validationService.validateOutcomeType(request, contact.type))
     if (having) mock.thenReturn(outcome) else mock.thenThrow(BadRequestException("bad outcome"))
+  }
+
+  private fun havingEnforcement(having: Boolean = true) {
+    val mock = whenever(validationService.validateEnforcement(request, contact.type, outcome))
+    if (having) {
+      mock.thenReturn(enforcement)
+    } else {
+      mock.thenThrow(BadRequestException("bad enforcement"))
+    }
   }
 
   private fun havingOfficeLocation(having: Boolean = true) {

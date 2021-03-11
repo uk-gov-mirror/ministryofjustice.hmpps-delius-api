@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.stream.Stream
+import javax.transaction.Transactional
 
 @ActiveProfiles("test-h2")
 class CreateContactTest : IntegrationTestBase() {
@@ -92,6 +93,10 @@ class CreateContactTest : IntegrationTestBase() {
           )
         )
       )
+
+      // enforcement
+      // Unacceptible behaviour, refer to offender manager
+      successCases.add(of(valid.copy(outcome = "UBHV", enforcement = "ROM")))
     }
     @JvmStatic
     fun successCases(): Stream<Arguments> = successCases.stream()
@@ -107,6 +112,7 @@ class CreateContactTest : IntegrationTestBase() {
       .expectBody().shouldReturnValidationError(expectedResult)
   }
 
+  @Transactional
   @ParameterizedTest(name = "[{index}] Valid contact {arguments}")
   @MethodSource("successCases")
   fun `should successfully create and audit a new contact`(request: NewContact) {
@@ -120,6 +126,7 @@ class CreateContactTest : IntegrationTestBase() {
       .shouldSaveContact(request)
   }
 
+  @Transactional
   @Test
   fun `should successfully create a new contact using client credentials and database_username`() {
     // set the subject and username to an unknown value to prove this is not used when database_username set

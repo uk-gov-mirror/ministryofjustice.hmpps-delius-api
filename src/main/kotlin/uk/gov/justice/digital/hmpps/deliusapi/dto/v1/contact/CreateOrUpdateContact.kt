@@ -5,6 +5,7 @@ import java.time.LocalTime
 
 interface CreateOrUpdateContact {
   val outcome: String?
+  val enforcement: String?
   val provider: String
   val team: String
   val staff: String

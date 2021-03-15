@@ -8,6 +8,7 @@ import org.mockito.junit.jupiter.MockitoSettings
 import org.mockito.quality.Strictness
 import uk.gov.justice.digital.hmpps.deliusapi.entity.ContactOutcomeType
 import uk.gov.justice.digital.hmpps.deliusapi.entity.ContactType
+import uk.gov.justice.digital.hmpps.deliusapi.entity.Enforcement
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Event
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Nsi
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Offender
@@ -38,6 +39,7 @@ abstract class ContactServiceTestBase {
 
   protected lateinit var type: ContactType
   protected lateinit var outcome: ContactOutcomeType
+  protected lateinit var enforcement: Enforcement
   protected lateinit var offender: Offender
   protected lateinit var provider: Provider
   protected lateinit var staff: Staff
@@ -64,6 +66,7 @@ abstract class ContactServiceTestBase {
     offender = Fake.offender().copy(id = offenderId, events = events)
 
     outcome = Fake.contactOutcomeType()
+    enforcement = Fake.enforcement()
     type = Fake.contactType()
 
     this.staff = Fake.staff()

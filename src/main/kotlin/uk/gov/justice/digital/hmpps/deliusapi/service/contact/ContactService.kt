@@ -74,6 +74,8 @@ class ContactService(
     validation.validateFutureAppointmentClashes(request, entity.type, entity.offender, entity.id)
 
     entity.outcome = validation.validateOutcomeType(request, entity.type)
+    validation.setOutcomeMeta(entity)
+
     entity.officeLocation = validation.validateOfficeLocation(request, entity.type, team)
 
     entity.provider = provider
@@ -86,6 +88,19 @@ class ContactService(
     entity.sensitive = request.sensitive
     entity.description = request.description
     entity.notes = getNotes(entity.notes, request.notes)
+
+    if (entity.enforcements.size > 1) {
+      throw RuntimeException("Cannot determine which enforcement to use on contact with id '${entity.id}'")
+    }
+
+    if (request.enforcement != entity.enforcements.getOrNull(0)?.action?.code) {
+      val enforcement = validation.validateEnforcement(request, entity.type, entity.outcome)
+      entity.enforcements.clear()
+      if (enforcement != null) {
+        enforcement.contact = entity
+        entity.enforcements.add(enforcement)
+      }
+    }
 
     contactRepository.saveAndFlush(entity)
     return mapper.toDto(entity)
@@ -105,6 +120,7 @@ class ContactService(
 
     validation.validateContactType(request, type)
     val outcome = validation.validateOutcomeType(request, type)
+    val enforcement = validation.validateEnforcement(request, type, outcome)
 
     val (provider, team, staff) = getProviderTeamStaff(request)
     val officeLocation = validation.validateOfficeLocation(request, type, team)
@@ -119,7 +135,7 @@ class ContactService(
 
     val nsi = if (request.nsiId == null) null
     else nsiRepository.findByIdOrNull(request.nsiId)
-      ?: throw IllegalArgumentException("NSI with id '${request.nsiId}' does not exist")
+      ?: throw BadRequestException("NSI with id '${request.nsiId}' does not exist")
 
     validation.validateAssociatedEntity(type, requirement, event, nsi)
 
@@ -147,6 +163,13 @@ class ContactService(
       staffEmployeeId = 1, // <- not actually sure what this is it should reference a PROVIDER_EMPLOYEE
       teamProviderId = 1,
     )
+
+    validation.setOutcomeMeta(contact)
+
+    if (enforcement != null) {
+      enforcement.contact = contact
+      contact.enforcements.add(enforcement)
+    }
 
     val entity = contactRepository.saveAndFlush(contact)
     return mapper.toDto(entity)

@@ -15,6 +15,8 @@ import uk.gov.justice.digital.hmpps.deliusapi.entity.ContactOutcomeType
 import uk.gov.justice.digital.hmpps.deliusapi.entity.ContactType
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Disposal
 import uk.gov.justice.digital.hmpps.deliusapi.entity.DisposalType
+import uk.gov.justice.digital.hmpps.deliusapi.entity.Enforcement
+import uk.gov.justice.digital.hmpps.deliusapi.entity.EnforcementAction
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Event
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Nsi
 import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiManager
@@ -91,7 +93,14 @@ object Fake {
     requirementTypeCategories = listOf(requirementTypeCategory()),
     nsiTypes = listOf(nsiType()),
   )
-  fun contactOutcomeType() = ContactOutcomeType(id = id(), code = faker.lorem().characters(1, 10), compliantAcceptable = true, attendance = true)
+  fun contactOutcomeType() = ContactOutcomeType(
+    id = id(),
+    code = faker.lorem().characters(1, 10),
+    compliantAcceptable = true,
+    attendance = true,
+    actionRequired = true,
+    enforceable = true,
+  )
   fun provider() = Provider(id = id(), code = faker.lorem().characters(3), teams = listOf(team()))
   fun team() = Team(
     id = id(),
@@ -133,6 +142,21 @@ object Fake {
     active = true
   )
 
+  fun enforcementAction() = EnforcementAction(
+    id = id(),
+    code = faker.lorem().characters(10),
+    outstandingContactAction = true,
+    responseByPeriod = 7,
+  )
+
+  fun enforcement() = Enforcement(
+    id = id(),
+    responseDate = randomPastLocalDate(),
+    actionTakenDate = randomPastLocalDate(),
+    actionTakenTime = LocalTime.NOON,
+    action = enforcementAction(),
+  )
+
   fun contact(): Contact {
     val contactOutcomeType = contactOutcomeType()
     val team = team()
@@ -142,6 +166,7 @@ object Fake {
       offender = offender(),
       type = contactType().copy(outcomeTypes = listOf(contactOutcomeType)),
       outcome = contactOutcomeType,
+      enforcements = mutableListOf(enforcement()),
       provider = provider,
       team = team,
       staff = staff(),
@@ -162,6 +187,9 @@ object Fake {
       lastUpdatedDateTime = randomLocalDateTime(),
       createdByUserId = id(),
       lastUpdatedUserId = id(),
+      attended = faker.bool().bool(),
+      complied = faker.bool().bool(),
+      hoursCredited = faker.number().randomDouble(1, 1, 12),
     )
   }
 

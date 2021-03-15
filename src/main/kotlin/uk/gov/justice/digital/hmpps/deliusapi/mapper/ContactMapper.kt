@@ -17,6 +17,7 @@ interface ContactMapper {
     Mapping(source = "offender.crn", target = "offenderCrn"),
     Mapping(source = "type.code", target = "type"),
     Mapping(source = "outcome.code", target = "outcome"),
+    Mapping(target = "enforcement", expression = GET_ENFORCEMENT_CODE),
     Mapping(source = "provider.code", target = "provider"),
     Mapping(source = "team.code", target = "team"),
     Mapping(source = "staff.code", target = "staff"),
@@ -29,15 +30,18 @@ interface ContactMapper {
 
   @Mappings(
     Mapping(source = "outcome.code", target = "outcome"),
+    Mapping(target = "enforcement", expression = GET_ENFORCEMENT_CODE),
     Mapping(source = "provider.code", target = "provider"),
     Mapping(source = "team.code", target = "team"),
     Mapping(source = "staff.code", target = "staff"),
     Mapping(source = "officeLocation.code", target = "officeLocation"),
     Mapping(target = "notes", ignore = true), // notes are immutable
   )
-  fun toUpdate(contact: Contact): UpdateContact
+  fun toUpdate(src: Contact): UpdateContact
 
   companion object {
+    private const val GET_ENFORCEMENT_CODE = "java(ContactMapper.Companion.getEnforcementCode(src))"
     val INSTANCE = Mappers.getMapper(ContactMapper::class.java)
+    fun getEnforcementCode(contact: Contact) = contact.enforcements.getOrNull(0)?.action?.code
   }
 }

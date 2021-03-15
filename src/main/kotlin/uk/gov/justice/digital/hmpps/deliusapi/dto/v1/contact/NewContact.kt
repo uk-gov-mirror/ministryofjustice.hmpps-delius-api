@@ -4,6 +4,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.validation.AllowedValues
 import uk.gov.justice.digital.hmpps.deliusapi.validation.Crn
 import uk.gov.justice.digital.hmpps.deliusapi.validation.DependentFields
 import uk.gov.justice.digital.hmpps.deliusapi.validation.EndTime
+import uk.gov.justice.digital.hmpps.deliusapi.validation.EnforcementActionCode
 import uk.gov.justice.digital.hmpps.deliusapi.validation.ExclusiveFields
 import uk.gov.justice.digital.hmpps.deliusapi.validation.FieldGroups
 import uk.gov.justice.digital.hmpps.deliusapi.validation.NotBlankWhenProvided
@@ -44,6 +45,10 @@ data class NewContact(
   @NotBlankWhenProvided
   @field:Size(max = 10)
   override val outcome: String? = null,
+
+  @EnforcementActionCode
+  @DependentFields("outcome")
+  override val enforcement: String? = null,
 
   @ProviderCode
   override val provider: String,

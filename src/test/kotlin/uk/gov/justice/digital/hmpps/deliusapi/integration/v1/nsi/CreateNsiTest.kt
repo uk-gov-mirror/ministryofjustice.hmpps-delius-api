@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.validation.ValidationTestCase
 import uk.gov.justice.digital.hmpps.deliusapi.validation.ValidationTestCaseBuilder
 import java.time.LocalDate
 import java.time.LocalDateTime
+import javax.transaction.Transactional
 
 @ActiveProfiles("test-h2")
 class CreateNsiTest @Autowired constructor (
@@ -87,6 +88,7 @@ class CreateNsiTest @Autowired constructor (
       .cases
   }
 
+  @Transactional
   @ParameterizedTest(name = "[{index}] Valid nsi {arguments}")
   @MethodSource("validTestCases")
   fun `Creating valid nsi`(case: ValidationTestCase<NewNsi>) {

@@ -18,11 +18,19 @@ data class ContactOutcomeType(
   @Column(name = "CODE")
   var code: String,
 
-  @Column(name = "OUTCOME_COMPLIANT_ACCEPTABLE", columnDefinition = "CHAR(1)")
+  @Column(name = "OUTCOME_COMPLIANT_ACCEPTABLE", length = 1)
   @Type(type = "yes_no")
   val compliantAcceptable: Boolean?,
 
-  @Column(name = "OUTCOME_ATTENDANCE", columnDefinition = "CHAR(1)")
+  @Column(name = "OUTCOME_ATTENDANCE", length = 1)
   @Type(type = "yes_no")
   var attendance: Boolean?,
+
+  @Column(name = "ACTION_REQUIRED", nullable = false)
+  @Type(type = "yes_no")
+  var actionRequired: Boolean,
+
+  @Column(name = "ENFORCEABLE", length = 1)
+  @Type(type = "yes_no")
+  var enforceable: Boolean?,
 )

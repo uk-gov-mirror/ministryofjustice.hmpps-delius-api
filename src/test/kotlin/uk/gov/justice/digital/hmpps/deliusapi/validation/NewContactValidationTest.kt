@@ -22,7 +22,9 @@ class NewContactValidationTest : ValidationTest<NewContact>() {
     fun validCases() = ValidationTestCaseBuilder.fromFake<NewContact>()
       .setValid()
       .kitchenSink()
-      .string(NewContact::outcome) { it.isNull().length(1).length(10) }
+      .string(NewContact::outcome) { it.length(1).length(10) }
+      .string(NewContact::enforcement) { it.isNull().length(1).length(10) }
+      .allNull(NewContact::outcome, NewContact::enforcement)
       .string(NewContact::officeLocation) { it.isNull() }
       .time(NewContact::endTime) { it.isNull() }
       .string(NewContact::notes) { it.isNull().empty() }
@@ -36,6 +38,7 @@ class NewContactValidationTest : ValidationTest<NewContact>() {
       .string(NewContact::offenderCrn) { it.empty().blank().value("bacon", "not a valid crn") }
       .string(NewContact::type) { it.empty().blank().value("bacon", "not an allowed contact type") }
       .string(NewContact::outcome) { it.empty().blank().length(11) }
+      .string(NewContact::enforcement) { it.empty().blank().length(11).dependent(NewContact::outcome) }
       .string(NewContact::provider) { it.empty().blank().length(4) }
       .string(NewContact::team) { it.empty().blank().length(7) }
       .string(NewContact::staff) { it.empty().blank().length(8) }

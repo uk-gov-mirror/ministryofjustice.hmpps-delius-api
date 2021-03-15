@@ -19,6 +19,7 @@ class ContactMapperTest {
       .hasProperty(ContactDto::offenderCrn, source.offender.crn)
       .hasProperty(ContactDto::type, source.type.code)
       .hasProperty(ContactDto::outcome, source.outcome?.code)
+      .hasProperty(ContactDto::enforcement, source.enforcements[0].action?.code!!)
       .hasProperty(ContactDto::provider, source.provider?.code)
       .hasProperty(ContactDto::team, source.team?.code)
       .hasProperty(ContactDto::staff, source.staff?.code)
@@ -41,6 +42,7 @@ class ContactMapperTest {
 
     assertThat(observed)
       .hasProperty(UpdateContact::outcome, source.outcome?.code)
+      .hasProperty(UpdateContact::enforcement, source.enforcements[0].action?.code!!)
       .hasProperty(UpdateContact::provider, source.provider?.code)
       .hasProperty(UpdateContact::team, source.team?.code)
       .hasProperty(UpdateContact::staff, source.staff?.code)

@@ -18,7 +18,9 @@ class UpdateContactValidationTest : ValidationTest<UpdateContact>() {
     fun validCases() = ValidationTestCaseBuilder.fromFake<UpdateContact>()
       .setValid()
       .kitchenSink()
-      .string(UpdateContact::outcome) { it.isNull().length(1).length(10) }
+      .string(UpdateContact::outcome) { it.length(1).length(10) }
+      .string(UpdateContact::enforcement) { it.isNull().length(1).length(10) }
+      .allNull(UpdateContact::outcome, UpdateContact::enforcement)
       .string(UpdateContact::officeLocation) { it.isNull() }
       .time(UpdateContact::endTime) { it.isNull() }
       .string(UpdateContact::notes) { it.isNull().empty() }
@@ -28,6 +30,7 @@ class UpdateContactValidationTest : ValidationTest<UpdateContact>() {
     @JvmStatic
     fun invalidCases() = ValidationTestCaseBuilder.fromFake<UpdateContact>()
       .string(UpdateContact::outcome) { it.empty().blank().length(11) }
+      .string(UpdateContact::enforcement) { it.empty().blank().length(11).dependent(UpdateContact::outcome) }
       .string(UpdateContact::provider) { it.empty().blank() }
       .string(UpdateContact::team) { it.empty().blank() }
       .string(UpdateContact::staff) { it.empty().blank() }

@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.deliusapi.integration.v1.contact
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments.of
 import org.junit.jupiter.params.provider.MethodSource
@@ -10,7 +11,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.ContactDto
-import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.NewContact
 import uk.gov.justice.digital.hmpps.deliusapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.deliusapi.mapper.ContactMapper
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
@@ -19,13 +20,14 @@ import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
 import java.time.LocalDate
 import java.time.LocalTime
+import javax.transaction.Transactional
 import kotlin.reflect.KProperty1
 
 data class Operation(val op: String, val path: String, val value: Any? = null)
 
 class UpdateCase(
   vararg val operations: Operation,
-  val expected: (contact: Contact) -> Map<KProperty1<ContactDto, *>, Any?>,
+  val expected: (contact: ContactDto) -> Map<KProperty1<ContactDto, *>, Any?>,
 )
 
 @ActiveProfiles("test-h2")
@@ -38,6 +40,7 @@ class PatchContactTest @Autowired constructor(
     fun validCases() = listOf(
       UpdateCase(
         Operation("replace", "/outcome", "UBHV"),
+        Operation("replace", "/enforcement", "ROM"),
         Operation("replace", "/provider", "N02"),
         Operation("replace", "/team", "N02T01"),
         Operation("replace", "/staff", "N02P002"),
@@ -94,6 +97,7 @@ class PatchContactTest @Autowired constructor(
     )
   }
 
+  @Transactional
   @ParameterizedTest(name = "[{index}] Valid patch contact {arguments}")
   @MethodSource("validCases")
   fun `Successfully patching existing contact`(case: UpdateCase) {
@@ -104,10 +108,7 @@ class PatchContactTest @Autowired constructor(
       .whenPatchingContact(contact.id, *case.operations)
       .expectStatus().isOk
 
-    val updated = contactRepository.findByIdOrNull(contact.id)
-    val observed = ContactMapper.INSTANCE.toDto(updated!!)
-
-    expected.toList().fold(assertThat(observed)) { it, (k, v) -> it.hasProperty(k, v) }
+    shouldUpdateContact(contact.id, expected)
   }
 
   @ParameterizedTest(name = "[{index}] Invalid patch contact {0}")
@@ -129,15 +130,45 @@ class PatchContactTest @Autowired constructor(
       .expectStatus().isUnauthorized
   }
 
-  fun havingExistingContact(): Contact {
-    var id = 0L
-    val request = Fake.validNewContact()
-    webTestClient.whenCreatingContact(request)
+  @Transactional
+  @Test
+  fun `Successfully patching existing contact with enforcement`() {
+    val contact = havingExistingContact(
+      Fake.validNewContact().copy(
+        outcome = "UBHV",
+        enforcement = "ROM",
+      )
+    )
+
+    webTestClient
+      .whenPatchingContact(
+        contact.id,
+        Operation("replace", "/outcome", "CO22"),
+        Operation("remove", "/enforcement")
+      )
+      .expectStatus().isOk
+
+    shouldUpdateContact(
+      contact.id,
+      mapOf(
+        ContactDto::outcome to "CO22",
+        ContactDto::enforcement to null,
+      )
+    )
+  }
+
+  private fun shouldUpdateContact(id: Long, expected: Map<KProperty1<ContactDto, *>, Any?>) {
+    val updated = contactRepository.findByIdOrNull(id)
+    val observed = ContactMapper.INSTANCE.toDto(updated!!)
+    expected.toList().fold(assertThat(observed)) { it, (k, v) -> it.hasProperty(k, v) }
+  }
+
+  private fun havingExistingContact(request: NewContact = Fake.validNewContact()): ContactDto {
+    return webTestClient.whenCreatingContact(request)
       .expectStatus().isCreated
-      .expectBody()
-      .jsonPath("$.id").value<Long> { id = it }
-    assertThat(id).describedAs("should create contact & return id").isPositive
-    return contactRepository.findByIdOrNull(id)!!
+      .expectBody(ContactDto::class.java)
+      .returnResult()
+      .responseBody
   }
 
   private fun WebTestClient.whenPatchingContact(id: Long, vararg operations: Operation): WebTestClient.ResponseSpec {

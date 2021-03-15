@@ -187,6 +187,9 @@ object Fake {
       lastUpdatedDateTime = randomLocalDateTime(),
       createdByUserId = id(),
       lastUpdatedUserId = id(),
+      attended = faker.bool().bool(),
+      complied = faker.bool().bool(),
+      hoursCredited = faker.number().randomDouble(1, 1, 12),
     )
   }
 

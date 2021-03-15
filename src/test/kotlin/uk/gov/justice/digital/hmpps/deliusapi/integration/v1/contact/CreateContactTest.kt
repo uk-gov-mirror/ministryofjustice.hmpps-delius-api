@@ -95,7 +95,7 @@ class CreateContactTest : IntegrationTestBase() {
       )
 
       // enforcement
-      // Unacceptible behaviour, refer to offender manager
+      // Unacceptable behaviour, refer to offender manager
       successCases.add(of(valid.copy(outcome = "UBHV", enforcement = "ROM")))
     }
     @JvmStatic

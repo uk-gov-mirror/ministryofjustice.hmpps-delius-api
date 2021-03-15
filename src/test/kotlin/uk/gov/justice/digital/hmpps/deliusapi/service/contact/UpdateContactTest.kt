@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.deliusapi.service.contact
 
+import com.nhaarman.mockitokotlin2.times
+import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -10,6 +12,8 @@ import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.UpdateContact
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import uk.gov.justice.digital.hmpps.deliusapi.exception.NotFoundException
+import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditContext
+import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditableInteraction
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
 import java.util.Optional
@@ -140,6 +144,11 @@ class UpdateContactTest : ContactServiceTestBase() {
       .hasProperty(Contact::sensitive, request.sensitive)
       .hasProperty(Contact::description, request.description)
       .hasProperty(Contact::notes, originalNotes + ContactService.NOTES_SEPARATOR + request.notes)
+
+    shouldSetAuditContext()
+
+    // should set outcome meta
+    verify(validationService, times(1)).setOutcomeMeta(entityCaptor.value)
   }
 
   private fun havingContact(having: Boolean = true, editable: Boolean = true) {
@@ -183,4 +192,9 @@ class UpdateContactTest : ContactServiceTestBase() {
   }
 
   private fun whenUpdatingContact() = subject.updateContact(contact.id, request)
+
+  private fun shouldSetAuditContext() {
+    val context = AuditContext.get(AuditableInteraction.UPDATE_CONTACT)
+    assertThat(context.contactId).isEqualTo(contact.id)
+  }
 }

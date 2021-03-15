@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.deliusapi.service.contact
 
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.CreateOrUpdateContact
+import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
 import uk.gov.justice.digital.hmpps.deliusapi.entity.ContactOutcomeType
 import uk.gov.justice.digital.hmpps.deliusapi.entity.ContactType
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Enforcement
@@ -14,7 +15,10 @@ import uk.gov.justice.digital.hmpps.deliusapi.entity.Team
 import uk.gov.justice.digital.hmpps.deliusapi.entity.YesNoBoth
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
+import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getDuration
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.isPermissibleAbsence
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -56,6 +60,21 @@ class ContactValidationService(private val contactRepository: ContactRepository)
     }
 
     return outcome
+  }
+
+  fun setOutcomeMeta(contact: Contact) {
+    contact.attended = contact.outcome?.attendance
+    contact.complied = contact.outcome?.compliantAcceptable
+
+    // If offender has complied and attended (outcome is acceptable) then set any hours credited
+    if (contact.type.recordedHoursCredited && contact.attended == true && contact.complied == true) {
+      contact.hoursCredited = BigDecimal.valueOf(contact.getDuration().toMinutes())
+        .divide(BigDecimal(60))
+        .setScale(2, RoundingMode.HALF_UP)
+        .toDouble()
+    } else {
+      contact.hoursCredited = null
+    }
   }
 
   fun validateEnforcement(request: CreateOrUpdateContact, type: ContactType, outcome: ContactOutcomeType?): Enforcement? {

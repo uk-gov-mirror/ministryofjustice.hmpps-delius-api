@@ -74,8 +74,7 @@ class ContactService(
     validation.validateFutureAppointmentClashes(request, entity.type, entity.offender, entity.id)
 
     entity.outcome = validation.validateOutcomeType(request, entity.type)
-    entity.attended = entity.outcome?.attendance
-    entity.complied = entity.outcome?.compliantAcceptable
+    validation.setOutcomeMeta(entity)
 
     entity.officeLocation = validation.validateOfficeLocation(request, entity.type, team)
 
@@ -89,6 +88,10 @@ class ContactService(
     entity.sensitive = request.sensitive
     entity.description = request.description
     entity.notes = getNotes(entity.notes, request.notes)
+
+    if (entity.enforcements.size > 1) {
+      throw RuntimeException("Cannot determine which enforcement to use on contact with id '${entity.id}'")
+    }
 
     if (request.enforcement != entity.enforcements.getOrNull(0)?.action?.code) {
       val enforcement = validation.validateEnforcement(request, entity.type, entity.outcome)
@@ -132,7 +135,7 @@ class ContactService(
 
     val nsi = if (request.nsiId == null) null
     else nsiRepository.findByIdOrNull(request.nsiId)
-      ?: throw IllegalArgumentException("NSI with id '${request.nsiId}' does not exist")
+      ?: throw BadRequestException("NSI with id '${request.nsiId}' does not exist")
 
     validation.validateAssociatedEntity(type, requirement, event, nsi)
 
@@ -150,8 +153,6 @@ class ContactService(
       date = request.date,
       startTime = request.startTime,
       endTime = request.endTime,
-      attended = outcome?.attendance,
-      complied = outcome?.compliantAcceptable,
       alert = request.alert,
       sensitive = request.sensitive,
       notes = getNotes(type.defaultHeadings, request.notes),
@@ -162,6 +163,8 @@ class ContactService(
       staffEmployeeId = 1, // <- not actually sure what this is it should reference a PROVIDER_EMPLOYEE
       teamProviderId = 1,
     )
+
+    validation.setOutcomeMeta(contact)
 
     if (enforcement != null) {
       enforcement.contact = contact

@@ -9,12 +9,14 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
+import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Enforcement
 import uk.gov.justice.digital.hmpps.deliusapi.entity.YesNoBoth
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 import uk.gov.justice.digital.hmpps.deliusapi.util.comparingDateTimesToNearestSecond
+import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -206,6 +208,68 @@ class ContactValidationServiceTest {
   @Test
   fun `Successfully validating enforcement`() =
     attemptingToValidateEnforcement(success = true)
+
+  @Test
+  fun `Updating outcome meta with non-recorded hours outcome`() {
+    val contact = Fake.contact().copy(
+      type = Fake.contactType().copy(
+        recordedHoursCredited = false,
+      ),
+      outcome = Fake.contactOutcomeType().copy(
+        attendance = true,
+        compliantAcceptable = true,
+      )
+    )
+
+    subject.setOutcomeMeta(contact)
+
+    assertThat(contact)
+      .hasProperty(Contact::attended, true)
+      .hasProperty(Contact::complied, true)
+      .hasProperty(Contact::hoursCredited, null)
+  }
+
+  @Test
+  fun `Updating outcome meta with non-attended recorded hours outcome`() {
+    val contact = Fake.contact().copy(
+      type = Fake.contactType().copy(
+        recordedHoursCredited = true,
+      ),
+      outcome = Fake.contactOutcomeType().copy(
+        attendance = false,
+        compliantAcceptable = true,
+      )
+    )
+
+    subject.setOutcomeMeta(contact)
+
+    assertThat(contact)
+      .hasProperty(Contact::attended, false)
+      .hasProperty(Contact::complied, true)
+      .hasProperty(Contact::hoursCredited, null)
+  }
+
+  @Test
+  fun `Updating outcome meta with recorded hours outcome`() {
+    val contact = Fake.contact().copy(
+      startTime = LocalTime.of(12, 30),
+      endTime = LocalTime.of(14, 0),
+      type = Fake.contactType().copy(
+        recordedHoursCredited = true,
+      ),
+      outcome = Fake.contactOutcomeType().copy(
+        attendance = true,
+        compliantAcceptable = true,
+      )
+    )
+
+    subject.setOutcomeMeta(contact)
+
+    assertThat(contact)
+      .hasProperty(Contact::attended, true)
+      .hasProperty(Contact::complied, true)
+      .hasProperty(Contact::hoursCredited, 1.5)
+  }
 
   private fun attemptingToValidateContactType(
     success: Boolean,

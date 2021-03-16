@@ -24,7 +24,7 @@ import javax.persistence.Version
 @EntityListeners(AuditingEntityListener::class)
 @Table(name = "NSI_MANAGER")
 @Where(clause = "SOFT_DELETED = 0 AND START_DATE <= CURRENT_DATE AND (END_DATE IS NULL OR END_DATE > CURRENT_DATE)")
-data class NsiManager(
+class NsiManager(
   @Id
   @SequenceGenerator(name = "NSI_MANAGER_ID_GENERATOR", sequenceName = "NSI_MANAGER_ID_SEQ", allocationSize = 1)
   @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "NSI_MANAGER_ID_GENERATOR")

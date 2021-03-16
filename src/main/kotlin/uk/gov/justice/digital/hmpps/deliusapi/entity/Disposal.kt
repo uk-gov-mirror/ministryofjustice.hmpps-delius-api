@@ -10,7 +10,7 @@ import javax.persistence.Table
 
 @Entity
 @Table(name = "DISPOSAL")
-data class Disposal(
+class Disposal(
   @Id
   @Column(name = "DISPOSAL_ID")
   var id: Long,

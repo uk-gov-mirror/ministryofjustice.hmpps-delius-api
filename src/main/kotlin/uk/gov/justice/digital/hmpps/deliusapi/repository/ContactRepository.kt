@@ -22,4 +22,6 @@ interface ContactRepository : JpaRepository<Contact, Long> {
     @Param("startTime") startTime: LocalTime,
     @Param("endTime") endTime: LocalTime,
   ): List<Contact>
+
+  fun findAllByTypeId(typeId: Long): List<Contact>
 }

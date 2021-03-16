@@ -13,7 +13,7 @@ import javax.persistence.Table
 
 @Entity
 @Table(name = "AUDITED_INTERACTION")
-data class AuditedInteraction(
+class AuditedInteraction(
   @Id
   @Column(name = "DATE_TIME")
   @GeneratedValue(generator = "date")

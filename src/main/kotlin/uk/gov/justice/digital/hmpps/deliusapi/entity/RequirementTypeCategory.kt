@@ -7,7 +7,7 @@ import javax.persistence.Table
 
 @Entity
 @Table(name = "R_RQMNT_TYPE_MAIN_CATEGORY")
-data class RequirementTypeCategory(
+class RequirementTypeCategory(
   @Id
   @Column(name = "RQMNT_TYPE_MAIN_CATEGORY_ID")
   var id: Long,

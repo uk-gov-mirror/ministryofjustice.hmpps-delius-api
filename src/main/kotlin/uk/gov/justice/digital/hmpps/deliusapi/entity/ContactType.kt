@@ -10,12 +10,11 @@ import javax.persistence.JoinColumn
 import javax.persistence.JoinTable
 import javax.persistence.Lob
 import javax.persistence.ManyToMany
-import javax.persistence.OneToMany
 import javax.persistence.Table
 
 @Entity
 @Table(name = "R_CONTACT_TYPE")
-data class ContactType(
+class ContactType(
   @Id
   @Column(name = "CONTACT_TYPE_ID")
   var id: Long,
@@ -101,8 +100,4 @@ data class ContactType(
     inverseJoinColumns = [JoinColumn(name = "NSI_TYPE_ID", nullable = false)],
   )
   var nsiTypes: List<NsiType>? = null,
-
-  @OneToMany
-  @JoinColumn(name = "CONTACT_TYPE_ID")
-  var enforcementActions: List<EnforcementAction>? = null,
 )

@@ -12,7 +12,7 @@ import javax.persistence.Table
 
 @Entity
 @Table(name = "USER_")
-data class User(
+class User(
   @Id
   @Column(name = "USER_ID")
   val id: Long = 0,

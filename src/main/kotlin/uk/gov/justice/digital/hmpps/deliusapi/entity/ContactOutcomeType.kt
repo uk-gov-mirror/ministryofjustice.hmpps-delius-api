@@ -10,7 +10,7 @@ import javax.persistence.Table
 @Entity
 @Table(name = "R_CONTACT_OUTCOME_TYPE")
 @Where(clause = "SELECTABLE = 'Y'")
-data class ContactOutcomeType(
+class ContactOutcomeType(
   @Id
   @Column(name = "CONTACT_OUTCOME_TYPE_ID")
   var id: Long,
@@ -20,7 +20,7 @@ data class ContactOutcomeType(
 
   @Column(name = "OUTCOME_COMPLIANT_ACCEPTABLE", length = 1)
   @Type(type = "yes_no")
-  val compliantAcceptable: Boolean?,
+  var compliantAcceptable: Boolean?,
 
   @Column(name = "OUTCOME_ATTENDANCE", length = 1)
   @Type(type = "yes_no")

@@ -9,7 +9,7 @@ import javax.persistence.Table
 
 @Entity
 @Table(name = "R_REFERENCE_DATA_MASTER")
-data class ReferenceDataMaster(
+class ReferenceDataMaster(
   @Id
   @Column(name = "REFERENCE_DATA_MASTER_ID")
   var id: Long,

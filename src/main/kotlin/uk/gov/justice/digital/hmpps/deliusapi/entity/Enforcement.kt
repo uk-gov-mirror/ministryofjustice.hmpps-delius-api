@@ -25,7 +25,7 @@ import javax.persistence.Version
 @Table(name = "ENFORCEMENT")
 @EntityListeners(AuditingEntityListener::class)
 @Where(clause = "SOFT_DELETED = 0")
-data class Enforcement(
+class Enforcement(
   @Id
   @SequenceGenerator(name = "ENFORCEMENT_ID_SEQ", sequenceName = "ENFORCEMENT_ID_SEQ", allocationSize = 1)
   @GeneratedValue(strategy = GenerationType.AUTO, generator = "ENFORCEMENT_ID_SEQ")

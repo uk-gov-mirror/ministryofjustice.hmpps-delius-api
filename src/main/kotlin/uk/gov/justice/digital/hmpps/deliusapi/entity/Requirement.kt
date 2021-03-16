@@ -12,7 +12,7 @@ import javax.persistence.Table
 @Entity
 @Table(name = "RQMNT")
 @Where(clause = "SOFT_DELETED = 0")
-data class Requirement(
+class Requirement(
   @Id
   @Column(name = "RQMNT_ID")
   var id: Long,

@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.entity.Team
 import uk.gov.justice.digital.hmpps.deliusapi.entity.YesNoBoth
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
+import uk.gov.justice.digital.hmpps.deliusapi.repository.EnforcementActionRepository
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getDuration
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.isPermissibleAbsence
 import java.math.BigDecimal
@@ -23,7 +24,10 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 @Service
-class ContactValidationService(private val contactRepository: ContactRepository) {
+class ContactValidationService(
+  private val contactRepository: ContactRepository,
+  private val enforcementActionRepository: EnforcementActionRepository
+) {
   fun validateContactType(request: CreateOrUpdateContact, type: ContactType) {
     if (request.alert && !type.alertFlag) {
       throw BadRequestException("Contact type '${type.code}' does not support alert")
@@ -77,7 +81,7 @@ class ContactValidationService(private val contactRepository: ContactRepository)
     }
   }
 
-  fun validateEnforcement(request: CreateOrUpdateContact, type: ContactType, outcome: ContactOutcomeType?): Enforcement? {
+  fun validateEnforcement(request: CreateOrUpdateContact, outcome: ContactOutcomeType?): Enforcement? {
     if (outcome == null) {
       return if (request.enforcement == null) null
       else throw BadRequestException("Enforcement cannot be provided without an outcome")
@@ -97,8 +101,8 @@ class ContactValidationService(private val contactRepository: ContactRepository)
       if (request.enforcement == null) {
         throw BadRequestException("Outcome '${outcome.code}' requires an enforcement action")
       }
-      val action = type.enforcementActions?.find { it.code == request.enforcement }
-        ?: throw BadRequestException("Contact type '${type.code}' does not support enforcement action '${request.enforcement}'")
+      val action = enforcementActionRepository.findByCode(request.enforcement!!)
+        ?: throw BadRequestException("Enforcement action '${request.enforcement}' does not exist")
       enforcement.action = action
       if (action.responseByPeriod != null) {
         enforcement.responseDate = LocalDate.now().plusDays(action.responseByPeriod!!)

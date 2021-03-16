@@ -28,7 +28,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getEventOrBadRe
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getRequirementOrBadRequest
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getStaffOrBadRequest
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getTeamOrBadRequest
-import java.lang.IllegalArgumentException
+import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.updateNotes
 
 @Service
 class ContactService(
@@ -39,13 +39,8 @@ class ContactService(
   private val nsiRepository: NsiRepository,
   private val mapper: ContactMapper,
   private val validation: ContactValidationService,
+  private val systemContactService: SystemContactService,
 ) {
-
-  companion object {
-    // TODO is separator correct?
-    const val NOTES_SEPARATOR = "\n\n---------\n\n"
-  }
-
   @ProviderResponseAuthority
   fun getUpdateContact(id: Long): UpdateContact {
     val contact = contactRepository.findByIdOrNull(id)
@@ -87,22 +82,28 @@ class ContactService(
     entity.alert = request.alert
     entity.sensitive = request.sensitive
     entity.description = request.description
-    entity.notes = getNotes(entity.notes, request.notes)
+    entity.updateNotes(request.notes)
 
     if (entity.enforcements.size > 1) {
       throw RuntimeException("Cannot determine which enforcement to use on contact with id '${entity.id}'")
     }
 
-    if (request.enforcement != entity.enforcements.getOrNull(0)?.action?.code) {
-      val enforcement = validation.validateEnforcement(request, entity.type, entity.outcome)
+    val createSystemEnforcementAction = if (request.enforcement != entity.enforcements.getOrNull(0)?.action?.code) {
+      val enforcement = validation.validateEnforcement(request, entity.outcome)
       entity.enforcements.clear()
       if (enforcement != null) {
         enforcement.contact = entity
         entity.enforcements.add(enforcement)
-      }
-    }
+        true
+      } else false
+    } else false
 
     contactRepository.saveAndFlush(entity)
+
+    if (createSystemEnforcementAction) {
+      systemContactService.createSystemEnforcementActionContact(entity)
+    }
+
     return mapper.toDto(entity)
   }
 
@@ -120,7 +121,7 @@ class ContactService(
 
     validation.validateContactType(request, type)
     val outcome = validation.validateOutcomeType(request, type)
-    val enforcement = validation.validateEnforcement(request, type, outcome)
+    val enforcement = validation.validateEnforcement(request, outcome)
 
     val (provider, team, staff) = getProviderTeamStaff(request)
     val officeLocation = validation.validateOfficeLocation(request, type, team)
@@ -155,14 +156,10 @@ class ContactService(
       endTime = request.endTime,
       alert = request.alert,
       sensitive = request.sensitive,
-      notes = getNotes(type.defaultHeadings, request.notes),
       description = request.description,
-
-      // TODO need to set to something from configuration
-      partitionAreaId = 0,
-      staffEmployeeId = 1, // <- not actually sure what this is it should reference a PROVIDER_EMPLOYEE
-      teamProviderId = 1,
     )
+
+    contact.updateNotes(type.defaultHeadings, request.notes)
 
     validation.setOutcomeMeta(contact)
 
@@ -172,60 +169,12 @@ class ContactService(
     }
 
     val entity = contactRepository.saveAndFlush(contact)
-    return mapper.toDto(entity)
-  }
 
-  /**
-   * Adds a system generated contact record.
-   * System generated contacts are non-audited & non-validated (other than referential integrity of course).
-   */
-  fun createSystemContact(request: NewSystemContact) {
-    val offender = offenderRepository.findByIdOrNull(request.offenderId)
-      ?: throw IllegalArgumentException("Offender with id '${request.offenderId}' does not exist")
-    val provider = providerRepository.findByIdOrNull(request.providerId)
-      ?: throw IllegalArgumentException("Provider with id '${request.providerId}' does not exist")
-    val team = provider.teams?.find { it.id == request.teamId }
-      ?: throw IllegalArgumentException("Team with id '${request.teamId}' does not exist on provider '${provider.code}'")
-    val staff = team.staff?.find { it.id == request.staffId }
-      ?: throw IllegalArgumentException("Staff with id '${request.staffId}' does not exist on team '${team.code}'")
-
-    val event = if (request.eventId == null) null
-    else offender.events?.find { it.id == request.eventId }
-      ?: throw IllegalArgumentException("Event with id '${request.eventId}' does not exist on offender '${offender.id}'")
-
-    val nsi = if (request.nsiId == null) null
-    else nsiRepository.findByIdOrNull(request.nsiId)
-      ?: throw IllegalArgumentException("NSI with id '${request.nsiId}' does not exist")
-
-    val type = when {
-      request.typeId != null ->
-        contactTypeRepository.findByIdOrNull(request.typeId)
-          ?: throw IllegalArgumentException("Contact type with id '${request.typeId}' does not exist")
-      request.type != null ->
-        contactTypeRepository.findByCode(request.type.code)
-          ?: throw IllegalArgumentException("Contact type with code '${request.type.code}' does not exist")
-      else -> throw IllegalArgumentException("Must provide type id or code")
+    if (enforcement != null) {
+      systemContactService.createSystemEnforcementActionContact(entity)
     }
 
-    val contact = Contact(
-      type = type,
-      offender = offender,
-      nsi = nsi,
-      provider = provider,
-      team = team,
-      staff = staff,
-      event = event,
-      date = request.timestamp.toLocalDate(),
-      startTime = request.timestamp.toLocalTime(),
-      notes = getNotes(type.defaultHeadings, request.notes),
-
-      // TODO need to set to something from configuration
-      partitionAreaId = 0,
-      staffEmployeeId = 1, // <- not actually sure what this is it should reference a PROVIDER_EMPLOYEE
-      teamProviderId = 1,
-    )
-
-    contactRepository.saveAndFlush(contact)
+    return mapper.toDto(entity)
   }
 
   private fun getProviderTeamStaff(request: CreateOrUpdateContact): Triple<Provider, Team, Staff> {
@@ -236,8 +185,4 @@ class ContactService(
     val staff = team.getStaffOrBadRequest(request.staff)
     return Triple(provider, team, staff)
   }
-
-  private fun getNotes(vararg sections: String?) = sections
-    .filterNotNull()
-    .joinToString(NOTES_SEPARATOR)
 }

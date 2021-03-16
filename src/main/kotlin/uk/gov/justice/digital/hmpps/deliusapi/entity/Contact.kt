@@ -29,7 +29,7 @@ import javax.persistence.Version
 @EntityListeners(AuditingEntityListener::class)
 @Table(name = "CONTACT")
 @Where(clause = "SOFT_DELETED = 0")
-data class Contact(
+class Contact(
   @Id
   @SequenceGenerator(name = "CONTACT_ID_GENERATOR", sequenceName = "CONTACT_ID_SEQ", allocationSize = 1)
   @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "CONTACT_ID_GENERATOR")
@@ -128,15 +128,21 @@ data class Contact(
   @Column(name = "TRUST_PROVIDER_FLAG", nullable = false)
   var trustProviderFlag: Long = 0,
 
+  /**
+   * TODO set this from configuration
+   */
   @Column(name = "STAFF_EMPLOYEE_ID", nullable = false)
-  var staffEmployeeId: Long = 0,
+  var staffEmployeeId: Long = 1,
 
   @JoinColumn(name = "PROBATION_AREA_ID")
   @ManyToOne
   var provider: Provider? = null,
 
+  /**
+   * TODO set this from configuration
+   */
   @Column(name = "TRUST_PROVIDER_TEAM_ID", nullable = false)
-  var teamProviderId: Long = 0,
+  var teamProviderId: Long = 1,
 
   @Column(name = "DESCRIPTION")
   var description: String? = null,

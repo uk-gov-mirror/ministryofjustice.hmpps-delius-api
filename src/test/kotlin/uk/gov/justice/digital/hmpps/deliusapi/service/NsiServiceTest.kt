@@ -38,8 +38,8 @@ import uk.gov.justice.digital.hmpps.deliusapi.repository.ReferenceDataMasterRepo
 import uk.gov.justice.digital.hmpps.deliusapi.repository.TransferReasonRepository
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditContext
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditableInteraction
-import uk.gov.justice.digital.hmpps.deliusapi.service.contact.ContactService
 import uk.gov.justice.digital.hmpps.deliusapi.service.contact.NewSystemContact
+import uk.gov.justice.digital.hmpps.deliusapi.service.contact.SystemContactService
 import uk.gov.justice.digital.hmpps.deliusapi.service.contact.WellKnownContactType
 import uk.gov.justice.digital.hmpps.deliusapi.service.nsi.NsiService
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
@@ -55,7 +55,7 @@ class NsiServiceTest {
   @Mock private lateinit var providerRepository: ProviderRepository
   @Mock private lateinit var transferReasonRepository: TransferReasonRepository
   @Mock private lateinit var referenceDataMasterRepository: ReferenceDataMasterRepository
-  @Mock private lateinit var contactService: ContactService
+  @Mock private lateinit var systemContactService: SystemContactService
   @Mock private lateinit var mapper: NsiMapper
   @Captor private lateinit var newNsiCaptor: ArgumentCaptor<Nsi>
   @Captor private lateinit var statusContactCaptor: ArgumentCaptor<NewSystemContact>
@@ -77,25 +77,23 @@ class NsiServiceTest {
   @Test
   fun `Successfully creating nsi`() {
     havingDependentEntities()
+    val manager = Fake.nsiManager()
+    manager.provider = managerProvider
+    manager.team = managerTeam
+    manager.staff = managerStaff
 
-    val created = Fake.nsi().copy(
-      type = type,
-      subType = subType,
-      status = status,
-      intendedProvider = intendedProvider,
-      outcome = outcome,
-      offender = offender,
-      event = event,
-      requirement = requirement,
-      managers = mutableListOf(
-        Fake.nsiManager().copy(
-          provider = managerProvider,
-          team = managerTeam,
-          staff = managerStaff,
-        )
-      ),
-      statusDate = request.statusDate,
-    )
+    val created = Fake.nsi()
+    created.type = type
+    created.subType = subType
+    created.status = status
+    created.intendedProvider = intendedProvider
+    created.outcome = outcome
+    created.offender = offender
+    created.event = event
+    created.requirement = requirement
+    created.managers = mutableListOf(manager)
+    created.statusDate = request.statusDate
+
     val expectedResult = Fake.nsiDto()
 
     whenever(nsiRepository.saveAndFlush(newNsiCaptor.capture())).thenReturn(created)
@@ -135,7 +133,7 @@ class NsiServiceTest {
 
     shouldSetAuditContext(created.id)
 
-    verify(contactService, times(4)).createSystemContact(capture(statusContactCaptor))
+    verify(systemContactService, times(4)).createSystemContact(capture(statusContactCaptor))
 
     shouldCreateSystemContact(created.id, typeId = status.contactTypeId)
     shouldCreateSystemContact(created.id, wellKnownType = WellKnownContactType.REFERRAL)
@@ -314,61 +312,81 @@ class NsiServiceTest {
 
     val offenderId = Fake.id()
 
-    requirement = Fake.requirement().copy(
-      id = request.requirementId!!,
-      offenderId = offenderId,
+    requirement = Fake.requirement().apply {
+      id = request.requirementId!!
+      this.offenderId = offenderId
       terminationDate = request.endDate
-    )
+    }
+
     val requirements = if (havingRequirement) listOf(requirement, Fake.requirement()) else listOf()
 
-    event = Fake.event().copy(
-      id = request.eventId!!,
-      referralDate = request.referralDate,
-      disposals = listOf(Fake.disposal().copy(requirements = requirements))
-    )
+    val disposal = Fake.disposal().apply { this.requirements = requirements }
+
+    event = Fake.event().apply {
+      id = request.eventId!!
+      referralDate = request.referralDate
+      disposals = listOf(disposal)
+    }
     val events = if (havingEvent) listOf(event, Fake.event()) else listOf()
 
-    offender = Fake.offender().copy(id = offenderId, events = events)
+    offender = Fake.offender()
+    offender.id = offenderId
+    offender.events = events
+
     whenever(offenderRepository.findByCrn(request.offenderCrn))
       .thenReturn(if (havingOffender) offender else null)
 
-    subType = Fake.standardReference().copy(code = request.subType!!)
-    status = Fake.nsiStatus().copy(code = request.status)
-    intendedProvider = Fake.provider().copy(code = request.intendedProvider)
-    outcome = Fake.standardReference().copy(code = request.outcome!!)
+    subType = Fake.standardReference().apply {
+      code = request.subType!!
+    }
 
-    type = Fake.nsiType().copy(
-      subTypes = if (havingSubType) listOf(subType, Fake.standardReference()) else listOf(),
-      statuses = if (havingStatus) listOf(status, Fake.nsiStatus()) else listOf(),
-      providers = if (havingIntendedProvider) listOf(intendedProvider, Fake.provider()) else listOf(),
-      units = if (havingUnits) Fake.standardReference() else null,
-      outcomes = if (havingOutcome) listOf(outcome, Fake.standardReference()) else listOf(),
-      eventLevel = havingEventLevel,
-      offenderLevel = havingOffenderLevel,
-      allowActiveDuplicates = havingActiveDuplicates,
-      allowInactiveDuplicates = havingInactiveDuplicates,
-    )
+    status = Fake.nsiStatus().apply {
+      code = request.status
+    }
+    intendedProvider = Fake.provider().apply {
+      code = request.intendedProvider
+    }
+    outcome = Fake.standardReference().apply {
+      code = request.outcome!!
+    }
+
+    type = Fake.nsiType().apply {
+      subTypes = if (havingSubType) listOf(subType, Fake.standardReference()) else listOf()
+      statuses = if (havingStatus) listOf(status, Fake.nsiStatus()) else listOf()
+      providers = if (havingIntendedProvider) listOf(intendedProvider, Fake.provider()) else listOf()
+      units = if (havingUnits) Fake.standardReference() else null
+      outcomes = if (havingOutcome) listOf(outcome, Fake.standardReference()) else listOf()
+      eventLevel = havingEventLevel
+      offenderLevel = havingOffenderLevel
+      allowActiveDuplicates = havingActiveDuplicates
+      allowInactiveDuplicates = havingInactiveDuplicates
+    }
+
     whenever(nsiTypeRepository.findByCode(request.type))
       .thenReturn(if (havingType) type else null)
 
-    managerStaff = Fake.staff().copy(code = request.manager.staff!!)
-    managerTeam = Fake.team().copy(
-      code = request.manager.team!!,
+    managerStaff = Fake.staff().apply { code = request.manager.staff!! }
+
+    managerTeam = Fake.team().apply {
+      code = request.manager.team!!
       staff = if (havingManagerStaff) listOf(managerStaff, Fake.staff()) else listOf()
-    )
-    managerProvider = Fake.provider().copy(
-      code = request.manager.provider,
+    }
+
+    managerProvider = Fake.provider().apply {
+      code = request.manager.provider
       teams = if (havingManagerTeam) listOf(managerTeam, Fake.team()) else listOf()
-    )
+    }
+
     whenever(providerRepository.findByCodeAndSelectableIsTrue(request.manager.provider))
       .thenReturn(if (havingManagerProvider) managerProvider else null)
 
     whenever(transferReasonRepository.findByCode("NSI"))
       .thenReturn(Fake.transferReason())
 
-    val referenceMaster = Fake.referenceDataMaster().copy(
-      standardReferences = listOf(Fake.standardReference().copy(code = "IN1"))
-    )
+    val reference = Fake.standardReference().apply { code = "IN1" }
+
+    val referenceMaster = Fake.referenceDataMaster().apply { standardReferences = listOf(reference) }
+
     whenever(referenceDataMasterRepository.findByCode("NM ALLOCATION REASON"))
       .thenReturn(referenceMaster)
   }
@@ -412,6 +430,6 @@ class NsiServiceTest {
   }
 
   private fun shouldNotCreateSystemContact() {
-    verifyZeroInteractions(contactService)
+    verifyZeroInteractions(systemContactService)
   }
 }

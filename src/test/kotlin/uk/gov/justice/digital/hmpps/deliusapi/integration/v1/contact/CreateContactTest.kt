@@ -93,10 +93,6 @@ class CreateContactTest : IntegrationTestBase() {
           )
         )
       )
-
-      // enforcement
-      // Unacceptable behaviour, refer to offender manager
-      successCases.add(of(valid.copy(outcome = "UBHV", enforcement = "ROM")))
     }
     @JvmStatic
     fun successCases(): Stream<Arguments> = successCases.stream()
@@ -124,6 +120,28 @@ class CreateContactTest : IntegrationTestBase() {
       .shouldReturnCreatedContact(request)
       // And it should save the entity to the database with the correct details
       .shouldSaveContact(request)
+  }
+
+  @Transactional
+  @Test
+  fun `should successfully create and audit a new enforcement action contact`() {
+    // Unacceptable behaviour, refer to offender manager
+    val request = valid.copy(outcome = "UBHV", enforcement = "ROM")
+    webTestClient.whenCreatingContact(request)
+      // Then it should return successfully
+      .expectStatus().isCreated
+      .expectBody()
+      // And it should return the correct details
+      .shouldReturnCreatedContact(request)
+      // And it should save the entity to the database with the correct details
+      .shouldSaveContact(request)
+
+    val contacts = contactRepository.findAllByTypeId(1L)
+    assertThat(contacts).anyMatch {
+      it.offender.crn == request.offenderCrn &&
+        it.notes!!.startsWith(request.notes!!) &&
+        it.notes!!.endsWith("Enforcement Action: Refer to Offender Manager")
+    }
   }
 
   @Transactional

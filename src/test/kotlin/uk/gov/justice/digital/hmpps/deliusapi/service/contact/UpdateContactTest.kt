@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import uk.gov.justice.digital.hmpps.deliusapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditContext
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditableInteraction
+import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.CONTACT_NOTES_SEPARATOR
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
 import java.util.Optional
@@ -143,18 +144,21 @@ class UpdateContactTest : ContactServiceTestBase() {
       .hasProperty(Contact::alert, request.alert)
       .hasProperty(Contact::sensitive, request.sensitive)
       .hasProperty(Contact::description, request.description)
-      .hasProperty(Contact::notes, originalNotes + ContactService.NOTES_SEPARATOR + request.notes)
+      .hasProperty(Contact::notes, originalNotes + CONTACT_NOTES_SEPARATOR + request.notes)
 
     shouldSetAuditContext()
 
     // should set outcome meta
     verify(validationService, times(1)).setOutcomeMeta(entityCaptor.value)
+
+    // should create system enforcements
+    verify(systemContactService, times(1)).createSystemEnforcementActionContact(entityCaptor.value)
   }
 
   private fun havingContact(having: Boolean = true, editable: Boolean = true) {
-    contact = Fake.contact().copy(
-      type = Fake.contactType().copy(editable = editable),
-    )
+    contact = Fake.contact().apply {
+      type = Fake.contactType().apply { this.editable = editable }
+    }
     request = Fake.updateContact().copy(
       team = team.code,
       staff = staff.code,
@@ -174,7 +178,7 @@ class UpdateContactTest : ContactServiceTestBase() {
   }
 
   private fun havingEnforcement(having: Boolean = true) {
-    val mock = whenever(validationService.validateEnforcement(request, contact.type, outcome))
+    val mock = whenever(validationService.validateEnforcement(request, outcome))
     if (having) {
       mock.thenReturn(enforcement)
     } else {

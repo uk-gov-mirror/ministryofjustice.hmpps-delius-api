@@ -49,10 +49,9 @@ class NsiMapperTest {
 
   @Test
   fun `Mapping from nsi manager to nsi manager dto with unallocated team & staff`() {
-    val source = Fake.nsiManager().copy(
-      team = Fake.team().copy(code = Fake.faker.bothify("?##UAT")),
-      staff = Fake.staff().copy(code = "?##?##U")
-    )
+    val source = Fake.nsiManager()
+    source.team?.code = Fake.faker.bothify("?##UAT")
+    source.staff?.code = "?##?##U"
     val observed = NsiMapper.INSTANCE.toDto(source)
     assertThat(observed)
       .hasProperty(NsiManagerDto::id, source.id)

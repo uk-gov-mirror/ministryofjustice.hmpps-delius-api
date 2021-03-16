@@ -15,7 +15,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.NewContact
 import uk.gov.justice.digital.hmpps.deliusapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.deliusapi.mapper.ContactMapper
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
-import uk.gov.justice.digital.hmpps.deliusapi.service.contact.ContactService
+import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.CONTACT_NOTES_SEPARATOR
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
 import java.time.LocalDate
@@ -65,7 +65,7 @@ class PatchContactTest @Autowired constructor(
           ContactDto::alert to true,
           ContactDto::sensitive to true,
           // notes are not actually replaced, they are appended
-          ContactDto::notes to it.notes + ContactService.NOTES_SEPARATOR + "updated notes",
+          ContactDto::notes to it.notes + CONTACT_NOTES_SEPARATOR + "updated notes",
           ContactDto::description to "updated description",
         )
       },

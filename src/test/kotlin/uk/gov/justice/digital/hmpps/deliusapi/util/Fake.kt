@@ -145,8 +145,10 @@ object Fake {
   fun enforcementAction() = EnforcementAction(
     id = id(),
     code = faker.lorem().characters(10),
+    description = faker.company().bs(),
     outstandingContactAction = true,
     responseByPeriod = 7,
+    contactType = contactType(),
   )
 
   fun enforcement() = Enforcement(
@@ -160,11 +162,11 @@ object Fake {
   fun contact(): Contact {
     val contactOutcomeType = contactOutcomeType()
     val team = team()
-    val provider = provider().copy(teams = listOf(team))
+    val provider = provider().apply { teams = listOf(team) }
     return Contact(
       id = id(),
       offender = offender(),
-      type = contactType().copy(outcomeTypes = listOf(contactOutcomeType)),
+      type = contactType().apply { outcomeTypes = listOf(contactOutcomeType) },
       outcome = contactOutcomeType,
       enforcements = mutableListOf(enforcement()),
       provider = provider,
@@ -275,8 +277,8 @@ object Fake {
 
   fun nsiManager(nsi: Nsi = nsi()): NsiManager {
     val staff = staff()
-    val team = team().copy(staff = listOf(staff))
-    val provider = provider().copy(teams = listOf(team))
+    val team = team().apply { this.staff = listOf(staff) }
+    val provider = provider().apply { teams = listOf(team) }
     return NsiManager(
       id = id(),
       nsi = nsi,

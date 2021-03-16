@@ -10,7 +10,7 @@ import javax.persistence.Table
 
 @Entity
 @Table(name = "PROBATION_AREA")
-data class Provider(
+class Provider(
   @Id
   @Column(name = "PROBATION_AREA_ID")
   var id: Long,

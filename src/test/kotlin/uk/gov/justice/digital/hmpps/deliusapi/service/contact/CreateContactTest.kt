@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.deliusapi.service.contact
 
 import com.nhaarman.mockitokotlin2.any
+import com.nhaarman.mockitokotlin2.never
 import com.nhaarman.mockitokotlin2.times
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
@@ -16,6 +17,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.entity.Enforcement
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditContext
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditableInteraction
+import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.CONTACT_NOTES_SEPARATOR
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
 import java.util.Optional
@@ -56,7 +58,7 @@ class CreateContactTest : ContactServiceTestBase() {
   @Test
   fun `Creating nsi contact`() {
     havingDependentEntities()
-    type = type.copy(nsiTypes = listOf(nsi.type?.copy()!!))
+    type = type.apply { nsiTypes = listOf(nsi.type!!) }
     havingRepositories(havingNsi = true)
     request = request.copy(requirementId = null, eventId = null)
     havingValidation()
@@ -246,7 +248,7 @@ class CreateContactTest : ContactServiceTestBase() {
       false -> outcomeMock.thenThrow(BadRequestException("bad outcome"))
     }
 
-    val enforcementMock = whenever(validationService.validateEnforcement(request, type, outcome))
+    val enforcementMock = whenever(validationService.validateEnforcement(request, outcome))
     when (havingValidEnforcement) {
       null -> enforcementMock.thenReturn(null)
       true -> enforcementMock.thenReturn(enforcement)
@@ -318,7 +320,7 @@ class CreateContactTest : ContactServiceTestBase() {
       .hasProperty(Contact::endTime, request.endTime)
       .hasProperty(Contact::alert, request.alert)
       .hasProperty(Contact::sensitive, request.sensitive)
-      .hasProperty(Contact::notes, type.defaultHeadings + ContactService.NOTES_SEPARATOR + request.notes)
+      .hasProperty(Contact::notes, type.defaultHeadings + CONTACT_NOTES_SEPARATOR + request.notes)
       .hasProperty(Contact::description, request.description)
       .hasProperty(Contact::partitionAreaId, 0)
       .hasProperty(Contact::staffEmployeeId, 1)
@@ -333,11 +335,15 @@ class CreateContactTest : ContactServiceTestBase() {
       .hasProperty(Contact::enforcements, listOf(enforcement))
     assertThat(enforcement)
       .hasProperty(Enforcement::contact, entityCaptor.value)
+    verify(systemContactService, times(1))
+      .createSystemEnforcementActionContact(any())
   }
 
   private fun shouldNotSaveEnforcement() {
     assertThat(entityCaptor.value)
       .hasProperty(Contact::enforcements, emptyList())
+    verify(systemContactService, never())
+      .createSystemEnforcementActionContact(any())
   }
 
   private fun shouldSetAuditContext() {

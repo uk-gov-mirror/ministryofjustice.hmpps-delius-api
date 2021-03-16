@@ -8,7 +8,7 @@ import javax.persistence.Table
 
 @Entity
 @Table(name = "BUSINESS_INTERACTION")
-data class BusinessInteraction(
+class BusinessInteraction(
   @Id
   @Column(name = "BUSINESS_INTERACTION_ID", unique = true, nullable = false, precision = 38)
   var id: Long,

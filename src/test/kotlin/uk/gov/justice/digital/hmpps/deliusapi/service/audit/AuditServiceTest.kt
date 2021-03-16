@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.ArgumentCaptor
+import org.mockito.ArgumentMatchers.argThat
 import org.mockito.Captor
 import org.mockito.InjectMocks
 import org.mockito.Mock
@@ -63,14 +64,15 @@ internal class AuditServiceTest {
     )
 
     verify(auditedInteractionRepository).saveAndFlush(
-      AuditedInteraction(
-        null,
-        true,
-        "offenderId='5678'",
-        businessInteraction,
-        1234
-      )
+      argThat {
+        it.dateTime == null &&
+          it.success &&
+          it.parameters == "offenderId='5678'" &&
+          it.businessInteraction == businessInteraction &&
+          it.userId == 1234L
+      }
     )
+
     verifyNoMoreInteractions(auditedInteractionRepository)
   }
 
@@ -146,8 +148,9 @@ internal class AuditServiceTest {
 
   @Test
   fun `When enabled date has not passed do not audit`() {
-    val notEnabledBusinessInteraction = businessInteraction.copy(enabledDate = LocalDateTime.now().plusYears(1))
-    whenever(businessInteractionRepository.findFirstByCode(any())).thenReturn(notEnabledBusinessInteraction)
+    businessInteraction.enabledDate = LocalDateTime.now().plusYears(1)
+
+    whenever(businessInteractionRepository.findFirstByCode(any())).thenReturn(businessInteraction)
     whenever(securityUserContext.getCurrentDeliusUserId()).thenReturn(1234)
 
     subject.successfulInteraction(AuditableInteraction.ADD_CONTACT, AuditContext(5678))
@@ -157,8 +160,8 @@ internal class AuditServiceTest {
 
   @Test
   fun `When enabled date null do not audit`() {
-    val notEnabledBusinessInteraction = businessInteraction.copy(enabledDate = null)
-    whenever(businessInteractionRepository.findFirstByCode(any())).thenReturn(notEnabledBusinessInteraction)
+    businessInteraction.enabledDate = null
+    whenever(businessInteractionRepository.findFirstByCode(any())).thenReturn(businessInteraction)
     whenever(securityUserContext.getCurrentDeliusUserId()).thenReturn(1234)
 
     subject.successfulInteraction(AuditableInteraction.ADD_CONTACT, AuditContext(5678))

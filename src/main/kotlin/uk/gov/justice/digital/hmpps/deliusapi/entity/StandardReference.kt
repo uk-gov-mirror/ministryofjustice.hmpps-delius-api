@@ -9,7 +9,7 @@ import javax.persistence.Table
 @Entity
 @Table(name = "R_STANDARD_REFERENCE_LIST")
 @Where(clause = "SELECTABLE = 'Y'")
-data class StandardReference(
+class StandardReference(
   @Id
   @Column(name = "STANDARD_REFERENCE_LIST_ID", nullable = false)
   var id: Long,

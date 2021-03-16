@@ -13,7 +13,7 @@ import javax.persistence.Table
 @Entity
 @Table(name = "R_NSI_TYPE")
 @Where(clause = "SELECTABLE = 'Y'")
-data class NsiType(
+class NsiType(
   @Id
   @Column(name = "NSI_TYPE_ID", nullable = false)
   var id: Long = 0,

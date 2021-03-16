@@ -8,7 +8,7 @@ import javax.persistence.Table
 
 @Entity
 @Table(name = "R_DISPOSAL_TYPE")
-data class DisposalType(
+class DisposalType(
   @Id
   @Column(name = "DISPOSAL_TYPE_ID")
   var id: Long,

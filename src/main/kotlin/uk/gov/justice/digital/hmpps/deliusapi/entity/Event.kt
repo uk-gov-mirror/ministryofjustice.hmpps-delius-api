@@ -12,7 +12,7 @@ import javax.persistence.Table
 @Entity
 @Table(name = "EVENT")
 @Where(clause = "SOFT_DELETED = 0")
-data class Event(
+class Event(
   @Id
   @Column(name = "EVENT_ID")
   var id: Long,

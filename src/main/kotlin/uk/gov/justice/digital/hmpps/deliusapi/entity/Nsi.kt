@@ -27,7 +27,7 @@ import javax.persistence.Version
 @EntityListeners(AuditingEntityListener::class)
 @Table(name = "NSI")
 @Where(clause = "SOFT_DELETED = 0")
-data class Nsi(
+class Nsi(
   @Id
   @SequenceGenerator(name = "NSI_ID_GENERATOR", sequenceName = "NSI_ID_SEQ", allocationSize = 1)
   @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "NSI_ID_GENERATOR")

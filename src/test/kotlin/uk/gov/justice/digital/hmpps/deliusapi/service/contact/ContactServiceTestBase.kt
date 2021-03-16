@@ -35,6 +35,7 @@ abstract class ContactServiceTestBase {
   @Mock protected lateinit var nsiRepository: NsiRepository
   @Mock protected lateinit var mapper: ContactMapper
   @Mock protected lateinit var validationService: ContactValidationService
+  @Mock protected lateinit var systemContactService: SystemContactService
   @InjectMocks protected lateinit var subject: ContactService
 
   protected lateinit var type: ContactType
@@ -57,26 +58,28 @@ abstract class ContactServiceTestBase {
   ) {
     val offenderId = Fake.id()
 
-    requirement = Fake.requirement().copy(offenderId = offenderId)
-    val requirements = if (havingRequirement) listOf(requirement, Fake.requirement()) else listOf()
-    val disposals = listOf(Fake.disposal().copy(requirements = requirements))
-    event = Fake.event().copy(disposals = disposals)
-    val events = if (havingEvent) listOf(event, Fake.event()) else listOf()
+    requirement = Fake.requirement()
+    requirement.offenderId = offenderId
+    val disposal = Fake.disposal().apply {
+      this.requirements = if (havingRequirement) listOf(requirement, Fake.requirement()) else listOf()
+    }
+    event = Fake.event().apply { disposals = listOf(disposal) }
 
-    offender = Fake.offender().copy(id = offenderId, events = events)
+    offender = Fake.offender().apply {
+      id = offenderId
+      events = if (havingEvent) listOf(event, Fake.event()) else listOf()
+    }
 
     outcome = Fake.contactOutcomeType()
     enforcement = Fake.enforcement()
     type = Fake.contactType()
 
     this.staff = Fake.staff()
-    val staff = if (havingStaff) listOf(this.staff, Fake.staff()) else listOf()
+    val staffs = if (havingStaff) listOf(this.staff, Fake.staff()) else listOf()
 
     officeLocation = Fake.officeLocation()
-    team = Fake.team().copy(staff = staff)
-    val teams = if (havingTeam) listOf(team, Fake.team()) else listOf()
-
-    provider = Fake.provider().copy(teams = teams)
+    team = Fake.team().apply { staff = staffs }
+    provider = Fake.provider().apply { teams = if (havingTeam) listOf(team, Fake.team()) else listOf() }
 
     nsi = Fake.nsi()
   }

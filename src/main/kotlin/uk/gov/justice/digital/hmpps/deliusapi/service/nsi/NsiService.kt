@@ -22,8 +22,8 @@ import uk.gov.justice.digital.hmpps.deliusapi.repository.findByCodeOrThrow
 import uk.gov.justice.digital.hmpps.deliusapi.repository.findByCrnOrBadRequest
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditContext
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditableInteraction
-import uk.gov.justice.digital.hmpps.deliusapi.service.contact.ContactService
 import uk.gov.justice.digital.hmpps.deliusapi.service.contact.NewSystemContact
+import uk.gov.justice.digital.hmpps.deliusapi.service.contact.SystemContactService
 import uk.gov.justice.digital.hmpps.deliusapi.service.contact.WellKnownContactType
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.assertSupportedLevel
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getEventOrBadRequest
@@ -42,7 +42,7 @@ class NsiService(
   private val providerRepository: ProviderRepository,
   private val transferReasonRepository: TransferReasonRepository,
   private val referenceDataMasterRepository: ReferenceDataMasterRepository,
-  private val contactService: ContactService,
+  private val systemContactService: SystemContactService,
   private val mapper: NsiMapper,
 ) {
 
@@ -161,14 +161,14 @@ class NsiService(
       staffId = manager.staff?.id!!,
       timestamp = nsi.statusDate,
     )
-    this.contactService.createSystemContact(status)
+    this.systemContactService.createSystemContact(status)
 
     val referral = status.copy(typeId = null, type = WellKnownContactType.REFERRAL)
-    this.contactService.createSystemContact(referral)
+    this.systemContactService.createSystemContact(referral)
 
     if (nsi.startDate != null) {
       val commenced = referral.copy(type = WellKnownContactType.COMMENCED)
-      this.contactService.createSystemContact(commenced)
+      this.systemContactService.createSystemContact(commenced)
     }
 
     if (nsi.outcome != null) {
@@ -176,7 +176,7 @@ class NsiService(
         type = WellKnownContactType.TERMINATED,
         notes = "NSI Terminated with Outcome: ${nsi.outcome?.description}"
       )
-      this.contactService.createSystemContact(terminated)
+      this.systemContactService.createSystemContact(terminated)
     }
   }
 

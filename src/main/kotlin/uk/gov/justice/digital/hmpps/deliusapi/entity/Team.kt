@@ -12,7 +12,7 @@ import javax.persistence.Table
 @Entity
 @Table(name = "TEAM")
 @Where(clause = "START_DATE <= CURRENT_DATE AND (END_DATE IS NULL OR END_DATE > CURRENT_DATE)")
-data class Team(
+class Team(
   @Id
   @Column(name = "TEAM_ID")
   var id: Long,

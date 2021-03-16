@@ -9,7 +9,7 @@ import javax.persistence.Table
 @Entity
 @Table(name = "R_NSI_STATUS")
 @Where(clause = "SELECTABLE = 'Y'")
-data class NsiStatus(
+class NsiStatus(
   @Id
   @Column(name = "NSI_STATUS_ID")
   var id: Long,

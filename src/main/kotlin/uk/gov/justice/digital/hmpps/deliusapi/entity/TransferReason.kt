@@ -9,7 +9,7 @@ import javax.persistence.Table
 @Entity
 @Table(name = "R_TRANSFER_REASON")
 @Where(clause = "SELECTABLE = 'Y'")
-data class TransferReason(
+class TransferReason(
   @Id
   @Column(name = "TRANSFER_REASON_ID")
   var id: Long,

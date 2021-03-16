@@ -11,7 +11,7 @@ import javax.persistence.Table
 @Entity
 @Table(name = "OFFENDER")
 @Where(clause = "SOFT_DELETED = 0")
-data class Offender(
+class Offender(
   @Id
   @Column(name = "OFFENDER_ID")
   var id: Long,

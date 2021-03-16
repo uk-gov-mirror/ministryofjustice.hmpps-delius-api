@@ -21,7 +21,7 @@ data class ProviderUserIdentity(
 
 @Entity
 @Table(name = "PROBATION_AREA_USER")
-data class ProviderUser(
+class ProviderUser(
   @EmbeddedId
   var id: ProviderUserIdentity,
 

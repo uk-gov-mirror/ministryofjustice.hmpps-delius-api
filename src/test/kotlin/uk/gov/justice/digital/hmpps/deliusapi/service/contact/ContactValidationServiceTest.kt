@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.entity.Enforcement
 import uk.gov.justice.digital.hmpps.deliusapi.entity.YesNoBoth
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
+import uk.gov.justice.digital.hmpps.deliusapi.repository.EnforcementActionRepository
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 import uk.gov.justice.digital.hmpps.deliusapi.util.comparingDateTimesToNearestSecond
 import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
@@ -23,6 +24,7 @@ import java.time.LocalTime
 @ExtendWith(MockitoExtension::class)
 class ContactValidationServiceTest {
   @Mock private lateinit var contactRepository: ContactRepository
+  @Mock private lateinit var enforcementActionRepository: EnforcementActionRepository
   @InjectMocks private lateinit var subject: ContactValidationService
 
   @Test
@@ -107,53 +109,56 @@ class ContactValidationServiceTest {
 
   @Test
   fun `Successfully validating whole order, requirement contact`() {
-    val type = Fake.contactType().copy(wholeOrderLevel = true)
+    val type = Fake.contactType().apply { wholeOrderLevel = true }
     assertDoesNotThrow { subject.validateAssociatedEntity(type, Fake.requirement(), null, null) }
   }
 
   @Test
   fun `Successfully validating non-whole order, requirement contact with explicit requirement type`() {
     val requirement = Fake.requirement()
-    val type = Fake.contactType().copy(
-      wholeOrderLevel = false,
+    val type = Fake.contactType().apply {
+      wholeOrderLevel = false
       requirementTypeCategories = listOf(requirement.typeCategory!!)
-    )
+    }
     assertDoesNotThrow { subject.validateAssociatedEntity(type, requirement) }
   }
 
   @Test
   fun `Attempting to validate invalid requirement contact`() {
-    val type = Fake.contactType().copy(wholeOrderLevel = false)
+    val type = Fake.contactType().apply { wholeOrderLevel = false }
     assertThrows<BadRequestException> { subject.validateAssociatedEntity(type, Fake.requirement()) }
   }
 
   @Test
   fun `Attempting to validate non-cja 2003 event contact`() {
-    val type = Fake.contactType().copy(cjaOrderLevel = false)
-    val disposal = Fake.disposal().copy(type = Fake.disposalType().copy(cja2003Order = true))
+    val type = Fake.contactType().apply { cjaOrderLevel = false }
+    val disposal = Fake.disposal().apply { this.type = Fake.disposalType().apply { cja2003Order = true } }
     assertThrows<BadRequestException> {
-      subject.validateAssociatedEntity(type, event = Fake.event().copy(disposals = listOf(disposal)))
+      subject.validateAssociatedEntity(type, event = Fake.event().apply { disposals = listOf(disposal) })
     }
   }
 
   @Test
   fun `Attempting to validate non-legacy event contact`() {
-    val type = Fake.contactType().copy(legacyOrderLevel = false)
-    val disposal = Fake.disposal().copy(type = Fake.disposalType().copy(legacyOrder = true))
+    val type = Fake.contactType().apply { legacyOrderLevel = false }
+    val disposal = Fake.disposal().apply { this.type = Fake.disposalType().apply { legacyOrder = true } }
     assertThrows<BadRequestException> {
-      subject.validateAssociatedEntity(type, event = Fake.event().copy(disposals = listOf(disposal)))
+      subject.validateAssociatedEntity(type, event = Fake.event().apply { disposals = listOf(disposal) })
     }
   }
 
   @Test
   fun `Successfully validating event contact`() {
-    val type = Fake.contactType().copy(legacyOrderLevel = true, cjaOrderLevel = true)
+    val type = Fake.contactType().apply {
+      legacyOrderLevel = true
+      cjaOrderLevel = true
+    }
     val disposals = listOf(
-      Fake.disposal().copy(type = Fake.disposalType().copy(cja2003Order = true)),
-      Fake.disposal().copy(type = Fake.disposalType().copy(legacyOrder = true))
+      Fake.disposal().apply { this.type = Fake.disposalType().apply { cja2003Order = true } },
+      Fake.disposal().apply { this.type = Fake.disposalType().apply { legacyOrder = true } }
     )
     assertDoesNotThrow {
-      subject.validateAssociatedEntity(type, event = Fake.event().copy(disposals = disposals))
+      subject.validateAssociatedEntity(type, event = Fake.event().apply { this.disposals = disposals })
     }
   }
 
@@ -165,7 +170,7 @@ class ContactValidationServiceTest {
   @Test
   fun `Successfully validating nsi contact`() {
     val nsi = Fake.nsi()
-    val type = Fake.contactType().copy(nsiTypes = listOf(nsi.type!!))
+    val type = Fake.contactType().apply { nsiTypes = listOf(nsi.type!!) }
     assertDoesNotThrow { subject.validateAssociatedEntity(type, nsi = nsi) }
   }
 
@@ -207,19 +212,19 @@ class ContactValidationServiceTest {
 
   @Test
   fun `Successfully validating enforcement`() =
-    attemptingToValidateEnforcement(success = true)
+    attemptingToValidateEnforcement(success = true, havingEnforcementAction = true)
 
   @Test
   fun `Updating outcome meta with non-recorded hours outcome`() {
-    val contact = Fake.contact().copy(
-      type = Fake.contactType().copy(
-        recordedHoursCredited = false,
-      ),
-      outcome = Fake.contactOutcomeType().copy(
-        attendance = true,
-        compliantAcceptable = true,
-      )
-    )
+    val contact = Fake.contact().apply {
+      type = Fake.contactType().apply {
+        recordedHoursCredited = false
+      }
+      outcome = Fake.contactOutcomeType().apply {
+        attendance = true
+        compliantAcceptable = true
+      }
+    }
 
     subject.setOutcomeMeta(contact)
 
@@ -231,15 +236,15 @@ class ContactValidationServiceTest {
 
   @Test
   fun `Updating outcome meta with non-attended recorded hours outcome`() {
-    val contact = Fake.contact().copy(
-      type = Fake.contactType().copy(
-        recordedHoursCredited = true,
-      ),
-      outcome = Fake.contactOutcomeType().copy(
-        attendance = false,
-        compliantAcceptable = true,
-      )
-    )
+    val contact = Fake.contact().apply {
+      type = Fake.contactType().apply {
+        recordedHoursCredited = true
+      }
+      outcome = Fake.contactOutcomeType().apply {
+        attendance = false
+        compliantAcceptable = true
+      }
+    }
 
     subject.setOutcomeMeta(contact)
 
@@ -251,17 +256,17 @@ class ContactValidationServiceTest {
 
   @Test
   fun `Updating outcome meta with recorded hours outcome`() {
-    val contact = Fake.contact().copy(
-      startTime = LocalTime.of(12, 30),
-      endTime = LocalTime.of(14, 0),
-      type = Fake.contactType().copy(
-        recordedHoursCredited = true,
-      ),
-      outcome = Fake.contactOutcomeType().copy(
-        attendance = true,
-        compliantAcceptable = true,
-      )
-    )
+    val contact = Fake.contact().apply {
+      startTime = LocalTime.of(12, 30)
+      endTime = LocalTime.of(14, 0)
+      type = Fake.contactType().apply {
+        recordedHoursCredited = true
+      }
+      outcome = Fake.contactOutcomeType().apply {
+        attendance = true
+        compliantAcceptable = true
+      }
+    }
 
     subject.setOutcomeMeta(contact)
 
@@ -279,7 +284,10 @@ class ContactValidationServiceTest {
     havingEndTime: Boolean = true,
   ) {
     val request = Fake.newContact().copy(alert = alert, endTime = if (havingEndTime) LocalTime.NOON else null)
-    val type = Fake.contactType().copy(alertFlag = alertFlag, recordedHoursCredited = recordedHoursCredited)
+    val type = Fake.contactType().apply {
+      this.alertFlag = alertFlag
+      this.recordedHoursCredited = recordedHoursCredited
+    }
 
     if (success) {
       assertDoesNotThrow { subject.validateContactType(request, type) }
@@ -300,15 +308,15 @@ class ContactValidationServiceTest {
       outcome = if (havingRequestOutcome) "some-outcome" else null,
       date = if (havingPastDate) Fake.randomPastLocalDate() else Fake.randomFutureLocalDate(),
     )
-    val outcomeType = Fake.contactOutcomeType().copy(
-      code = if (havingOutcome) "some-outcome" else "some-other-outcome",
-      attendance = !isPermissibleAbsence,
-      compliantAcceptable = isPermissibleAbsence,
-    )
-    val type = Fake.contactType().copy(
-      outcomeFlag = outcomeFlag,
-      outcomeTypes = listOf(outcomeType),
-    )
+    val outcomeType = Fake.contactOutcomeType().apply {
+      code = if (havingOutcome) "some-outcome" else "some-other-outcome"
+      attendance = !isPermissibleAbsence
+      compliantAcceptable = isPermissibleAbsence
+    }
+    val type = Fake.contactType().apply {
+      this.outcomeFlag = outcomeFlag
+      outcomeTypes = listOf(outcomeType)
+    }
 
     if (success == false) {
       assertThrows<BadRequestException> { subject.validateOutcomeType(request, type) }
@@ -331,13 +339,13 @@ class ContactValidationServiceTest {
     val request = Fake.newContact().copy(
       officeLocation = if (havingRequestOfficeLocation) "some-office-location" else null
     )
-    val type = Fake.contactType().copy(locationFlag = locationFlag)
-    val officeLocation = Fake.officeLocation().copy(
+    val type = Fake.contactType().apply { this.locationFlag = locationFlag }
+    val officeLocation = Fake.officeLocation().apply {
       code = if (havingOfficeLocation) "some-office-location" else "some-other-office-location"
-    )
-    val team = Fake.team().copy(
+    }
+    val team = Fake.team().apply {
       officeLocations = listOf(officeLocation)
-    )
+    }
 
     if (success == false) {
       assertThrows<BadRequestException> { subject.validateOfficeLocation(request, type, team) }
@@ -362,7 +370,7 @@ class ContactValidationServiceTest {
       endTime = if (havingEndTime) LocalTime.NOON else null,
       date = if (havingFutureDate) Fake.randomFutureLocalDate() else Fake.randomPastLocalDate()
     )
-    val type = Fake.contactType().copy(attendanceContact = attendanceContact)
+    val type = Fake.contactType().apply { this.attendanceContact = attendanceContact }
     val offender = Fake.offender()
     val existing = Fake.contact()
 
@@ -391,23 +399,29 @@ class ContactValidationServiceTest {
     compliantAcceptable: Boolean = false,
     enforceable: Boolean = true,
     actionRequired: Boolean = true,
-    havingEnforcementAction: Boolean = true,
+    havingEnforcementAction: Boolean? = null,
   ) {
     val request = Fake.newContact().copy(
       enforcement = if (havingEnforcement) "some-enforcement" else null
     )
-    val action = Fake.enforcementAction().copy(code = "some-enforcement", responseByPeriod = 7)
-    val type = Fake.contactType().copy(
-      enforcementActions = if (havingEnforcementAction) listOf(action) else emptyList()
-    )
-    val outcome = if (havingOutcome) Fake.contactOutcomeType().copy(
-      compliantAcceptable = compliantAcceptable,
-      enforceable = enforceable,
-      actionRequired = actionRequired,
-    ) else null
+    val action = Fake.enforcementAction().apply {
+      code = "some-enforcement"
+      responseByPeriod = 7
+    }
+
+    if (havingEnforcementAction != null) {
+      whenever(enforcementActionRepository.findByCode("some-enforcement"))
+        .thenReturn(if (havingEnforcementAction) action else null)
+    }
+
+    val outcome = if (havingOutcome) Fake.contactOutcomeType().apply {
+      this.compliantAcceptable = compliantAcceptable
+      this.enforceable = enforceable
+      this.actionRequired = actionRequired
+    } else null
 
     if (success) {
-      val observed = subject.validateEnforcement(request, type, outcome)
+      val observed = subject.validateEnforcement(request, outcome)
       if (havingEnforcement) {
         assertThat(observed)
           .usingRecursiveComparison()
@@ -424,7 +438,7 @@ class ContactValidationServiceTest {
         assertThat(observed).isEqualTo(null)
       }
     } else {
-      assertThrows<BadRequestException> { subject.validateEnforcement(request, type, outcome) }
+      assertThrows<BadRequestException> { subject.validateEnforcement(request, outcome) }
     }
   }
 }

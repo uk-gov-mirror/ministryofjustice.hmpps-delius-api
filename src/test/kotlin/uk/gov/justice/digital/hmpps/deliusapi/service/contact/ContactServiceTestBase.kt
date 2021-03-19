@@ -36,6 +36,8 @@ abstract class ContactServiceTestBase {
   @Mock protected lateinit var mapper: ContactMapper
   @Mock protected lateinit var validationService: ContactValidationService
   @Mock protected lateinit var systemContactService: SystemContactService
+  @Mock protected lateinit var contactBreachService: ContactBreachService
+  @Mock protected lateinit var contactEnforcementService: ContactEnforcementService
   @InjectMocks protected lateinit var subject: ContactService
 
   protected lateinit var type: ContactType

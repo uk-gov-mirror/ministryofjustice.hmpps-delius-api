@@ -65,9 +65,17 @@ class ContactType(
   @Type(type = "yes_no")
   var offenderLevel: Boolean,
 
+  /**
+   * This is used in Delius to populate the list of available contact types on the schedule future appointments feature.
+   * This should be used when checking if a contact type is appropriate for a logical appointment operation e.g. booking recurring, cancelling.
+   */
   @Column(name = "FUTURE_SCHEDULED_CONTACTS_FLAG", nullable = false, length = 1)
   @Type(type = "yes_no")
   var scheduleFutureAppointments: Boolean,
+
+  @Column(name = "NATIONAL_STANDARDS_CONTACT", nullable = false, length = 1)
+  @Type(type = "yes_no")
+  var nationalStandardsContact: Boolean,
 
   @Column(name = "EDITABLE", length = 1)
   @Type(type = "yes_no")

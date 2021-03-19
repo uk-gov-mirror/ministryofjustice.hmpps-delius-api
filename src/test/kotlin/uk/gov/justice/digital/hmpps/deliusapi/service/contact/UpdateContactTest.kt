@@ -125,6 +125,9 @@ class UpdateContactTest : ContactServiceTestBase() {
     whenever(contactRepository.saveAndFlush(entityCaptor.capture())).thenReturn(contact)
     whenever(mapper.toDto(contact)).thenReturn(dto)
 
+    val actionContact = Fake.contact()
+    whenever(systemContactService.createSystemEnforcementActionContact(contact)).thenReturn(actionContact)
+
     val originalNotes = contact.notes
 
     val observed = whenUpdatingContact()
@@ -153,6 +156,13 @@ class UpdateContactTest : ContactServiceTestBase() {
 
     // should create system enforcements
     verify(systemContactService, times(1)).createSystemEnforcementActionContact(entityCaptor.value)
+
+    // should update breach
+    verify(contactBreachService, times(1)).updateBreachOnInsertContact(actionContact)
+    verify(contactBreachService, times(1)).updateBreachOnUpdateContact(entityCaptor.value)
+
+    // should update ftc
+    verify(contactEnforcementService, times(1)).updateFailureToComply(entityCaptor.value)
   }
 
   private fun havingContact(having: Boolean = true, editable: Boolean = true) {

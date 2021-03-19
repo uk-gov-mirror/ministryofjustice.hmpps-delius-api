@@ -6,6 +6,7 @@ import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
+import org.assertj.core.api.ObjectAssert
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
@@ -43,7 +44,7 @@ import java.util.Optional
 
 @ExtendWith(MockitoExtension::class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-class CreateSystemContactTest {
+class SystemContactServiceTest {
   @Mock private lateinit var contactRepository: ContactRepository
   @Mock private lateinit var offenderRepository: OffenderRepository
   @Mock private lateinit var contactTypeRepository: ContactTypeRepository
@@ -148,24 +149,9 @@ class CreateSystemContactTest {
     subject.createSystemEnforcementActionContact(contact)
 
     assertThat(entityCaptor.value)
-      .hasProperty(Contact::offender, contact.offender)
       .hasProperty(Contact::type, action.contactType)
-      .hasProperty(Contact::outcome, null)
-      .hasProperty(Contact::provider, contact.provider)
-      .hasProperty(Contact::team, contact.team)
-      .hasProperty(Contact::staff, contact.staff)
-      .hasProperty(Contact::nsi, contact.nsi)
-      .hasProperty(Contact::requirement, contact.requirement)
-      .hasProperty(Contact::event, contact.event)
-      .hasProperty(Contact::officeLocation, contact.officeLocation)
       .hasProperty(Contact::date, LocalDate.now())
-      .hasProperty(Contact::endTime, null)
-      .hasProperty(Contact::alert, false)
-      .hasProperty(Contact::sensitive, contact.sensitive)
-      .hasProperty(Contact::description, null)
-      .hasProperty(Contact::partitionAreaId, 0)
-      .hasProperty(Contact::staffEmployeeId, 1)
-      .hasProperty(Contact::teamProviderId, 1)
+      .hasCommonContactSourcedProperties(contact)
 
     assertThat(entityCaptor.value.notes)
       .startsWith(contact.notes)
@@ -174,6 +160,50 @@ class CreateSystemContactTest {
     assertThat(entityCaptor.value.startTime!!)
       .isCloseTo(LocalTime.now(), within(1, ChronoUnit.MINUTES))
   }
+
+  @Test
+  fun `Successfully creating system linked contact but missing contact type`() {
+    val contact = Fake.contact()
+    val type = Fake.faker.options().option(WellKnownContactType::class.java)
+    whenever(contactTypeRepository.findByCode(type.code)).thenReturn(null)
+    assertThrows<RuntimeException> { subject.createLinkedSystemContact(contact, type) }
+  }
+
+  @Test
+  fun `Successfully creating system linked contact`() {
+    val contact = Fake.contact()
+    val savedContact = Fake.contact()
+    val code = Fake.faker.options().option(WellKnownContactType::class.java)
+    val contactType = Fake.contactType()
+    whenever(contactTypeRepository.findByCode(code.code)).thenReturn(contactType)
+    whenever(contactRepository.saveAndFlush(entityCaptor.capture())).thenReturn(savedContact)
+    val observed = subject.createLinkedSystemContact(contact, code)
+    assertThat(observed).isSameAs(savedContact)
+    assertThat(entityCaptor.value)
+      .hasProperty(Contact::type, contactType)
+      .hasProperty(Contact::date, contact.date)
+      .hasProperty(Contact::startTime, contact.startTime)
+      .hasCommonContactSourcedProperties(contact)
+  }
+
+  private fun ObjectAssert<Contact>.hasCommonContactSourcedProperties(contact: Contact) = this
+    .hasProperty(Contact::offender, contact.offender)
+    .hasProperty(Contact::outcome, null)
+    .hasProperty(Contact::provider, contact.provider)
+    .hasProperty(Contact::team, contact.team)
+    .hasProperty(Contact::staff, contact.staff)
+    .hasProperty(Contact::nsi, contact.nsi)
+    .hasProperty(Contact::requirement, contact.requirement)
+    .hasProperty(Contact::event, contact.event)
+    .hasProperty(Contact::officeLocation, contact.officeLocation)
+    .hasProperty(Contact::endTime, null)
+    .hasProperty(Contact::alert, contact.alert)
+    .hasProperty(Contact::sensitive, contact.sensitive)
+    .hasProperty(Contact::description, null)
+    .hasProperty(Contact::linkedContact, contact)
+    .hasProperty(Contact::partitionAreaId, 0)
+    .hasProperty(Contact::staffEmployeeId, 1)
+    .hasProperty(Contact::teamProviderId, 1)
 
   private fun havingDependentEntities(
     havingEvent: Boolean = true,

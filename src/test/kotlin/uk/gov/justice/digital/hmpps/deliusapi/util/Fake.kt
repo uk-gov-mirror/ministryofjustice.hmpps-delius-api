@@ -67,6 +67,7 @@ object Fake {
   fun randomFutureLocalDate(): LocalDate = faker.date().future(10, 1, TimeUnit.DAYS).toLocalDate()
 
   fun id(): Long = faker.number().numberBetween(1L, 900_000_000_000_000_000L) // maxvalue of db sequences
+  fun count(): Long = faker.number().numberBetween(1L, 100L)
 
   private fun crn() = "${faker.lorem().fixedString(1)}${faker.number().randomNumber(6, true)}"
 
@@ -92,6 +93,7 @@ object Fake {
     outcomeTypes = listOf(contactOutcomeType()),
     requirementTypeCategories = listOf(requirementTypeCategory()),
     nsiTypes = listOf(nsiType()),
+    nationalStandardsContact = true,
   )
   fun contactOutcomeType() = ContactOutcomeType(
     id = id(),
@@ -128,19 +130,24 @@ object Fake {
     id = id(),
     cja2003Order = true,
     legacyOrder = true,
+    sentenceType = faker.lorem().characters(5),
+    failureToComplyLimit = count(),
   )
 
   fun disposal() = Disposal(
     id = id(),
     requirements = listOf(requirement()),
     type = disposalType(),
+    date = randomPastLocalDate(),
   )
 
   fun event() = Event(
     id = id(),
     disposals = listOf(disposal()),
     referralDate = randomPastLocalDate(),
-    active = true
+    active = true,
+    ftcCount = count(),
+    inBreach = true,
   )
 
   fun enforcementAction() = EnforcementAction(

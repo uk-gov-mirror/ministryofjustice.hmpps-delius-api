@@ -8,7 +8,6 @@ import com.nhaarman.mockitokotlin2.whenever
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.mockito.AdditionalAnswers
 import org.mockito.ArgumentCaptor
 import org.mockito.Captor
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.NewContact
@@ -27,11 +26,15 @@ class CreateContactTest : ContactServiceTestBase() {
   private lateinit var entityCaptor: ArgumentCaptor<Contact>
   private lateinit var request: NewContact
 
+  private val savedContact = Fake.contact()
+  private val enforcementContact = Fake.contact()
+
   @Test
   fun `Successfully creating contact`() {
     havingDependentEntities()
     havingRepositories()
     havingValidation()
+    havingEnforcementContact()
 
     whenSuccessfullyCreatingContact()
 
@@ -39,6 +42,7 @@ class CreateContactTest : ContactServiceTestBase() {
     shouldSaveEnforcement()
     shouldSetAuditContext()
     shouldSetOutcomeMeta()
+    shouldUpdateFailureToComply()
   }
 
   @Test
@@ -53,6 +57,7 @@ class CreateContactTest : ContactServiceTestBase() {
     shouldNotSaveEnforcement()
     shouldSetAuditContext()
     shouldSetOutcomeMeta()
+    shouldUpdateFailureToComply()
   }
 
   @Test
@@ -63,6 +68,7 @@ class CreateContactTest : ContactServiceTestBase() {
     request = request.copy(requirementId = null, eventId = null)
     havingValidation()
     passesValidation()
+    shouldUpdateFailureToComply()
   }
 
   @Test
@@ -273,8 +279,12 @@ class CreateContactTest : ContactServiceTestBase() {
     }
   }
 
+  private fun havingEnforcementContact() {
+    whenever(systemContactService.createSystemEnforcementActionContact(savedContact))
+      .thenReturn(enforcementContact)
+  }
+
   private fun whenSuccessfullyCreatingContact() {
-    val savedContact = Fake.contact()
     val expectedResult = Fake.contactDto()
 
     whenever(contactRepository.saveAndFlush(entityCaptor.capture()))
@@ -292,7 +302,7 @@ class CreateContactTest : ContactServiceTestBase() {
   }
 
   private fun passesValidation() {
-    whenever(contactRepository.saveAndFlush(any())).then(AdditionalAnswers.returnsFirstArg<Contact>())
+    whenever(contactRepository.saveAndFlush(entityCaptor.capture())).thenReturn(savedContact)
 
     subject.createContact(request)
 
@@ -336,7 +346,9 @@ class CreateContactTest : ContactServiceTestBase() {
     assertThat(enforcement)
       .hasProperty(Enforcement::contact, entityCaptor.value)
     verify(systemContactService, times(1))
-      .createSystemEnforcementActionContact(any())
+      .createSystemEnforcementActionContact(savedContact)
+    verify(contactBreachService, times(1)).updateBreachOnInsertContact(enforcementContact)
+    verify(contactBreachService, times(1)).updateBreachOnInsertContact(savedContact)
   }
 
   private fun shouldNotSaveEnforcement() {
@@ -350,4 +362,7 @@ class CreateContactTest : ContactServiceTestBase() {
     val context = AuditContext.get(AuditableInteraction.ADD_CONTACT)
     assertThat(context.offenderId).isEqualTo(offender.id)
   }
+
+  private fun shouldUpdateFailureToComply() =
+    verify(contactEnforcementService, times(1)).updateFailureToComply(savedContact)
 }

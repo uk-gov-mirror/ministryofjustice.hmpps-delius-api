@@ -21,4 +21,9 @@ class DisposalType(
   @Type(type = "yes_no")
   var legacyOrder: Boolean,
 
+  @Column(name = "SENTENCE_TYPE", length = 50)
+  var sentenceType: String? = null,
+
+  @Column(name = "FTC_LIMIT")
+  var failureToComplyLimit: Long? = null,
 )

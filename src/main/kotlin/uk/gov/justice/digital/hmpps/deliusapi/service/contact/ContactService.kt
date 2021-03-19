@@ -40,6 +40,8 @@ class ContactService(
   private val mapper: ContactMapper,
   private val validation: ContactValidationService,
   private val systemContactService: SystemContactService,
+  private val contactBreachService: ContactBreachService,
+  private val contactEnforcementService: ContactEnforcementService,
 ) {
   @ProviderResponseAuthority
   fun getUpdateContact(id: Long): UpdateContact {
@@ -84,25 +86,22 @@ class ContactService(
     entity.description = request.description
     entity.updateNotes(request.notes)
 
-    if (entity.enforcements.size > 1) {
-      throw RuntimeException("Cannot determine which enforcement to use on contact with id '${entity.id}'")
-    }
-
-    val createSystemEnforcementAction = if (request.enforcement != entity.enforcements.getOrNull(0)?.action?.code) {
-      val enforcement = validation.validateEnforcement(request, entity.outcome)
-      entity.enforcements.clear()
-      if (enforcement != null) {
-        enforcement.contact = entity
-        entity.enforcements.add(enforcement)
-        true
-      } else false
+    val createSystemEnforcementAction = if (request.enforcement != entity.enforcement?.action?.code) {
+      entity.enforcement = validation.validateEnforcement(request, entity.outcome)
+      true
     } else false
 
     contactRepository.saveAndFlush(entity)
 
     if (createSystemEnforcementAction) {
-      systemContactService.createSystemEnforcementActionContact(entity)
+      val actionContact = systemContactService.createSystemEnforcementActionContact(entity)
+      if (actionContact != null) {
+        contactBreachService.updateBreachOnInsertContact(actionContact)
+      }
     }
+
+    contactBreachService.updateBreachOnUpdateContact(entity)
+    contactEnforcementService.updateFailureToComply(entity)
 
     return mapper.toDto(entity)
   }
@@ -165,14 +164,20 @@ class ContactService(
 
     if (enforcement != null) {
       enforcement.contact = contact
-      contact.enforcements.add(enforcement)
+      contact.enforcement = enforcement
     }
 
     val entity = contactRepository.saveAndFlush(contact)
 
     if (enforcement != null) {
-      systemContactService.createSystemEnforcementActionContact(entity)
+      val actionContact = systemContactService.createSystemEnforcementActionContact(entity)
+      if (actionContact != null) {
+        contactBreachService.updateBreachOnInsertContact(actionContact)
+      }
     }
+
+    contactBreachService.updateBreachOnInsertContact(entity)
+    contactEnforcementService.updateFailureToComply(entity)
 
     return mapper.toDto(entity)
   }

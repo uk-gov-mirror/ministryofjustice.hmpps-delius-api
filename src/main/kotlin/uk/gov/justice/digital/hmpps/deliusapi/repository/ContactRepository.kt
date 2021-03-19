@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
+import uk.gov.justice.digital.hmpps.deliusapi.repository.models.LocalDateTimeWrapper
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -24,4 +25,32 @@ interface ContactRepository : JpaRepository<Contact, Long> {
   ): List<Contact>
 
   fun findAllByTypeId(typeId: Long): List<Contact>
+
+  @Query(
+    "select count(distinct c.date) from Contact c where c.complied = false and c.event.id = :eventId " +
+      "and c.type.nationalStandardsContact = true and (:lastResetDate is null or c.date >= :lastResetDate)"
+  )
+  fun countFailureToComply(@Param("eventId") eventId: Long, @Param("lastResetDate") lastResetDate: LocalDate?): Long
+
+  @Query(
+    "select count(c.id) from Contact c where c.event.id = :eventId and c.type.code = :contactCode " +
+      "and c.outcome is null and (:breachEnd is null or c.date >= :breachEnd)"
+  )
+  fun countEnforcementUnderReview(
+    @Param("eventId") eventId: Long,
+    @Param("contactCode") contactCode: String,
+    @Param("breachEnd") breachEnd: LocalDate?
+  ): Long
+
+  @Query(
+    "select new uk.gov.justice.digital.hmpps.deliusapi.repository.models.LocalDateTimeWrapper(c.date, c.startTime) from Contact c where c.event.id = :eventId " +
+      "and c.type.code in :breachContactTypes order by c.date DESC, c.startTime DESC"
+  )
+  fun findAllBreachDates(
+    @Param("eventId") eventId: Long,
+    @Param("breachContactTypes") breachContactTypes: List<String>
+  ): List<LocalDateTimeWrapper>
 }
+
+fun ContactRepository.isEnforcementUnderReview(eventId: Long, contactCode: String, breachEnd: LocalDate?) =
+  countEnforcementUnderReview(eventId, contactCode, breachEnd) > 0

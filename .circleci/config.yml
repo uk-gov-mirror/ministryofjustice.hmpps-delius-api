@@ -110,8 +110,12 @@ jobs:
             - ~/.gradle
           key: gradle-{{ checksum "build.gradle.kts" }}
       - run:
+          name: "Get the Veracode agent"
+          command: |
+            wget https://repo1.maven.org/maven2/com/veracode/vosp/api/wrappers/vosp-api-wrappers-java/21.2.7.4/vosp-api-wrappers-java-21.2.7.4.jar -O VeracodeJavaAPI.jar
+      - run:
           name: "Upload to Veracode"
-          command: java -jar /opt/veracode/api-wrapper.jar
+          command: java -jar VeracodeJavaAPI.jar
             -vid $VERACODE_API_ID
             -vkey $VERACODE_API_KEY
             -action uploadandscan

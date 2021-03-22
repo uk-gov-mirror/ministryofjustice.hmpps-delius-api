@@ -93,7 +93,7 @@ commands:
               } 
 
 jobs:
-  validate:
+  build:
     executor: hmpps/java
     environment:
       _JAVA_OPTIONS: -Xmx1024m -XX:ParallelGCThreads=2 -XX:ConcGCThreads=2 -XX:ParallelGCThreads=2 -Djava.util.concurrent.ForkJoinPool.common.parallelism=2 -Dorg.gradle.daemon=false
@@ -109,26 +109,32 @@ jobs:
           paths:
             - ~/.gradle
           key: gradle-{{ checksum "build.gradle.kts" }}
-      - run:
-          name: "Get the Veracode agent"
-          command: |
-            wget https://repo1.maven.org/maven2/com/veracode/vosp/api/wrappers/vosp-api-wrappers-java/21.2.7.4/vosp-api-wrappers-java-21.2.7.4.jar -O VeracodeJavaAPI.jar
-      - run:
-          name: "Upload to Veracode"
-          command: java -jar VeracodeJavaAPI.jar
-            -vid $VERACODE_API_ID
-            -vkey $VERACODE_API_KEY
-            -action uploadandscan
-            -appname $CIRCLE_PROJECT_REPONAME
-            -createprofile true
-            -version CircleCI-$CIRCLE_BUILD_NUM
-            -filepath /app/build/libs/hmpps-delius-api-*.jar
+      - persist_to_workspace:
+          root: build/libs
+          paths:
+            - '*.jar'
       - store_test_results:
           path: build/test-results
       - store_artifacts:
           path: build/reports/tests
       - store_artifacts:
           path: build/libs
+  scan:
+    docker:
+      - image: veracode/api-wrapper-java:latest
+    steps:
+      - attach_workspace:
+          at: /app
+      - run:
+          name: "Upload to Veracode"
+          command: java -jar /opt/veracode/api-wrapper.jar
+            -vid $VERACODE_API_ID
+            -vkey $VERACODE_API_KEY
+            -action uploadandscan
+            -appname $CIRCLE_PROJECT_REPONAME
+            -createprofile true
+            -version CircleCI-$CIRCLE_BUILD_NUM
+            -filepath /app/hmpps-delius-api-*.jar
   build_docker:
     docker:
        - image: circleci/python
@@ -211,13 +217,16 @@ workflows:
   version: 2
   build-test-and-deploy:
     jobs:
-      - validate:
+      - build:
           filters:
             tags:
               ignore: /.*/
+      - scan:
+          requires:
+            - build
       - build_docker:
           requires:
-            - validate
+            - scan
       - deploy-dev:
           requires:
             - build_docker
@@ -229,7 +238,6 @@ workflows:
               only:
                 - main
           requires:
-            - validate
             - build_docker
           context:
             - moj-slack-notifications            

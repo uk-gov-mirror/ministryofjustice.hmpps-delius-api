@@ -104,27 +104,11 @@ jobs:
             - gradle-{{ checksum "build.gradle.kts" }}
             - gradle-
       - run:
-          command: ./gradlew check
+          command: ./gradlew build
       - save_cache:
           paths:
             - ~/.gradle
           key: gradle-{{ checksum "build.gradle.kts" }}
-      - persist_to_workspace:
-          root: .
-          paths:
-            - build/libs
-      - store_test_results:
-          path: build/test-results
-      - store_artifacts:
-          path: build/reports/tests
-      - store_artifacts:
-          path: build/libs
-  scan:
-    docker:
-      - image: veracode/api-wrapper-java:latest
-    steps:
-      - attach_workspace:
-          at: /app
       - run:
           name: "Upload to Veracode"
           command: java -jar /opt/veracode/api-wrapper.jar
@@ -135,7 +119,12 @@ jobs:
             -createprofile true
             -version CircleCI-$CIRCLE_BUILD_NUM
             -filepath /app/build/libs/hmpps-delius-api-*.jar
-
+      - store_test_results:
+          path: build/test-results
+      - store_artifacts:
+          path: build/reports/tests
+      - store_artifacts:
+          path: build/libs
   build_docker:
     docker:
        - image: circleci/python
@@ -222,13 +211,9 @@ workflows:
           filters:
             tags:
               ignore: /.*/
-      - scan:
-          requires:
-            - validate
       - build_docker:
           requires:
             - validate
-            - scan
       - deploy-dev:
           requires:
             - build_docker

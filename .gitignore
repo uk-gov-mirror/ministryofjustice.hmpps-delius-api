@@ -69,3 +69,6 @@ ecr.repo
 
 # H2 Database Files
 *.db
+
+# MacOs metadata files
+.DS_Store

@@ -1,0 +1,9 @@
+# Take a pre-built image
+FROM 895523100917.dkr.ecr.eu-west-2.amazonaws.com/hmpps/delius-test-db:4.10.3
+
+# Uplift the PDM version and install the latest Delius PLSQL code
+COPY scripts /scripts/
+RUN exec $ORACLE_BASE/$RUN_FILE & \
+    until lsnrctl status | grep -q 'Service "xepdb1" has 1 instance(s).'; do echo -n .; sleep 1; done && \
+    chmod +x /scripts/*.sh && chmod +x /scripts/delius/install/*.sh && chown -R oracle:oinstall /scripts && \
+    su - oracle -c "/scripts/uplift.sh && /scripts/shutdown.sh"

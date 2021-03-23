@@ -11,11 +11,13 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsi
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsiManager
+import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiStatusHistory
 import uk.gov.justice.digital.hmpps.deliusapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.NsiRepository
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 import uk.gov.justice.digital.hmpps.deliusapi.util.comparingDateTimesToNearestSecond
+import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
 import uk.gov.justice.digital.hmpps.deliusapi.validation.ValidationTestCase
 import uk.gov.justice.digital.hmpps.deliusapi.validation.ValidationTestCaseBuilder
 import java.time.LocalDate
@@ -107,10 +109,17 @@ class CreateNsiTest @Autowired constructor (
           .isEqualTo(case.subject)
 
         shouldCreateSystemGeneratedContact(entity.id, entity.status?.contactTypeId!!)
+
+        assertThat(entity.statuses)
+          .hasSize(1)
+          .element(0)
+          .hasProperty(NsiStatusHistory::notes, case.subject.notes)
+          .extracting { it.nsiStatus?.code }
+          .isEqualTo(case.subject.status)
       }
   }
 
-  fun shouldCreateSystemGeneratedContact(nsiId: Long, typeId: Long) {
+  private fun shouldCreateSystemGeneratedContact(nsiId: Long, typeId: Long) {
     val existing = contactRepository.findAllByNsiId(nsiId)
     assertThat(existing).anyMatch { it.type.id == typeId }
   }

@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.entity.Event
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Nsi
 import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiManager
 import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiStatus
+import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiStatusHistory
 import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiType
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Offender
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Provider
@@ -130,6 +131,14 @@ class NsiServiceTest {
       .hasProperty(NsiManager::team, managerTeam)
       .hasProperty(NsiManager::staff, managerStaff)
       .hasProperty(NsiManager::nsi, newNsiCaptor.value)
+
+    assertThat(newNsiCaptor.value.statuses)
+      .hasSize(1)
+      .element(0)
+      .hasProperty(NsiStatusHistory::nsi, newNsiCaptor.value)
+      .hasProperty(NsiStatusHistory::nsiStatus, status)
+      .hasProperty(NsiStatusHistory::date, request.statusDate)
+      .hasProperty(NsiStatusHistory::notes, request.notes)
 
     shouldSetAuditContext(created.id)
 

@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsiManager
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NsiDto
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Nsi
 import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiManager
+import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiStatusHistory
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import uk.gov.justice.digital.hmpps.deliusapi.mapper.NsiMapper
 import uk.gov.justice.digital.hmpps.deliusapi.repository.NsiRepository
@@ -143,8 +144,15 @@ class NsiService(
     )
 
     val manager = createNsiManager(request.manager, request.referralDate, nsi)
-
     nsi.managers.add(manager)
+
+    val statusHistory = NsiStatusHistory(
+      nsi = nsi,
+      nsiStatus = status,
+      date = nsi.statusDate,
+      notes = nsi.notes,
+    )
+    nsi.statuses.add(statusHistory)
 
     val entity = nsiRepository.saveAndFlush(nsi)
     audit.nsiId = entity.id

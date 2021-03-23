@@ -4,11 +4,12 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.EventRepository
-import uk.gov.justice.digital.hmpps.deliusapi.repository.models.LocalDateTimeWrapper
 import uk.gov.justice.digital.hmpps.deliusapi.service.contact.WellKnownContactType.Companion.BREACH_END_CODES
 import uk.gov.justice.digital.hmpps.deliusapi.service.contact.WellKnownContactType.Companion.BREACH_START_CODES
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getStartDateTime
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 
 @Service
 class ContactBreachService(
@@ -31,13 +32,15 @@ class ContactBreachService(
       BreachType.START -> {
         // Contact initiates breach
 
-        // Prefer to go to the breach end contacts as a source of truth for the last breach date.
-        // otherwise we attempt to construct from the event (which only has date no time)
-        // otherwise there has been no previous breach
-        val latestBreachEnd = contactRepository.findAllBreachDates(event.id, BREACH_END_CODES)
-          .getOrNull(0)
-          ?: if (event.breachEnd == null) null else LocalDateTimeWrapper(event.breachEnd!!, null)
-        if (latestBreachEnd == null || contactStartDateTime >= latestBreachEnd.dateTime) {
+        // To determine breach end, we check both the breachEnd date on the event
+        // & all existing breach end contacts for the event.
+        val eventBreachEnd = if (event.breachEnd == null) null
+        else LocalDateTime.of(event.breachEnd, LocalTime.MIDNIGHT)
+        val latestBreachContactEnd = contactRepository.findAllBreachDates(event.id, BREACH_END_CODES)
+          .getOrNull(0)?.dateTime
+        val latestBreachEnd = listOfNotNull(eventBreachEnd, latestBreachContactEnd).maxOrNull()
+
+        if (latestBreachEnd == null || contactStartDateTime > latestBreachEnd) {
           event.inBreach = true
           updated = true
         }

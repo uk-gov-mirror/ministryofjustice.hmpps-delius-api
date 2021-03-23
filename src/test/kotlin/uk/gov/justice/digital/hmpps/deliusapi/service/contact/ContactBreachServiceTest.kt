@@ -86,6 +86,28 @@ class ContactBreachServiceTest {
   }
 
   @Test
+  fun `Attempting to update breach on insert with breach start contact and expired breach in contact log but future breach end date on event`() {
+    havingContact(
+      WellKnownContactType.BREACH_INIT,
+      havingExistingEventBreach = LocalDate.of(2021, 3, 19)
+    )
+    havingLatestBreachEnd(LocalDateTime.of(2021, 3, 11, 13, 0))
+    whenUpdatingBreachOnInsertContact()
+    shouldNotUpdateEvent()
+  }
+
+  @Test
+  fun `Attempting to update breach on insert with breach start contact and expired breach end date on event but future breach end in contact log`() {
+    havingContact(
+      WellKnownContactType.BREACH_INIT,
+      havingExistingEventBreach = LocalDate.of(2021, 3, 17)
+    )
+    havingLatestBreachEnd(LocalDateTime.of(2021, 3, 19, 13, 0))
+    whenUpdatingBreachOnInsertContact()
+    shouldNotUpdateEvent()
+  }
+
+  @Test
   fun `Updating breach on insert with breach start contact and expired breach on event`() {
     havingContact(
       WellKnownContactType.BREACH_INIT,

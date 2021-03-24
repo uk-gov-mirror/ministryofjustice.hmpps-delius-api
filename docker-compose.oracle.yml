@@ -13,5 +13,18 @@ services:
     depends_on:
       - oracle
     environment:
-      - SPRING_PROFILES_ACTIVE=dev,oracle
+      - SPRING_PROFILES_ACTIVE=oracle
       - SPRING_DATASOURCE_URL=jdbc:oracle:thin:@//oracle:1521/XEPDB1
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=none
+
+  community-api:
+    restart: unless-stopped # need this to wait for oracle...
+    depends_on:
+      - oracle
+    environment:
+      - SPRING_PROFILES_ACTIVE=oracle
+      - SPRING_FLYWAY_ENABLED=false
+      - SPRING_DATASOURCE_URL=jdbc:oracle:thin:@//oracle:1521/XEPDB1
+      - SPRING_DATASOURCE_USERNAME=
+      - SPRING_DATASOURCE_PASSWORD=
+      - APPLICATIONINSIGHTS_CONNECTION_STRING=

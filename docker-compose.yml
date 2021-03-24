@@ -12,9 +12,9 @@ services:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/auth/health" ]
     environment:
       SERVER_PORT: 8080
-      SPRING_PROFILES_ACTIVE: dev,token-verification
       TOKENVERIFICATION_ENDPOINT_URL: "http://token-verification-api:8080"
       DELIUS_ENABLED: "false"
+      SPRING_PROFILES_ACTIVE: dev-config,auth-seed,nomis-seed,token-verification
 
   redis:
     image: 'bitnami/redis:5.0'
@@ -61,6 +61,19 @@ services:
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://oauth:8080/auth/.well-known/jwks.json
       TOKENVERIFICATION_API_BASE_URL: http://token-verification-api:8080
       TOKENVERIFICATION_ENABLED: "true"
+
+  community-api:
+    image: quay.io/hmpps/community-api:latest
+    networks:
+      - hmpps
+    container_name: community-api
+    ports:
+      - "8090:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK-SET-URI: http://oauth:8080/auth/.well-known/jwks.json
 
 networks:
   hmpps:

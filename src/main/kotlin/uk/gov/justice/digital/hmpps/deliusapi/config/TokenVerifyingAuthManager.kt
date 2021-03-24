@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.deliusapi.config
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import org.springframework.beans.factory.annotation.Value
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.core.Authentication
@@ -15,11 +15,9 @@ import org.springframework.web.reactive.function.client.WebClient
 @Component
 class TokenVerifyingAuthManager(
   jwtDecoderByIssuerUri: JwtDecoder,
-  private val tokenVerificationApiWebClient: WebClient,
-  @Suppress("SpringJavaInjectionPointsAutowiringInspection")
-  @Value("\${tokenverification.enabled:false}")
-  private val tokenVerificationEnabled: Boolean,
-  private val authAwareTokenConverter: AuthAwareTokenConverter,
+  @Autowired(required = false) private val tokenVerificationApiWebClient: WebClient?,
+  features: FeatureFlags,
+  authAwareTokenConverter: AuthAwareTokenConverter,
 ) :
   AuthenticationManager {
 
@@ -27,11 +25,14 @@ class TokenVerifyingAuthManager(
 
   init {
     jwtAuthenticationProvider.setJwtAuthenticationConverter(authAwareTokenConverter)
+
+    if (features.tokenVerification != (tokenVerificationApiWebClient != null)) {
+      throw RuntimeException("Token verification API client must only be wired when token verification feature is enabled")
+    }
   }
 
   override fun authenticate(authentication: Authentication): Authentication {
-
-    if (tokenVerificationEnabled) {
+    if (tokenVerificationApiWebClient != null) {
       val bearer = authentication as BearerTokenAuthenticationToken
 
       // firstly check the jwt is still valid

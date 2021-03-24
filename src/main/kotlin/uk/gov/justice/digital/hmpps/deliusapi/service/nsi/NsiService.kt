@@ -4,6 +4,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.deliusapi.advice.Auditable
 import uk.gov.justice.digital.hmpps.deliusapi.config.Authorities
+import uk.gov.justice.digital.hmpps.deliusapi.config.FeatureFlags
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsi
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsiManager
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NsiDto
@@ -45,6 +46,7 @@ class NsiService(
   private val referenceDataMasterRepository: ReferenceDataMasterRepository,
   private val systemContactService: SystemContactService,
   private val mapper: NsiMapper,
+  private val features: FeatureFlags,
 ) {
 
   @PreAuthorize(
@@ -146,13 +148,15 @@ class NsiService(
     val manager = createNsiManager(request.manager, request.referralDate, nsi)
     nsi.managers.add(manager)
 
-    val statusHistory = NsiStatusHistory(
-      nsi = nsi,
-      nsiStatus = status,
-      date = nsi.statusDate,
-      notes = nsi.notes,
-    )
-    nsi.statuses.add(statusHistory)
+    if (features.nsiStatusHistory) {
+      val statusHistory = NsiStatusHistory(
+        nsi = nsi,
+        nsiStatus = status,
+        date = nsi.statusDate,
+        notes = nsi.notes,
+      )
+      nsi.statuses.add(statusHistory)
+    }
 
     val entity = nsiRepository.saveAndFlush(nsi)
     audit.nsiId = entity.id

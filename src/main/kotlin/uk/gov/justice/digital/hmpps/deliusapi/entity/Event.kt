@@ -23,7 +23,22 @@ class Event(
   @Column(name = "ACTIVE_FLAG", columnDefinition = "NUMBER", nullable = false)
   var active: Boolean,
 
+  @Column(name = "FTC_COUNT", nullable = false)
+  var ftcCount: Long,
+
+  @Column(name = "IN_BREACH", columnDefinition = "NUMBER", nullable = false)
+  var inBreach: Boolean,
+
+  @Column(name = "BREACH_END")
+  var breachEnd: LocalDate? = null,
+
   @JoinColumn(name = "EVENT_ID")
   @OneToMany
   var disposals: List<Disposal>? = null,
-)
+) {
+  var disposal: Disposal?
+    get() = disposals?.getOrNull(0)
+    set(value) {
+      disposals = if (value == null) emptyList() else listOf(value)
+    }
+}

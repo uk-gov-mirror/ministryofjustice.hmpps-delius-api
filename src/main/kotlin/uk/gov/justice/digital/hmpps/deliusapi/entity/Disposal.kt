@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.deliusapi.entity
 
+import java.time.LocalDate
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.Id
@@ -22,4 +23,7 @@ class Disposal(
   @JoinColumn(name = "DISPOSAL_TYPE_ID")
   @ManyToOne
   var type: DisposalType? = null,
+
+  @Column(name = "DISPOSAL_DATE", nullable = false)
+  var date: LocalDate,
 )

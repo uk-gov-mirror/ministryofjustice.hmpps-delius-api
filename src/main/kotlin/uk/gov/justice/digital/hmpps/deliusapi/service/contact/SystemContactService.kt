@@ -71,8 +71,8 @@ class SystemContactService(
     contactRepository.saveAndFlush(entity)
   }
 
-  fun createSystemEnforcementActionContact(contact: Contact) {
-    val action = contact.enforcements.getOrNull(0)?.action ?: return
+  fun createSystemEnforcementActionContact(contact: Contact): Contact? {
+    val action = contact.enforcements.getOrNull(0)?.action ?: return null
 
     val entity = Contact(
       type = action.contactType,
@@ -87,10 +87,36 @@ class SystemContactService(
       date = LocalDate.now(),
       startTime = LocalTime.now(),
       sensitive = contact.sensitive,
+      alert = contact.alert,
+      linkedContact = contact,
     )
 
     entity.updateNotes("${contact.notes}\n${LocalDateTime.now()}\nEnforcement Action: ${action.description}")
 
-    contactRepository.saveAndFlush(entity)
+    return contactRepository.saveAndFlush(entity)
+  }
+
+  fun createLinkedSystemContact(contact: Contact, wellKnownType: WellKnownContactType): Contact {
+    val type = contactTypeRepository.findByCode(wellKnownType.code)
+      ?: throw RuntimeException("Cannot find the ${wellKnownType.name} well known contact type")
+
+    val entity = Contact(
+      type = type,
+      offender = contact.offender,
+      nsi = contact.nsi,
+      requirement = contact.requirement,
+      event = contact.event,
+      provider = contact.provider,
+      team = contact.team,
+      staff = contact.staff,
+      officeLocation = contact.officeLocation,
+      date = contact.date,
+      startTime = contact.startTime,
+      sensitive = contact.sensitive,
+      alert = contact.alert,
+      linkedContact = contact,
+    )
+
+    return contactRepository.saveAndFlush(entity)
   }
 }

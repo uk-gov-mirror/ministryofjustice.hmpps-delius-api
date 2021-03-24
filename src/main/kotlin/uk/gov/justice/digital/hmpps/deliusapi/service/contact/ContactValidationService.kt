@@ -168,7 +168,7 @@ class ContactValidationService(
     } else if (requirement != null) {
       // Contact is at "Whole Order" level - type must be whole order level OR have matching requirement type category.
       if (!type.wholeOrderLevel && type.requirementTypeCategories?.any { it.id == requirement.typeCategory?.id } != true) {
-        throw BadRequestException("Contact type '${type.code}' is not appropriate for an requirement in category '${requirement.typeCategory?.code}'")
+        throw BadRequestException("Contact type '${type.code}' is not appropriate for a requirement in category '${requirement.typeCategory?.code}'")
       }
     } else if (event != null) {
       // Contact is at event level - type must support relevant pre/post CJA 2003 status of event.

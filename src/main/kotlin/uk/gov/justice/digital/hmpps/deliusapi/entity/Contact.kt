@@ -14,6 +14,7 @@ import javax.persistence.CascadeType
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.EntityListeners
+import javax.persistence.FetchType
 import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
@@ -154,4 +155,27 @@ class Contact(
   @JoinColumn(name = "RQMNT_ID")
   @ManyToOne
   var requirement: Requirement? = null,
-)
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "LINKED_CONTACT_ID")
+  var linkedContact: Contact? = null,
+
+  @OneToMany(mappedBy = "linkedContact", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
+  var linkedContacts: MutableList<Contact> = mutableListOf(),
+) {
+
+  /**
+   * OneToOne abstraction over the OneToMany enforcements
+   */
+  var enforcement: Enforcement?
+    get() = if (enforcements.size > 1)
+      throw RuntimeException("Cannot determine which enforcement to use on contact with id '$id'")
+    else enforcements.getOrNull(0)
+    set(value) {
+      enforcements.clear()
+      if (value != null) {
+        value.contact = this
+        enforcements.add(value)
+      }
+    }
+}

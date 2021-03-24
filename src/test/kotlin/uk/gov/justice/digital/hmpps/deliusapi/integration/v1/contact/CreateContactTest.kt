@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
 import uk.gov.justice.digital.hmpps.deliusapi.integration.DEFAULT_INTEGRATION_TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.deliusapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
+import uk.gov.justice.digital.hmpps.deliusapi.repository.EventRepository
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 import uk.gov.justice.digital.hmpps.deliusapi.util.comparingDateTimesToNearestSecond
 import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
@@ -27,8 +28,8 @@ import javax.transaction.Transactional
 
 @ActiveProfiles("test-h2")
 class CreateContactTest : IntegrationTestBase() {
-  @Autowired
-  private lateinit var contactRepository: ContactRepository
+  @Autowired private lateinit var contactRepository: ContactRepository
+  @Autowired private lateinit var eventRepository: EventRepository
 
   companion object {
     private val valid = Fake.validNewContact()
@@ -136,12 +137,31 @@ class CreateContactTest : IntegrationTestBase() {
       // And it should save the entity to the database with the correct details
       .shouldSaveContact(request)
 
-    val contacts = contactRepository.findAllByTypeId(1L)
-    assertThat(contacts).anyMatch {
-      it.offender.crn == request.offenderCrn &&
-        it.notes!!.startsWith(request.notes!!) &&
-        it.notes!!.endsWith("Enforcement Action: Refer to Offender Manager")
-    }
+    shouldCreateEnforcementActionContact(request)
+  }
+
+  @Transactional
+  @Test
+  fun `should successfully create a contact and record failure to comply breach`() {
+    // An identical contact exists in the test data, this contact will push the FTC upto the event limit of 2
+    val request = valid.copy(
+      type = "CITA", // Citizenship Alcohol Session
+      outcome = "AFTC", // Attended - Failed to Comply
+      enforcement = "ROM",
+      requirementId = null,
+    )
+
+    webTestClient.whenCreatingContact(request)
+      // Then it should return successfully
+      .expectStatus().isCreated
+      .expectBody()
+      // And it should return the correct details
+      .shouldReturnCreatedContact(request)
+      // And it should save the entity to the database with the correct details
+      .shouldSaveContact(request)
+
+    shouldCreateEnforcementActionContact(request)
+    shouldCreateEnforcementReviewContact(request)
   }
 
   @Transactional
@@ -233,4 +253,20 @@ class CreateContactTest : IntegrationTestBase() {
         .hasProperty(Contact::staffEmployeeId, 1L)
         .hasProperty(Contact::teamProviderId, 1L)
     }
+
+  private fun shouldCreateEnforcementActionContact(request: NewContact) {
+    val contacts = contactRepository.findAllByTypeId(1L)
+    assertThat(contacts).anyMatch {
+      it.offender.crn == request.offenderCrn &&
+        it.notes!!.startsWith(request.notes!!) &&
+        it.notes!!.endsWith("Enforcement Action: Refer to Offender Manager")
+    }
+  }
+
+  private fun shouldCreateEnforcementReviewContact(request: NewContact) {
+    val contacts = contactRepository.findAllByTypeId(1110L)
+    assertThat(contacts).anyMatch {
+      it.offender.crn == request.offenderCrn
+    }
+  }
 }

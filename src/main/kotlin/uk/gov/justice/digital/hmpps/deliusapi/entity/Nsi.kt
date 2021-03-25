@@ -44,7 +44,7 @@ class Nsi(
 
   @JoinColumn(name = "NSI_TYPE_ID", nullable = false)
   @ManyToOne
-  var type: NsiType? = null,
+  var type: NsiType,
 
   @JoinColumn(name = "NSI_SUB_TYPE_ID")
   @ManyToOne
@@ -126,4 +126,13 @@ class Nsi(
 
   @OneToMany(cascade = [CascadeType.PERSIST], mappedBy = "nsi")
   var statuses: MutableList<NsiStatusHistory> = ArrayList(),
-)
+) {
+  var manager: NsiManager?
+    get() = managers.getOrNull(0)
+    set(value) {
+      managers.clear()
+      if (value != null) {
+        managers.add(value)
+      }
+    }
+}

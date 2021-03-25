@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.deliusapi.service.nsi
 
+import org.springframework.security.access.prepost.PostAuthorize
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -7,48 +8,82 @@ import uk.gov.justice.digital.hmpps.deliusapi.advice.Auditable
 import uk.gov.justice.digital.hmpps.deliusapi.config.Authorities
 import uk.gov.justice.digital.hmpps.deliusapi.config.FeatureFlags
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsi
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsiManager
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NsiDto
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.UpdateNsi
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Nsi
-import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiManager
 import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiStatusHistory
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import uk.gov.justice.digital.hmpps.deliusapi.mapper.NsiMapper
 import uk.gov.justice.digital.hmpps.deliusapi.repository.NsiRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.NsiTypeRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.OffenderRepository
-import uk.gov.justice.digital.hmpps.deliusapi.repository.ProviderRepository
-import uk.gov.justice.digital.hmpps.deliusapi.repository.ReferenceDataMasterRepository
-import uk.gov.justice.digital.hmpps.deliusapi.repository.TransferReasonRepository
+import uk.gov.justice.digital.hmpps.deliusapi.repository.extensions.findByIdOrNotFound
 import uk.gov.justice.digital.hmpps.deliusapi.repository.findByCodeOrBadRequest
-import uk.gov.justice.digital.hmpps.deliusapi.repository.findByCodeOrThrow
 import uk.gov.justice.digital.hmpps.deliusapi.repository.findByCrnOrBadRequest
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditContext
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditableInteraction
-import uk.gov.justice.digital.hmpps.deliusapi.service.contact.NewSystemContact
-import uk.gov.justice.digital.hmpps.deliusapi.service.contact.SystemContactService
-import uk.gov.justice.digital.hmpps.deliusapi.service.contact.WellKnownContactType
-import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.assertSupportedLevel
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getEventOrBadRequest
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getRequirementOrBadRequest
-import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getStaffOrBadRequest
-import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getTeamOrBadRequest
-import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getUnallocatedStaff
-import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getUnallocatedTeam
-import java.time.LocalDate
 
 @Service
 class NsiService(
   private val nsiRepository: NsiRepository,
   private val offenderRepository: OffenderRepository,
   private val nsiTypeRepository: NsiTypeRepository,
-  private val providerRepository: ProviderRepository,
-  private val transferReasonRepository: TransferReasonRepository,
-  private val referenceDataMasterRepository: ReferenceDataMasterRepository,
-  private val systemContactService: SystemContactService,
   private val mapper: NsiMapper,
   private val features: FeatureFlags,
+  private val validation: NsiValidationService,
+  private val nsiManagerService: NsiManagerService,
+  private val nsiSystemContactService: NsiSystemContactService,
 ) {
+
+  fun getUpdateNsi(id: Long): UpdateNsi = mapper.toUpdate(getNsi(id))
+
+  @Transactional
+  @Auditable(AuditableInteraction.ADMINISTER_NSI)
+  fun updateNsi(id: Long, request: UpdateNsi): NsiDto {
+    val entity = getNsi(id)
+
+    if (request.statusDate < entity.statusDate) {
+      throw BadRequestException("Updated status date must be equal to or after existing status date '${entity.statusDate}'")
+    }
+
+    if (entity.requirement != null) {
+      validation.assertRequirementConstraints(entity.type, entity.requirement!!, request)
+    }
+
+    validation.assertTypeConstraints(entity.type, request)
+    val newStatus = validation.validateStatus(entity.type, request)
+    val newOutcome = validation.validateOutcome(entity.type, request)
+
+    nsiSystemContactService.updateStatusContact(entity, newStatus, request)
+    nsiSystemContactService.updateCommencedContact(entity, request)
+    nsiSystemContactService.updateTerminationContact(entity, newOutcome, request)
+
+    entity.apply {
+      startDate = request.startDate
+      endDate = request.endDate
+      active = request.endDate == null
+      expectedStartDate = request.expectedStartDate
+      expectedEndDate = request.expectedEndDate
+      length = request.length
+      status = newStatus
+      statusDate = request.statusDate
+      outcome = newOutcome
+      notes = listOfNotNull(entity.notes, request.notes).joinToString("\n")
+    }
+
+    nsiManagerService.updateNsiManager(entity, request.manager)
+
+    validation.assertSupportedTypeLevel(entity)
+
+    val audit = AuditContext.get(AuditableInteraction.ADMINISTER_NSI)
+    audit.nsiId = entity.id
+
+    nsiRepository.saveAndFlush(entity)
+
+    return mapper.toDto(entity)
+  }
 
   @PreAuthorize(
     "hasAuthority('${Authorities.PROVIDER}'.concat(#request.intendedProvider)) " +
@@ -57,20 +92,12 @@ class NsiService(
   @Auditable(AuditableInteraction.ADMINISTER_NSI)
   @Transactional
   fun createNsi(request: NewNsi): NsiDto {
-    val active = request.endDate == null
     val offender = offenderRepository.findByCrnOrBadRequest(request.offenderCrn)
 
     val audit = AuditContext.get(AuditableInteraction.ADMINISTER_NSI)
     audit.offenderId = offender.id
 
     val type = nsiTypeRepository.findByCodeOrBadRequest(request.type)
-    type.assertSupportedLevel(request)
-
-    if (active && !type.allowActiveDuplicates || !active && !type.allowInactiveDuplicates) {
-      throw BadRequestException(
-        "NSI type '${request.type}' does not allow ${if (active) "active" else "inactive"} duplicates & duplicate checking is not yet implemented"
-      )
-    }
 
     val subType = if (request.subType == null) null
     else type.subTypes?.find { it.code == request.subType }
@@ -80,29 +107,8 @@ class NsiService(
       throw BadRequestException("NSI type '${type.code}' requires a sub type")
     }
 
-    val status = type.statuses?.find { it.code == request.status }
-      ?: throw BadRequestException("NSI status '${request.status}' is not a valid status of NSI type '${type.code}'")
-
     val intendedProvider = type.providers?.find { it.code == request.intendedProvider }
       ?: throw BadRequestException("Intended provider '${request.intendedProvider}' is not a valid provider of NSI type '${type.code}'")
-
-    val outcome = if (request.outcome == null) null
-    else type.outcomes?.find { it.code == request.outcome }
-      ?: throw BadRequestException("Outcome type '${request.outcome}' is not a valid outcome type of '${type.code}'")
-
-    if (type.units == null) {
-      if (request.length != null) {
-        throw BadRequestException("NSI type '${type.code}' does not support a length")
-      }
-    } else {
-      if (request.length == null) {
-        throw BadRequestException("NSI type '${type.code}' requires a length in units ${type.units?.code}")
-      }
-
-      if (request.length < type.minimumLength ?: Long.MIN_VALUE || request.length > type.maximumLength ?: Long.MAX_VALUE) {
-        throw BadRequestException("NSI type '${type.code}' requires a length between ${type.minimumLength} & ${type.maximumLength} ${type.units?.code}")
-      }
-    }
 
     val event = if (request.eventId == null) null else offender.getEventOrBadRequest(request.eventId)
     val requirement = if (event == null || request.requirementId == null) null
@@ -112,18 +118,12 @@ class NsiService(
       throw BadRequestException("Referral date must not be before the event referral date '${event.referralDate}'")
     }
 
-    if (requirement != null && requirement.typeCategory?.nsiTypes?.contains(type) != true) {
-      throw BadRequestException("Requirement '${requirement.id}' is not in a category that supports NSIs of type ${type.code}")
-    }
+    validation.assertTypeConstraints(type, request)
+    val status = validation.validateStatus(type, request)
+    val outcome = validation.validateOutcome(type, request)
 
-    if (requirement?.terminationDate != null) {
-      if (active) {
-        throw BadRequestException("End date is required as requirement has termination date '${requirement.terminationDate}'")
-      }
-
-      if (request.endDate?.isBefore(requirement.terminationDate) == true) {
-        throw BadRequestException("End date must not be before the requirement termination date '${requirement.terminationDate}'")
-      }
+    if (requirement != null) {
+      validation.assertRequirementConstraints(type, requirement, request)
     }
 
     val nsi = Nsi(
@@ -143,17 +143,17 @@ class NsiService(
       outcome = outcome,
       requirement = requirement,
       intendedProvider = intendedProvider,
-      active = active,
+      active = request.endDate == null,
       pendingTransfer = false,
     )
 
-    val manager = createNsiManager(request.manager, request.referralDate, nsi)
-    nsi.managers.add(manager)
+    nsiManagerService.createNsiManager(nsi, request.manager, request.referralDate)
+    validation.assertSupportedTypeLevel(nsi)
 
     if (features.nsiStatusHistory) {
       val statusHistory = NsiStatusHistory(
         nsi = nsi,
-        nsiStatus = status,
+        status = status,
         date = nsi.statusDate,
         notes = nsi.notes,
       )
@@ -163,60 +163,17 @@ class NsiService(
     val entity = nsiRepository.saveAndFlush(nsi)
     audit.nsiId = entity.id
 
-    createSystemContacts(entity, manager)
+    nsiSystemContactService.createReferralContact(entity)
+    nsiSystemContactService.createStatusContact(entity)
+    nsiSystemContactService.createCommencedContact(entity)
+    nsiSystemContactService.createTerminationContact(entity)
 
     return mapper.toDto(entity)
   }
 
-  private fun createSystemContacts(nsi: Nsi, manager: NsiManager) {
-    val status = NewSystemContact(
-      typeId = nsi.status?.contactTypeId,
-      offenderId = nsi.offender?.id!!,
-      nsiId = nsi.id,
-      eventId = nsi.event?.id,
-      providerId = manager.provider?.id!!,
-      teamId = manager.team?.id!!,
-      staffId = manager.staff?.id!!,
-      timestamp = nsi.statusDate,
-    )
-    this.systemContactService.createSystemContact(status)
-
-    val referral = status.copy(typeId = null, type = WellKnownContactType.REFERRAL)
-    this.systemContactService.createSystemContact(referral)
-
-    if (nsi.startDate != null) {
-      val commenced = referral.copy(type = WellKnownContactType.COMMENCED)
-      this.systemContactService.createSystemContact(commenced)
-    }
-
-    if (nsi.outcome != null) {
-      val terminated = referral.copy(
-        type = WellKnownContactType.TERMINATED,
-        notes = "NSI Terminated with Outcome: ${nsi.outcome?.description}"
-      )
-      this.systemContactService.createSystemContact(terminated)
-    }
-  }
-
-  private fun createNsiManager(request: NewNsiManager, startDate: LocalDate, nsi: Nsi): NsiManager {
-    val provider = providerRepository.findByCodeAndSelectableIsTrue(request.provider)
-      ?: throw BadRequestException("Provider with code '${request.provider}' does not exist")
-
-    val team = if (request.team == null) provider.getUnallocatedTeam()
-    else provider.getTeamOrBadRequest(request.team)
-
-    val staff = if (request.staff == null) team.getUnallocatedStaff()
-    else team.getStaffOrBadRequest(request.staff)
-
-    return NsiManager(
-      nsi = nsi,
-      startDate = startDate,
-      provider = provider,
-      team = team,
-      staff = staff,
-      transferReason = transferReasonRepository.findByCode("NSI"),
-      allocationReason = referenceDataMasterRepository.findByCodeOrThrow("NM ALLOCATION REASON")
-        .standardReferences?.find { it.code == "IN1" },
-    )
-  }
+  @PostAuthorize(
+    "hasAuthority('${Authorities.PROVIDER}'.concat(returnObject.intendedProvider)) " +
+      "and hasAuthority('${Authorities.PROVIDER}'.concat(returnObject.manager.provider))"
+  )
+  private fun getNsi(id: Long) = nsiRepository.findByIdOrNotFound(id)
 }

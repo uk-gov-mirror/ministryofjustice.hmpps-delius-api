@@ -1,8 +1,9 @@
 package uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact
 
-import uk.gov.justice.digital.hmpps.deliusapi.validation.DependentFields
 import uk.gov.justice.digital.hmpps.deliusapi.validation.EndTime
 import uk.gov.justice.digital.hmpps.deliusapi.validation.EnforcementActionCode
+import uk.gov.justice.digital.hmpps.deliusapi.validation.FieldGroup
+import uk.gov.justice.digital.hmpps.deliusapi.validation.FieldGroupType
 import uk.gov.justice.digital.hmpps.deliusapi.validation.FieldGroups
 import uk.gov.justice.digital.hmpps.deliusapi.validation.NotBlankWhenProvided
 import uk.gov.justice.digital.hmpps.deliusapi.validation.OfficeLocationCode
@@ -23,7 +24,7 @@ data class UpdateContact(
   override val outcome: String?,
 
   @EnforcementActionCode
-  @DependentFields("outcome")
+  @FieldGroup(FieldGroupType.DEPENDENT_ALL, "outcome")
   override val enforcement: String? = null,
 
   @ProviderCode

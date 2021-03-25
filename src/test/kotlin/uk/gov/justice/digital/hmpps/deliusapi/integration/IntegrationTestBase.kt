@@ -16,6 +16,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.deliusapi.config.wiremock.TokenVerificationExtension
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.NewContact
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsi
 import uk.gov.justice.digital.hmpps.deliusapi.repository.AuditedInteractionRepository
 import java.lang.RuntimeException
 
@@ -62,6 +63,24 @@ abstract class IntegrationTestBase {
     .accept(MediaType.APPLICATION_JSON)
     .bodyValue(request)
     .exchange()
+
+  protected fun WebTestClient.whenCreatingNsi(request: NewNsi) = this
+    .post().uri("/v1/nsi")
+    .havingAuthentication()
+    .contentType(MediaType.APPLICATION_JSON)
+    .accept(MediaType.APPLICATION_JSON)
+    .bodyValue(request)
+    .exchange()
+
+  protected fun WebTestClient.whenPatching(entity: String, id: Long, vararg operations: Operation): WebTestClient.ResponseSpec {
+    return patch()
+      .uri("/v1/$entity/$id")
+      .havingAuthentication()
+      .contentType(MediaType.parseMediaType("application/json-patch+json"))
+      .accept(MediaType.APPLICATION_JSON)
+      .bodyValue(operations)
+      .exchange()
+  }
 
   protected fun WebTestClient.BodyContentSpec.shouldReturnJsonParseError() =
     jsonPath("$.userMessage").value(startsWith("JSON parse error: "))

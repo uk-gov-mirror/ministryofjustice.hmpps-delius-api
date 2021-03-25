@@ -170,7 +170,7 @@ class ContactValidationServiceTest {
   @Test
   fun `Successfully validating nsi contact`() {
     val nsi = Fake.nsi()
-    val type = Fake.contactType().apply { nsiTypes = listOf(nsi.type!!) }
+    val type = Fake.contactType().apply { nsiTypes = listOf(nsi.type) }
     assertDoesNotThrow { subject.validateAssociatedEntity(type, nsi = nsi) }
   }
 

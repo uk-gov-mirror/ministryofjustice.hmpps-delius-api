@@ -22,7 +22,6 @@ import org.mockito.junit.jupiter.MockitoExtension
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.UpdateContact
 import uk.gov.justice.digital.hmpps.deliusapi.service.contact.ContactService
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
-import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
 import javax.validation.Validator
 
 @ExtendWith(MockitoExtension::class)
@@ -59,17 +58,7 @@ class ContactControllerTest {
     val observed = subject.patch(id, patch)
     assertThat(observed).isSameAs(dto)
     assertThat(updateCaptor.value)
-      .hasProperty(UpdateContact::outcome, "next-outcome")
-      .hasProperty(UpdateContact::provider, existing.provider)
-      .hasProperty(UpdateContact::team, existing.team)
-      .hasProperty(UpdateContact::staff, existing.staff)
-      .hasProperty(UpdateContact::officeLocation, existing.officeLocation)
-      .hasProperty(UpdateContact::date, existing.date)
-      .hasProperty(UpdateContact::startTime, existing.startTime)
-      .hasProperty(UpdateContact::endTime, existing.endTime)
-      .hasProperty(UpdateContact::alert, existing.alert)
-      .hasProperty(UpdateContact::sensitive, existing.sensitive)
-      .hasProperty(UpdateContact::notes, existing.notes)
-      .hasProperty(UpdateContact::description, existing.description)
+      .usingRecursiveComparison()
+      .isEqualTo(existing.copy(outcome = "next-outcome"))
   }
 }

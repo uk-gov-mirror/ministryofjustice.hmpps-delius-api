@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.deliusapi.service.contact
 
-import java.time.LocalDateTime
+import java.time.LocalDate
+import java.time.LocalTime
 
 data class NewSystemContact(
   val typeId: Long? = null,
@@ -11,6 +12,7 @@ data class NewSystemContact(
   val providerId: Long,
   val teamId: Long,
   val staffId: Long,
-  val timestamp: LocalDateTime,
+  val date: LocalDate,
+  val startTime: LocalTime? = null,
   val notes: String? = null,
 )

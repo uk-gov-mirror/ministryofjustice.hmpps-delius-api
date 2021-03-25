@@ -50,6 +50,12 @@ interface ContactRepository : JpaRepository<Contact, Long> {
     @Param("eventId") eventId: Long,
     @Param("breachContactTypes") breachContactTypes: List<String>
   ): List<LocalDateTimeWrapper>
+
+  fun findAllByNsiIdAndTypeId(nsiId: Long, typeId: Long): List<Contact>
+
+  fun findAllByNsiIdAndTypeCode(nsiId: Long, typeCode: String): List<Contact>
+
+  fun deleteByNsiIdAndTypeCode(nsiId: Long, typeCode: String)
 }
 
 fun ContactRepository.isEnforcementUnderReview(eventId: Long, contactCode: String, breachEnd: LocalDate?) =

@@ -12,9 +12,9 @@ data class NewNsiManager(
 
   @ApiModelProperty("The code of the team managing this intervention")
   @TeamCode
-  val team: String? = null,
+  override val team: String?,
 
   @ApiModelProperty("The officer code of the staff managing this intervention")
   @StaffCode
-  val staff: String? = null,
-)
+  override val staff: String?,
+) : CreateOrUpdateNsiManager

@@ -19,19 +19,24 @@ annotation class FieldGroups(
 
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class DependentFields(vararg val names: String)
+annotation class FieldGroup(val type: FieldGroupType, vararg val names: String)
 
-@Target(AnnotationTarget.FIELD)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class ExclusiveFields(vararg val names: String)
+enum class FieldGroupType {
+  /**
+   * All specified fields must be provided
+   */
+  DEPENDENT_ALL,
 
-private enum class FieldGroupType { DEPENDENT, EXCLUSIVE }
+  /**
+   * Any specified fields must be provided
+   */
+  DEPENDENT_ANY,
 
-private data class FieldGroupValidationCase(
-  val type: FieldGroupType,
-  val member: KProperty1<Any, *>,
-  val dependents: List<KProperty1<Any, *>>,
-)
+  /**
+   * Cannot be provided when any of the specified fields are provided
+   */
+  EXCLUSIVE_ANY
+}
 
 fun KClass<Any>.getProperty(name: String) = memberProperties
   .find { it.name == name } ?: throw RuntimeException("$name does not exist on $simpleName")
@@ -42,45 +47,55 @@ class FieldGroupsValidator : ConstraintValidator<FieldGroups, Any> {
       return true
     }
 
-    val kClass = value.javaClass.kotlin
-    val cases = kClass.getAnnotatedMembers(DependentFields::class, ExclusiveFields::class)
-      .map { (annotation, member) ->
-        when (annotation) {
-          is DependentFields -> FieldGroupValidationCase(
-            FieldGroupType.DEPENDENT,
-            member,
-            annotation.names.map { kClass.getProperty(it) }
-          )
-          is ExclusiveFields -> FieldGroupValidationCase(
-            FieldGroupType.EXCLUSIVE,
-            member,
-            annotation.names.map { kClass.getProperty(it) }
-          )
-          else -> throw RuntimeException("Unknown member group annotation ${annotation.annotationClass.simpleName}")
-        }
-      }
-
     context.disableDefaultConstraintViolation()
     var result = true
-    for (case in cases) {
-      result = result && case.assert(value, context)
+    val kClass = value.javaClass.kotlin
+
+    for ((annotation, member) in kClass.getAnnotatedMembers(FieldGroup::class)) {
+      when (annotation) {
+        is FieldGroup -> result = result && assert(
+          annotation.type,
+          member,
+          annotation.names.map { kClass.getProperty(it) },
+          value,
+          context
+        )
+        else -> throw RuntimeException("Unknown member group annotation ${annotation.annotationClass.simpleName}")
+      }
     }
 
     return result
   }
 
-  private fun FieldGroupValidationCase.assert(subject: Any, context: ConstraintValidatorContext): Boolean {
+  private fun pluralizeFields(aggregate: String, fields: List<String>): String {
+    if (fields.size == 1) {
+      return fields[0]
+    }
+    val joined = fields.dropLast(1).joinToString(", ")
+    return "$joined $aggregate ${fields.last()}"
+  }
+
+  private fun assert(
+    type: FieldGroupType,
+    member: KProperty1<Any, *>,
+    dependents: List<KProperty1<Any, *>>,
+    subject: Any,
+    context: ConstraintValidatorContext
+  ): Boolean {
     val value = member.get(subject)
-    val dependentNames = dependents.joinToString(", ") { it.name }
-    val dependents = dependents.map { it.get(subject) }
+    val dependentNames = dependents.map { it.name }
+    val dependentValues = dependents.map { it.get(subject) }
 
     val (message, result) = when (type) {
-      FieldGroupType.DEPENDENT ->
-        "cannot be provided without also providing $dependentNames" to
-          (value == null || dependents.all { it != null })
-      FieldGroupType.EXCLUSIVE ->
-        "cannot be provided when $dependentNames is also provided" to
-          (value == null || dependents.all { it == null })
+      FieldGroupType.DEPENDENT_ALL ->
+        "cannot be provided without also providing ${pluralizeFields("and", dependentNames)}" to
+          (value == null || dependentValues.all { it != null })
+      FieldGroupType.DEPENDENT_ANY ->
+        "cannot be provided without also providing ${pluralizeFields("or", dependentNames)}" to
+          (value == null || dependentValues.all { it != null })
+      FieldGroupType.EXCLUSIVE_ANY ->
+        "cannot be provided when ${pluralizeFields("or", dependentNames)} ${if (dependentValues.size == 1) "is" else "are"} also provided" to
+          (value == null || dependentValues.all { it == null })
     }
 
     if (result) {

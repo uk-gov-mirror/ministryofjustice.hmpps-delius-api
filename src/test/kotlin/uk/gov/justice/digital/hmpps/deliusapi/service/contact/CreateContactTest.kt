@@ -63,7 +63,7 @@ class CreateContactTest : ContactServiceTestBase() {
   @Test
   fun `Creating nsi contact`() {
     havingDependentEntities()
-    type = type.apply { nsiTypes = listOf(nsi.type!!) }
+    type = type.apply { nsiTypes = listOf(nsi.type) }
     havingRepositories(havingNsi = true)
     request = request.copy(requirementId = null, eventId = null)
     havingValidation()

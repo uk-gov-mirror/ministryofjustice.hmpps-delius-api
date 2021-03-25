@@ -162,8 +162,8 @@ class ContactValidationService(
   ) {
     if (nsi != null) {
       // Contact is at nsi level - contact type must support nsi type
-      if (type.nsiTypes?.any { it.id == nsi.type?.id } != true) {
-        throw BadRequestException("Contact type '${type.code}' is not appropriate for an NSI with type '${nsi.type?.code}'")
+      if (type.nsiTypes?.any { it.id == nsi.type.id } != true) {
+        throw BadRequestException("Contact type '${type.code}' is not appropriate for an NSI with type '${nsi.type.code}'")
       }
     } else if (requirement != null) {
       // Contact is at "Whole Order" level - type must be whole order level OR have matching requirement type category.

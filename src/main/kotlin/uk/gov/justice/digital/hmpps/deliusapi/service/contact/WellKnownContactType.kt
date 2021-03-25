@@ -1,9 +1,10 @@
 package uk.gov.justice.digital.hmpps.deliusapi.service.contact
 
 enum class WellKnownContactType(val code: String, val breachType: BreachType? = null) {
-  REFERRAL("NREF"),
-  COMMENCED("NCOM"),
-  TERMINATED("NTER"),
+  NSI_REFERRAL("NREF"),
+  NSI_COMMENCED("NCOM"),
+  NSI_TERMINATED("NTER"),
+  NSI_TRANSFER("NTRS"),
   REVIEW_ENFORCEMENT_STATUS("ARWS"),
   BREACH_INIT("AIBR", BreachType.START),
   BREACH_CONCLUDED("ABPC", BreachType.END),

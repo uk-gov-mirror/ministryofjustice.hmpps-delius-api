@@ -9,7 +9,6 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
-import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.transaction.annotation.Transactional
@@ -26,8 +25,6 @@ import uk.gov.justice.digital.hmpps.deliusapi.util.comparingDateTimesToNearestSe
 import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
 import uk.gov.justice.digital.hmpps.deliusapi.validation.ValidationTestCase
 import uk.gov.justice.digital.hmpps.deliusapi.validation.ValidationTestCaseBuilder
-import java.time.LocalDate
-import java.time.LocalDateTime
 
 @ActiveProfiles("test-h2")
 class CreateNsiTest @Autowired constructor (
@@ -39,32 +36,8 @@ class CreateNsiTest @Autowired constructor (
   lateinit var mapper: NsiMapper
 
   companion object {
-    private fun validNsiFactory() = Fake.newNsi().copy(
-      type = "KSS021",
-      subType = "KSS026",
-      status = "SLI01",
-      statusDate = LocalDateTime.now(),
-      outcome = "COMP",
-      offenderCrn = "X320741",
-      intendedProvider = "C21",
-      eventId = 2500295343,
-      requirementId = 2500083652,
-      referralDate = LocalDate.of(2017, 6, 1),
-      startDate = LocalDate.of(2017, 6, 1),
-      endDate = LocalDate.of(2017, 12, 1),
-      expectedStartDate = LocalDate.of(2017, 6, 1),
-      expectedEndDate = LocalDate.of(2017, 12, 1),
-      length = 1,
-      notes = "bacon and eggs",
-      manager = NewNsiManager(
-        staff = "C00P017",
-        team = "C00T02",
-        provider = "C00",
-      )
-    )
-
     @JvmStatic
-    fun validTestCases() = ValidationTestCaseBuilder.fromFactory(::validNsiFactory)
+    fun validTestCases() = ValidationTestCaseBuilder.fromFactory(Fake::validNewNsi)
       .setValid()
       .kitchenSink()
       .allNull(NewNsi::expectedStartDate, NewNsi::expectedEndDate)
@@ -78,7 +51,7 @@ class CreateNsiTest @Autowired constructor (
       .cases
 
     @JvmStatic
-    fun invalidTestCases() = ValidationTestCaseBuilder.fromFactory(::validNsiFactory)
+    fun invalidTestCases() = ValidationTestCaseBuilder.fromFactory(Fake::validNewNsi)
       .string(NewNsi::type) { it.empty() }
       .string(NewNsi::subType) { it.empty() }
       .string(NewNsi::offenderCrn) { it.empty() }
@@ -122,7 +95,7 @@ class CreateNsiTest @Autowired constructor (
           .hasSize(1)
           .element(0)
           .hasProperty(NsiStatusHistory::notes, case.subject.notes)
-          .extracting { it.nsiStatus?.code }
+          .extracting { it.status?.code }
           .isEqualTo(case.subject.status)
       }
   }
@@ -143,7 +116,7 @@ class CreateNsiTest @Autowired constructor (
   @Test
   fun `Attempting to create nsi for unauthorized intended provider`() {
     userName = "automation-testzxcvbn"
-    val subject = validNsiFactory()
+    val subject = Fake.validNewNsi()
     webTestClient.whenCreatingNsi(subject)
       .expectStatus().isUnauthorized
       .expectBody().shouldReturnAccessDenied()
@@ -151,8 +124,8 @@ class CreateNsiTest @Autowired constructor (
 
   @Test
   fun `Attempting to create nsi for unauthorized manager provider`() {
-    val subject = validNsiFactory().copy(
-      manager = NewNsiManager(provider = "ACI")
+    val subject = Fake.validNewNsi().copy(
+      manager = NewNsiManager(provider = "ACI", team = null, staff = null)
     )
     webTestClient.whenCreatingNsi(subject)
       .expectStatus().isUnauthorized
@@ -180,7 +153,7 @@ class CreateNsiTest @Autowired constructor (
     val originalNsiCount = nsiRepository.count()
     val originalAuditCount = auditedInteractionRepository.count()
 
-    webTestClient.whenCreatingNsi(validNsiFactory())
+    webTestClient.whenCreatingNsi(Fake.validNewNsi())
       .expectStatus().is2xxSuccessful
 
     assertThat(contactRepository.count()).isEqualTo(originalContactCount + 4)
@@ -196,21 +169,13 @@ class CreateNsiTest @Autowired constructor (
     val originalNsiCount = nsiRepository.count()
     val originalAuditCount = auditedInteractionRepository.count()
 
-    webTestClient.whenCreatingNsi(validNsiFactory())
+    webTestClient.whenCreatingNsi(Fake.validNewNsi())
       .expectStatus().is5xxServerError
 
     assertThat(contactRepository.count()).isEqualTo(originalContactCount)
     assertThat(nsiRepository.count()).isEqualTo(originalNsiCount)
     assertThat(auditedInteractionRepository.count()).isEqualTo(originalAuditCount + 1)
   }
-
-  private fun WebTestClient.whenCreatingNsi(request: NewNsi) = this
-    .post().uri("/v1/nsi")
-    .havingAuthentication()
-    .contentType(MediaType.APPLICATION_JSON)
-    .accept(MediaType.APPLICATION_JSON)
-    .bodyValue(request)
-    .exchange()
 
   private fun WebTestClient.BodyContentSpec.shouldReturnCreatedNsi(request: NewNsi) = this
     .jsonPath("$.eventId").value(Matchers.equalTo(request.eventId))

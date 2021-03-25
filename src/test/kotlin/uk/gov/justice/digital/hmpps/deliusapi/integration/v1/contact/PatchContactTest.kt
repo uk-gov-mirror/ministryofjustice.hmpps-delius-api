@@ -10,13 +10,14 @@ import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.data.repository.findByIdOrNull
-import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.ContactDto
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.NewContact
 import uk.gov.justice.digital.hmpps.deliusapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.deliusapi.integration.Operation
+import uk.gov.justice.digital.hmpps.deliusapi.integration.UpdateCase
 import uk.gov.justice.digital.hmpps.deliusapi.mapper.ContactMapper
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.CONTACT_NOTES_SEPARATOR
@@ -25,13 +26,6 @@ import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
 import java.time.LocalDate
 import java.time.LocalTime
 import kotlin.reflect.KProperty1
-
-data class Operation(val op: String, val path: String, val value: Any? = null)
-
-class UpdateCase(
-  vararg val operations: Operation,
-  val expected: (contact: ContactDto) -> Map<KProperty1<ContactDto, *>, Any?>,
-)
 
 @ActiveProfiles("test-h2")
 class PatchContactTest @Autowired constructor(
@@ -44,7 +38,7 @@ class PatchContactTest @Autowired constructor(
   companion object {
     @JvmStatic
     fun validCases() = listOf(
-      UpdateCase(
+      UpdateCase<ContactDto>(
         Operation("replace", "/outcome", "UBHV"),
         Operation("replace", "/enforcement", "ROM"),
         Operation("replace", "/provider", "N02"),
@@ -106,7 +100,7 @@ class PatchContactTest @Autowired constructor(
   @Transactional
   @ParameterizedTest(name = "[{index}] Valid patch contact {arguments}")
   @MethodSource("validCases")
-  fun `Successfully patching existing contact`(case: UpdateCase) {
+  fun `Successfully patching existing contact`(case: UpdateCase<ContactDto>) {
     val contact = havingExistingContact()
     val expected = case.expected(contact)
 
@@ -196,13 +190,6 @@ class PatchContactTest @Autowired constructor(
       .responseBody
   }
 
-  private fun WebTestClient.whenPatchingContact(id: Long, vararg operations: Operation): WebTestClient.ResponseSpec {
-    return patch()
-      .uri("/v1/contact/$id")
-      .havingAuthentication()
-      .contentType(MediaType.parseMediaType("application/json-patch+json"))
-      .accept(MediaType.APPLICATION_JSON)
-      .bodyValue(operations)
-      .exchange()
-  }
+  private fun WebTestClient.whenPatchingContact(id: Long, vararg operations: Operation) =
+    whenPatching("contact", id, *operations)
 }

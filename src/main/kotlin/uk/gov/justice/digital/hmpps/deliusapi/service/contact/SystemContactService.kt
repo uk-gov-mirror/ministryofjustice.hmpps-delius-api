@@ -62,8 +62,8 @@ class SystemContactService(
       team = team,
       staff = staff,
       event = event,
-      date = request.timestamp.toLocalDate(),
-      startTime = request.timestamp.toLocalTime(),
+      date = request.date,
+      startTime = request.startTime,
     )
 
     entity.updateNotes(type.defaultHeadings, request.notes)

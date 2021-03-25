@@ -1,6 +1,3 @@
-tokenverification:
-  enabled: false
-
 spring:
   security.oauth2.resourceserver.jwt.public-key-location: classpath:local-public-key.pub
 
@@ -19,3 +16,6 @@ spring:
 
 logging.level.org.hibernate:
   SQL: debug
+
+features:
+  token-verification: false

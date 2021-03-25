@@ -45,9 +45,23 @@ class TokenVerifyingAuthManagerTest {
   @Test
   fun `Verifying token when token verification is disabled`() {
     havingTokenDecode()
-    val observed = whenVerifyingToken(tokenVerificationEnabled = false)
+    val observed = whenVerifyingToken(tokenVerificationEnabled = false, webClientWired = false)
     shouldReturnValidToken(observed)
     shouldAttemptTokenVerification(should = false)
+  }
+
+  @Test
+  fun `Attempting to verify token when token verification is disabled but web client is wired`() {
+    assertThrows<RuntimeException> {
+      whenVerifyingToken(tokenVerificationEnabled = false, webClientWired = true)
+    }
+  }
+
+  @Test
+  fun `Attempting to verify token when token verification is enabled but web client is not wired`() {
+    assertThrows<RuntimeException> {
+      whenVerifyingToken(tokenVerificationEnabled = true, webClientWired = false)
+    }
   }
 
   @Test
@@ -74,8 +88,12 @@ class TokenVerifyingAuthManagerTest {
     whenever(converter.convert(jwt)).thenReturn(token)
   }
 
-  private fun whenVerifyingToken(tokenVerificationEnabled: Boolean = true): Authentication {
-    val subject = TokenVerifyingAuthManager(decoder, client, tokenVerificationEnabled, converter)
+  private fun whenVerifyingToken(
+    tokenVerificationEnabled: Boolean = true,
+    webClientWired: Boolean = true,
+  ): Authentication {
+    val features = FeatureFlags(tokenVerification = tokenVerificationEnabled)
+    val subject = TokenVerifyingAuthManager(decoder, if (webClientWired) client else null, features, converter)
     val authentication = BearerTokenAuthenticationToken(jwt.tokenValue)
     return subject.authenticate(authentication)
   }

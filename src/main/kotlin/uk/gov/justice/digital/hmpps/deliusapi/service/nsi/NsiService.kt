@@ -5,11 +5,13 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.deliusapi.advice.Auditable
 import uk.gov.justice.digital.hmpps.deliusapi.config.Authorities
+import uk.gov.justice.digital.hmpps.deliusapi.config.FeatureFlags
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsi
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsiManager
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NsiDto
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Nsi
 import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiManager
+import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiStatusHistory
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import uk.gov.justice.digital.hmpps.deliusapi.mapper.NsiMapper
 import uk.gov.justice.digital.hmpps.deliusapi.repository.NsiRepository
@@ -45,6 +47,7 @@ class NsiService(
   private val referenceDataMasterRepository: ReferenceDataMasterRepository,
   private val systemContactService: SystemContactService,
   private val mapper: NsiMapper,
+  private val features: FeatureFlags,
 ) {
 
   @PreAuthorize(
@@ -145,8 +148,17 @@ class NsiService(
     )
 
     val manager = createNsiManager(request.manager, request.referralDate, nsi)
-
     nsi.managers.add(manager)
+
+    if (features.nsiStatusHistory) {
+      val statusHistory = NsiStatusHistory(
+        nsi = nsi,
+        nsiStatus = status,
+        date = nsi.statusDate,
+        notes = nsi.notes,
+      )
+      nsi.statuses.add(statusHistory)
+    }
 
     val entity = nsiRepository.saveAndFlush(nsi)
     audit.nsiId = entity.id

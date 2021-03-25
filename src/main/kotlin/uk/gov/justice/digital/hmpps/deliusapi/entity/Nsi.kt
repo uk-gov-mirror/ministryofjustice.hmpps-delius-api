@@ -123,4 +123,7 @@ class Nsi(
   @OneToMany(cascade = [CascadeType.PERSIST], mappedBy = "nsi")
   @Where(clause = "ACTIVE_FLAG = 1")
   var managers: MutableList<NsiManager> = ArrayList(),
+
+  @OneToMany(cascade = [CascadeType.PERSIST], mappedBy = "nsi")
+  var statuses: MutableList<NsiStatusHistory> = ArrayList(),
 )

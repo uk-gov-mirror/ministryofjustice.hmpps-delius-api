@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.deliusapi.service
 
 import com.nhaarman.mockitokotlin2.capture
+import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.times
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.verifyZeroInteractions
@@ -13,14 +14,17 @@ import org.mockito.ArgumentCaptor
 import org.mockito.Captor
 import org.mockito.InjectMocks
 import org.mockito.Mock
+import org.mockito.Spy
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.junit.jupiter.MockitoSettings
 import org.mockito.quality.Strictness
+import uk.gov.justice.digital.hmpps.deliusapi.config.FeatureFlags
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsi
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Event
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Nsi
 import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiManager
 import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiStatus
+import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiStatusHistory
 import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiType
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Offender
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Provider
@@ -57,6 +61,7 @@ class NsiServiceTest {
   @Mock private lateinit var referenceDataMasterRepository: ReferenceDataMasterRepository
   @Mock private lateinit var systemContactService: SystemContactService
   @Mock private lateinit var mapper: NsiMapper
+  @Spy private lateinit var features: FeatureFlags
   @Captor private lateinit var newNsiCaptor: ArgumentCaptor<Nsi>
   @Captor private lateinit var statusContactCaptor: ArgumentCaptor<NewSystemContact>
   @InjectMocks private lateinit var subject: NsiService
@@ -73,76 +78,26 @@ class NsiServiceTest {
   private lateinit var managerProvider: Provider
   private lateinit var managerStaff: Staff
   private lateinit var managerTeam: Team
+  private lateinit var created: Nsi
 
   @Test
   fun `Successfully creating nsi`() {
+    havingNsiStatushistoryFeatureFlag()
     havingDependentEntities()
-    val manager = Fake.nsiManager()
-    manager.provider = managerProvider
-    manager.team = managerTeam
-    manager.staff = managerStaff
+    whenSuccessfullyCreatingNsi()
+    shouldSetNsiProperties()
+    shouldSetAuditContext()
+    shouldCreateSystemContacts()
+  }
 
-    val created = Fake.nsi()
-    created.type = type
-    created.subType = subType
-    created.status = status
-    created.intendedProvider = intendedProvider
-    created.outcome = outcome
-    created.offender = offender
-    created.event = event
-    created.requirement = requirement
-    created.managers = mutableListOf(manager)
-    created.statusDate = request.statusDate
-
-    val expectedResult = Fake.nsiDto()
-
-    whenever(nsiRepository.saveAndFlush(newNsiCaptor.capture())).thenReturn(created)
-    whenever(mapper.toDto(created)).thenReturn(expectedResult)
-
-    val observed = subject.createNsi(request)
-    assertThat(observed).isSameAs(expectedResult)
-
-    assertThat(newNsiCaptor.value)
-      .hasProperty(Nsi::offender, offender)
-      .hasProperty(Nsi::event, event)
-      .hasProperty(Nsi::type, type)
-      .hasProperty(Nsi::subType, subType)
-      .hasProperty(Nsi::length, request.length)
-      .hasProperty(Nsi::referralDate, request.referralDate)
-      .hasProperty(Nsi::expectedStartDate, request.expectedStartDate)
-      .hasProperty(Nsi::expectedEndDate, request.expectedEndDate)
-      .hasProperty(Nsi::startDate, request.startDate)
-      .hasProperty(Nsi::endDate, request.endDate)
-      .hasProperty(Nsi::status, status)
-      .hasProperty(Nsi::statusDate, request.statusDate)
-      .hasProperty(Nsi::notes, request.notes)
-      .hasProperty(Nsi::outcome, outcome)
-      .hasProperty(Nsi::active, false)
-      .hasProperty(Nsi::pendingTransfer, false)
-      .hasProperty(Nsi::requirement, requirement)
-      .hasProperty(Nsi::intendedProvider, intendedProvider)
-      .hasProperty(Nsi::softDeleted, false)
-
-    assertThat(newNsiCaptor.value.managers)
-      .hasSize(1)
-      .element(0)
-      .hasProperty(NsiManager::provider, managerProvider)
-      .hasProperty(NsiManager::team, managerTeam)
-      .hasProperty(NsiManager::staff, managerStaff)
-      .hasProperty(NsiManager::nsi, newNsiCaptor.value)
-
-    shouldSetAuditContext(created.id)
-
-    verify(systemContactService, times(4)).createSystemContact(capture(statusContactCaptor))
-
-    shouldCreateSystemContact(created.id, typeId = status.contactTypeId)
-    shouldCreateSystemContact(created.id, wellKnownType = WellKnownContactType.REFERRAL)
-    shouldCreateSystemContact(created.id, wellKnownType = WellKnownContactType.COMMENCED)
-    shouldCreateSystemContact(
-      created.id,
-      wellKnownType = WellKnownContactType.TERMINATED,
-      notes = "NSI Terminated with Outcome: ${outcome.description}"
-    )
+  @Test
+  fun `Successfully creating nsi with status history flag disabled`() {
+    havingNsiStatushistoryFeatureFlag(false)
+    havingDependentEntities()
+    whenSuccessfullyCreatingNsi()
+    shouldSetNsiProperties(shouldSetStatus = false)
+    shouldSetAuditContext()
+    shouldCreateSystemContacts()
   }
 
   @Test
@@ -285,10 +240,8 @@ class NsiServiceTest {
     shouldThrowBadRequestAndNotCreateAnySystemContacts()
   }
 
-  fun shouldThrowBadRequestAndNotCreateAnySystemContacts() {
-    assertThrows<BadRequestException> { subject.createNsi(request) }
-    shouldNotCreateSystemContact()
-  }
+  private fun havingNsiStatushistoryFeatureFlag(having: Boolean = true) =
+    whenever(features.nsiStatusHistory).doReturn(having)
 
   private fun havingDependentEntities(
     havingOffender: Boolean = true,
@@ -390,13 +343,96 @@ class NsiServiceTest {
 
     whenever(referenceDataMasterRepository.findByCode("NM ALLOCATION REASON"))
       .thenReturn(referenceMaster)
+
+    created = Fake.nsi().also {
+      it.type = type
+      it.subType = subType
+      it.status = status
+      it.intendedProvider = intendedProvider
+      it.outcome = outcome
+      it.offender = offender
+      it.event = event
+      it.requirement = requirement
+      it.managers = mutableListOf(
+        Fake.nsiManager().apply {
+          provider = managerProvider
+          team = managerTeam
+          staff = managerStaff
+        }
+      )
+      it.statusDate = request.statusDate
+    }
   }
 
-  private fun shouldSetAuditContext(id: Long) {
+  private fun whenSuccessfullyCreatingNsi() {
+    val expectedResult = Fake.nsiDto()
+
+    whenever(nsiRepository.saveAndFlush(newNsiCaptor.capture())).thenReturn(created)
+    whenever(mapper.toDto(created)).thenReturn(expectedResult)
+
+    val observed = subject.createNsi(request)
+    assertThat(observed).isSameAs(expectedResult)
+  }
+
+  private fun shouldSetNsiProperties(shouldSetStatus: Boolean = true) {
+    assertThat(newNsiCaptor.value)
+      .hasProperty(Nsi::offender, offender)
+      .hasProperty(Nsi::event, event)
+      .hasProperty(Nsi::type, type)
+      .hasProperty(Nsi::subType, subType)
+      .hasProperty(Nsi::length, request.length)
+      .hasProperty(Nsi::referralDate, request.referralDate)
+      .hasProperty(Nsi::expectedStartDate, request.expectedStartDate)
+      .hasProperty(Nsi::expectedEndDate, request.expectedEndDate)
+      .hasProperty(Nsi::startDate, request.startDate)
+      .hasProperty(Nsi::endDate, request.endDate)
+      .hasProperty(Nsi::status, status)
+      .hasProperty(Nsi::statusDate, request.statusDate)
+      .hasProperty(Nsi::notes, request.notes)
+      .hasProperty(Nsi::outcome, outcome)
+      .hasProperty(Nsi::active, false)
+      .hasProperty(Nsi::pendingTransfer, false)
+      .hasProperty(Nsi::requirement, requirement)
+      .hasProperty(Nsi::intendedProvider, intendedProvider)
+      .hasProperty(Nsi::softDeleted, false)
+
+    assertThat(newNsiCaptor.value.managers)
+      .hasSize(1)
+      .element(0)
+      .hasProperty(NsiManager::provider, managerProvider)
+      .hasProperty(NsiManager::team, managerTeam)
+      .hasProperty(NsiManager::staff, managerStaff)
+      .hasProperty(NsiManager::nsi, newNsiCaptor.value)
+
+    if (shouldSetStatus) {
+      assertThat(newNsiCaptor.value.statuses)
+        .hasSize(1)
+        .element(0)
+        .hasProperty(NsiStatusHistory::nsi, newNsiCaptor.value)
+        .hasProperty(NsiStatusHistory::nsiStatus, status)
+        .hasProperty(NsiStatusHistory::date, request.statusDate)
+        .hasProperty(NsiStatusHistory::notes, request.notes)
+    }
+  }
+
+  private fun shouldCreateSystemContacts() {
+    verify(systemContactService, times(4)).createSystemContact(capture(statusContactCaptor))
+
+    shouldCreateSystemContact(created.id, typeId = status.contactTypeId)
+    shouldCreateSystemContact(created.id, wellKnownType = WellKnownContactType.REFERRAL)
+    shouldCreateSystemContact(created.id, wellKnownType = WellKnownContactType.COMMENCED)
+    shouldCreateSystemContact(
+      created.id,
+      wellKnownType = WellKnownContactType.TERMINATED,
+      notes = "NSI Terminated with Outcome: ${outcome.description}"
+    )
+  }
+
+  private fun shouldSetAuditContext() {
     val context = AuditContext.get(AuditableInteraction.ADMINISTER_NSI)
     assertThat(context)
       .hasProperty(AuditContext::offenderId, offender.id)
-      .hasProperty(AuditContext::nsiId, id)
+      .hasProperty(AuditContext::nsiId, created.id)
   }
 
   private fun shouldCreateSystemContact(
@@ -432,5 +468,10 @@ class NsiServiceTest {
 
   private fun shouldNotCreateSystemContact() {
     verifyZeroInteractions(systemContactService)
+  }
+
+  private fun shouldThrowBadRequestAndNotCreateAnySystemContacts() {
+    assertThrows<BadRequestException> { subject.createNsi(request) }
+    shouldNotCreateSystemContact()
   }
 }

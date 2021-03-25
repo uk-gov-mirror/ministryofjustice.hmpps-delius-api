@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.deliusapi.config
 import org.hibernate.validator.constraints.URL
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.client.reactive.ReactorClientHttpConnector
@@ -11,13 +12,15 @@ import reactor.netty.http.client.HttpClient
 import java.time.Duration
 
 @Configuration
-class WebClientConfiguration(
-  /** OAUTH2 API Rest URL endpoint ("http://localhost:8100") */
-  @Value("\${tokenverification.api.base.url}") private val tokenVerificationApiBaseUrl: @URL String,
-) {
+class WebClientConfiguration {
 
   @Bean
-  fun tokenVerificationApiWebClient(builder: WebClient.Builder): WebClient = builder.baseUrl(tokenVerificationApiBaseUrl)
+  @ConditionalOnProperty(name = ["features.token-verification"])
+  fun tokenVerificationApiWebClient(
+    builder: WebClient.Builder,
+    /** OAUTH2 API Rest URL endpoint ("http://localhost:8100") */
+    @Value("\${tokenverification.api.base.url}") tokenVerificationApiBaseUrl: @URL String
+  ): WebClient = builder.baseUrl(tokenVerificationApiBaseUrl)
     .clientConnector(
       ReactorClientHttpConnector(HttpClient.create().warmupWithHealthPing(tokenVerificationApiBaseUrl))
     )

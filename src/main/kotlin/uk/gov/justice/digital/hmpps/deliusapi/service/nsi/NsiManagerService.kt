@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.deliusapi.service.nsi
 
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.CreateOrUpdateNsiManager
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsiManager
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.UpdateNsiManager
@@ -25,7 +27,6 @@ import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getUnallocatedS
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getUnallocatedTeam
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import javax.transaction.Transactional
 
 @Service
 class NsiManagerService(
@@ -60,7 +61,7 @@ class NsiManagerService(
     )
   }
 
-  @Transactional(Transactional.TxType.MANDATORY)
+  @Transactional(propagation = Propagation.MANDATORY)
   fun updateNsiManager(nsi: Nsi, request: UpdateNsiManager) {
     val oldManager = nsi.manager
       ?: throw RuntimeException("NSI with id ${nsi.id} has no manager to update")

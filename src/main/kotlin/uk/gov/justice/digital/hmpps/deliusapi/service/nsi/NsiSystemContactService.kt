@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.deliusapi.service.nsi
 
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.UpdateNsi
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Nsi
 import uk.gov.justice.digital.hmpps.deliusapi.entity.NsiStatus
@@ -12,14 +14,13 @@ import uk.gov.justice.digital.hmpps.deliusapi.service.contact.WellKnownContactTy
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import javax.transaction.Transactional
 
 /**
  * Convenience service for handling the (many) system contacts generated when maintaining NSIs.
  * Note: All contacts created in this service should be rolled back if primary entity cannot be saved.
  *       To enforce this, all operations require an existing transaction.
  */
-@Transactional(Transactional.TxType.MANDATORY)
+@Transactional(propagation = Propagation.MANDATORY)
 @Service
 class NsiSystemContactService(
   private val contactRepository: ContactRepository,

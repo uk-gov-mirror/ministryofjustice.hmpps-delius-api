@@ -51,7 +51,7 @@ interface ContactRepository : JpaRepository<Contact, Long> {
     @Param("breachContactTypes") breachContactTypes: List<String>
   ): List<LocalDateTimeWrapper>
 
-  fun findAllByNsiIdAndTypeId(nsiId: Long, typeId: Long): List<Contact>
+  fun findAllByNsiIdAndTypeIdAndDate(nsiId: Long, typeId: Long, date: LocalDate): List<Contact>
 
   fun findAllByNsiIdAndTypeCode(nsiId: Long, typeCode: String): List<Contact>
 

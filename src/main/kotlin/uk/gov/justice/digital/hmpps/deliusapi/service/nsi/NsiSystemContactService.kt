@@ -37,7 +37,9 @@ class NsiSystemContactService(
       createStatusContact(nsi, newStatus, request.statusDate)
     } else if (nsi.statusDate != request.statusDate) {
       // status unchanged but status date updated
-      val existing = contactRepository.findAllByNsiIdAndTypeId(nsi.id, newStatus.contactTypeId)
+      val existing = contactRepository.findAllByNsiIdAndTypeIdAndDate(
+        nsi.id, newStatus.contactTypeId, nsi.statusDate.toLocalDate()
+      )
       for (contact in existing) {
         contact.date = request.statusDate.toLocalDate()
         contact.startTime = request.statusDate.toLocalTime()

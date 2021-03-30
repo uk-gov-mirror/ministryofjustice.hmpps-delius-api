@@ -79,7 +79,11 @@ class NsiSystemContactServiceTest {
     val request = Fake.updateNsi().copy(statusDate = nsi.statusDate.plusMinutes(1))
 
     val existing = Fake.contact()
-    whenever(contactRepository.findAllByNsiIdAndTypeId(nsi.id, newStatus.contactTypeId))
+    whenever(
+      contactRepository.findAllByNsiIdAndTypeIdAndDate(
+        nsi.id, newStatus.contactTypeId, nsi.statusDate.toLocalDate()
+      )
+    )
       .thenReturn(listOf(existing))
 
     subject.updateStatusContact(nsi, newStatus, request)

@@ -54,8 +54,6 @@ interface ContactRepository : JpaRepository<Contact, Long> {
   fun findAllByNsiIdAndTypeIdAndDate(nsiId: Long, typeId: Long, date: LocalDate): List<Contact>
 
   fun findAllByNsiIdAndTypeCode(nsiId: Long, typeCode: String): List<Contact>
-
-  fun deleteByNsiIdAndTypeCode(nsiId: Long, typeCode: String)
 }
 
 fun ContactRepository.isEnforcementUnderReview(eventId: Long, contactCode: String, breachEnd: LocalDate?) =

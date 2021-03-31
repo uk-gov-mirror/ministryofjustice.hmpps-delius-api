@@ -8,6 +8,21 @@ import uk.gov.justice.digital.hmpps.deliusapi.repository.isEnforcementUnderRevie
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getBreachType
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.isInBreachOn
 
+enum class MaintainFailureToComplyType { NONE, UPDATE_AND_CHECK_BREACH, UPDATE }
+
+fun Contact.maintainsFailureToComply(): MaintainFailureToComplyType {
+  // 1. Is the contact type National Standards & has an event ID?
+  if (event == null) {
+    return MaintainFailureToComplyType.NONE
+  }
+  if (!type.nationalStandardsContact) {
+    // Is the contact type Release From Custody (EREL) -> Check & Update Event FTC
+    return if (type.code == WellKnownContactType.RELEASE_FROM_CUSTODY.code) MaintainFailureToComplyType.UPDATE
+    else MaintainFailureToComplyType.NONE
+  }
+  return MaintainFailureToComplyType.UPDATE_AND_CHECK_BREACH
+}
+
 @Service
 class ContactEnforcementService(
   private val contactRepository: ContactRepository,
@@ -16,28 +31,32 @@ class ContactEnforcementService(
   private val contactBreachService: ContactBreachService,
 ) {
   fun updateFailureToComply(contact: Contact) {
-    // 1. Is the contact type National Standards & has an event ID?
-    val event = contact.event ?: return
-
-    val currentFtc: Long by lazy { contactRepository.getCurrentFailureToComply(event) }
-
-    if (!contact.type.nationalStandardsContact) {
-      // Is the contact type Release From Custody (EREL) -> Check & Update Event FTC
-      if (contact.type.code == WellKnownContactType.RELEASE_FROM_CUSTODY.code) {
-        event.ftcCount = currentFtc
-        eventRepository.saveAndFlush(event)
-      }
-      return
+    when (contact.maintainsFailureToComply()) {
+      MaintainFailureToComplyType.NONE -> return
+      MaintainFailureToComplyType.UPDATE -> updateFtcCount(contact)
+      MaintainFailureToComplyType.UPDATE_AND_CHECK_BREACH -> updateFtcCountAndCheckBreach(contact)
     }
+  }
+
+  private fun updateFtcCount(contact: Contact) {
+    val event = contact.event ?: return
+    val currentFtc = contactRepository.getCurrentFailureToComply(event)
+    if (currentFtc != event.ftcCount) {
+      event.ftcCount = currentFtc
+      eventRepository.saveAndFlush(event)
+    }
+  }
+
+  private fun updateFtcCountAndCheckBreach(contact: Contact) {
+    val event = contact.event ?: return
 
     // Determine whether the contact starts or ends a breach
     val enforcementBreachType = if (contact.outcome?.actionRequired == true)
       contact.enforcement?.action?.contactType?.getBreachType() else null
 
     // 2. Check & Update Event FTC
-    if (enforcementBreachType != BreachType.END && currentFtc != event.ftcCount) {
-      event.ftcCount = currentFtc
-      eventRepository.saveAndFlush(event)
+    if (enforcementBreachType != BreachType.END) {
+      updateFtcCount(contact)
     }
 
     // 3. Does the contact have an outcome?

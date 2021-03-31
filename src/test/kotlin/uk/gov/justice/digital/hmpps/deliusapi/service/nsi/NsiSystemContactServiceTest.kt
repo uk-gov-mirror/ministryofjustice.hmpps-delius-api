@@ -146,6 +146,20 @@ class NsiSystemContactServiceTest {
   }
 
   @Test
+  fun `Updating commencement contact when commencement removed`() {
+    val nsi = Fake.nsi().apply { startDate = LocalDate.of(2021, 3, 26) }
+    val request = Fake.updateNsi().copy(startDate = null)
+    val existing = havingContactByNsiAndWellKnownType(nsi, WellKnownContactType.NSI_COMMENCED)
+
+    subject.updateCommencedContact(nsi, request)
+
+    shouldNotCreateAnySystemContacts()
+
+    // should delete existing
+    verify(systemContactService, times(1)).safeDeleteSystemContact(existing)
+  }
+
+  @Test
   fun `Creating termination contact but nsi has no outcome`() {
     val nsi = Fake.nsi().apply { outcome = null }
     subject.createTerminationContact(nsi)

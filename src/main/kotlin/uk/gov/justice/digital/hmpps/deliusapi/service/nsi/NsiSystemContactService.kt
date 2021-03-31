@@ -61,9 +61,13 @@ class NsiSystemContactService(
       nsi.startDate == null && request.startDate != null ->
         // nsi is now commenced
         createWellKnownContact(nsi, WellKnownContactType.NSI_COMMENCED, request.startDate)
-      nsi.startDate != null && request.startDate == null ->
+      nsi.startDate != null && request.startDate == null -> {
         // delete commencement contact
-        contactRepository.deleteByNsiIdAndTypeCode(nsi.id, WellKnownContactType.NSI_COMMENCED.code)
+        val existing = contactRepository.findAllByNsiIdAndTypeCode(nsi.id, WellKnownContactType.NSI_COMMENCED.code)
+        for (contact in existing) {
+          systemContactService.safeDeleteSystemContact(contact)
+        }
+      }
       nsi.startDate != null && request.startDate != null && nsi.startDate != request.startDate -> {
         // update commencement contact(s)
         val existing = contactRepository.findAllByNsiIdAndTypeCode(nsi.id, WellKnownContactType.NSI_COMMENCED.code)

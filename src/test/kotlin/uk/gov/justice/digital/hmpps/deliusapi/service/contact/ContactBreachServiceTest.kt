@@ -41,7 +41,7 @@ class ContactBreachServiceTest {
 
   @Test
   fun `Attempting to update breach on insert with non-breach contact`() {
-    havingContact(WellKnownContactType.COMMENCED)
+    havingContact(WellKnownContactType.NSI_COMMENCED)
     whenUpdatingBreachOnInsertContact()
     shouldNotUpdateEvent()
   }
@@ -181,7 +181,7 @@ class ContactBreachServiceTest {
 
   @Test
   fun `Attempting to update breach on update with non-breach contact`() {
-    havingContact(WellKnownContactType.COMMENCED)
+    havingContact(WellKnownContactType.NSI_COMMENCED)
     whenUpdatingBreachOnUpdateContact()
     shouldNotUpdateEvent()
   }

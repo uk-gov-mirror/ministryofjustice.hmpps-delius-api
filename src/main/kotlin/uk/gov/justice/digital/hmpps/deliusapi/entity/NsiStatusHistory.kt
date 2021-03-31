@@ -37,7 +37,7 @@ class NsiStatusHistory(
 
   @JoinColumn(name = "NSI_STATUS_ID", nullable = false)
   @ManyToOne
-  var nsiStatus: NsiStatus? = null,
+  var status: NsiStatus? = null,
 
   @Column(name = "NSI_STATUS_DATE")
   var date: LocalDateTime? = null,

@@ -2,10 +2,10 @@ package uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact
 
 import uk.gov.justice.digital.hmpps.deliusapi.validation.AllowedValues
 import uk.gov.justice.digital.hmpps.deliusapi.validation.Crn
-import uk.gov.justice.digital.hmpps.deliusapi.validation.DependentFields
 import uk.gov.justice.digital.hmpps.deliusapi.validation.EndTime
 import uk.gov.justice.digital.hmpps.deliusapi.validation.EnforcementActionCode
-import uk.gov.justice.digital.hmpps.deliusapi.validation.ExclusiveFields
+import uk.gov.justice.digital.hmpps.deliusapi.validation.FieldGroup
+import uk.gov.justice.digital.hmpps.deliusapi.validation.FieldGroupType
 import uk.gov.justice.digital.hmpps.deliusapi.validation.FieldGroups
 import uk.gov.justice.digital.hmpps.deliusapi.validation.NotBlankWhenProvided
 import uk.gov.justice.digital.hmpps.deliusapi.validation.OfficeLocationCode
@@ -26,7 +26,7 @@ data class NewContact(
   @Crn
   val offenderCrn: String,
 
-  @ExclusiveFields("requirementId")
+  @FieldGroup(FieldGroupType.EXCLUSIVE_ANY, "requirementId")
   @field:Positive
   val nsiId: Long? = null,
 
@@ -34,7 +34,7 @@ data class NewContact(
   val eventId: Long? = null,
 
   @field:Positive
-  @DependentFields("eventId")
+  @FieldGroup(FieldGroupType.DEPENDENT_ALL, "eventId")
   val requirementId: Long? = null,
 
   @field:NotBlank
@@ -47,7 +47,7 @@ data class NewContact(
   override val outcome: String? = null,
 
   @EnforcementActionCode
-  @DependentFields("outcome")
+  @FieldGroup(FieldGroupType.DEPENDENT_ALL, "outcome")
   override val enforcement: String? = null,
 
   @ProviderCode

@@ -22,6 +22,9 @@ class Provider(
   @Type(type = "yes_no")
   var selectable: Boolean = false,
 
+  @Column(name = "DESCRIPTION", length = 60, nullable = false)
+  var description: String,
+
   @OneToMany
   @JoinColumn(name = "PROBATION_AREA_ID")
   var teams: List<Team>? = null,

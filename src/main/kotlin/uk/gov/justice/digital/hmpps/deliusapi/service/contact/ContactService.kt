@@ -13,13 +13,13 @@ import uk.gov.justice.digital.hmpps.deliusapi.entity.Provider
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Staff
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Team
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
-import uk.gov.justice.digital.hmpps.deliusapi.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.deliusapi.mapper.ContactMapper
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactTypeRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.NsiRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.OffenderRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ProviderRepository
+import uk.gov.justice.digital.hmpps.deliusapi.repository.extensions.findByIdOrNotFound
 import uk.gov.justice.digital.hmpps.deliusapi.repository.findByCrnOrBadRequest
 import uk.gov.justice.digital.hmpps.deliusapi.security.ProviderRequestAuthority
 import uk.gov.justice.digital.hmpps.deliusapi.security.ProviderResponseAuthority
@@ -44,20 +44,13 @@ class ContactService(
   private val contactBreachService: ContactBreachService,
   private val contactEnforcementService: ContactEnforcementService,
 ) {
-  @ProviderResponseAuthority
-  fun getUpdateContact(id: Long): UpdateContact {
-    val contact = contactRepository.findByIdOrNull(id)
-      ?: throw NotFoundException.byId<Contact>(id)
-
-    return mapper.toUpdate(contact)
-  }
+  fun getUpdateContact(id: Long): UpdateContact = mapper.toUpdate(getContact(id))
 
   @Transactional
   @ProviderRequestAuthority
   @Auditable(AuditableInteraction.UPDATE_CONTACT)
   fun updateContact(id: Long, request: UpdateContact): ContactDto {
-    val entity = contactRepository.findByIdOrNull(id)
-      ?: throw NotFoundException.byId<Contact>(id)
+    val entity = getContact(id)
 
     if (entity.type.editable != true) {
       throw BadRequestException("Contact type '${entity.type.code}' is not editable")
@@ -184,6 +177,9 @@ class ContactService(
 
     return mapper.toDto(entity)
   }
+
+  @ProviderResponseAuthority
+  private fun getContact(id: Long) = contactRepository.findByIdOrNotFound(id)
 
   private fun getProviderTeamStaff(request: CreateOrUpdateContact): Triple<Provider, Team, Staff> {
     val provider = providerRepository.findByCodeAndSelectableIsTrue(request.provider)

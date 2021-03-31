@@ -2,12 +2,15 @@ package uk.gov.justice.digital.hmpps.deliusapi.service.contact
 
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactTypeRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.NsiRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.OffenderRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ProviderRepository
+import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.flattenLinkedContacts
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.updateNotes
 import java.lang.IllegalArgumentException
 import java.time.LocalDate
@@ -15,6 +18,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 
 @Service
+@Transactional(propagation = Propagation.MANDATORY)
 class SystemContactService(
   private val contactRepository: ContactRepository,
   private val offenderRepository: OffenderRepository,
@@ -62,8 +66,8 @@ class SystemContactService(
       team = team,
       staff = staff,
       event = event,
-      date = request.timestamp.toLocalDate(),
-      startTime = request.timestamp.toLocalTime(),
+      date = request.date,
+      startTime = request.startTime,
     )
 
     entity.updateNotes(type.defaultHeadings, request.notes)
@@ -118,5 +122,14 @@ class SystemContactService(
     )
 
     return contactRepository.saveAndFlush(entity)
+  }
+
+  fun safeDeleteSystemContact(contact: Contact) {
+    for (toDelete in listOf(contact, *contact.flattenLinkedContacts().toTypedArray())) {
+      if (toDelete.maintainsFailureToComply() != MaintainFailureToComplyType.NONE) {
+        throw RuntimeException("Cannot delete contact with id '${toDelete.id}' as it affects FTC")
+      }
+      contactRepository.delete(toDelete)
+    }
   }
 }

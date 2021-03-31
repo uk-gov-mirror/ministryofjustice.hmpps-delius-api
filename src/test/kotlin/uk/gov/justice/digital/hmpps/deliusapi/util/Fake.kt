@@ -8,6 +8,8 @@ import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsi
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsiManager
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NsiDto
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NsiManagerDto
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.UpdateNsi
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.UpdateNsiManager
 import uk.gov.justice.digital.hmpps.deliusapi.entity.AuditedInteraction
 import uk.gov.justice.digital.hmpps.deliusapi.entity.BusinessInteraction
 import uk.gov.justice.digital.hmpps.deliusapi.entity.Contact
@@ -65,6 +67,7 @@ object Fake {
   fun randomPastLocalDate(): LocalDate = faker.date().past(10, 1, TimeUnit.DAYS).toLocalDate()
   fun randomLocalDateTime(): LocalDateTime = faker.date().past(10, 1, TimeUnit.DAYS).toLocalDateTime()
   fun randomFutureLocalDate(): LocalDate = faker.date().future(10, 1, TimeUnit.DAYS).toLocalDate()
+  fun randomLocalTime() = randomLocalDateTime().toLocalTime()
 
   fun id(): Long = faker.number().numberBetween(1L, 900_000_000_000_000_000L) // maxvalue of db sequences
   fun count(): Long = faker.number().numberBetween(1L, 100L)
@@ -95,6 +98,7 @@ object Fake {
     nsiTypes = listOf(nsiType()),
     nationalStandardsContact = true,
   )
+
   fun contactOutcomeType() = ContactOutcomeType(
     id = id(),
     code = faker.lorem().characters(1, 10),
@@ -103,15 +107,30 @@ object Fake {
     actionRequired = true,
     enforceable = true,
   )
-  fun provider() = Provider(id = id(), code = faker.lorem().characters(3), teams = listOf(team()))
+
+  fun provider() = Provider(
+    id = id(),
+    code = faker.lorem().characters(3),
+    description = faker.company().bs(),
+    teams = listOf(team()),
+  )
+
   fun team() = Team(
     id = id(),
     code = faker.bothify("?##?##"),
+    description = faker.company().bs(),
     staff = listOf(staff()),
     officeLocations = listOf(officeLocation())
   )
+
   fun officeLocation() = OfficeLocation(id = id(), code = faker.lorem().characters(7))
-  fun staff() = Staff(id = id(), code = faker.bothify("?##?###"))
+  fun staff() = Staff(
+    id = id(),
+    code = faker.bothify("?##?###"),
+    firstName = faker.name().firstName(),
+    middleName = faker.name().firstName(),
+    lastName = faker.name().lastName(),
+  )
 
   fun requirementTypeCategory() = RequirementTypeCategory(
     id = id(),
@@ -241,7 +260,8 @@ object Fake {
     providerId = id(),
     teamId = id(),
     staffId = id(),
-    timestamp = randomLocalDateTime()
+    date = randomPastLocalDate(),
+    startTime = randomLocalTime(),
   )
 
   fun auditedInteraction() = AuditedInteraction(
@@ -306,6 +326,8 @@ object Fake {
 
   fun newNsiManager(): NewNsiManager = nsiMapper.toNew(nsiManagerDto())
 
+  fun updateNsiManager(): UpdateNsiManager = nsiMapper.toUpdate(nsiManager())
+
   fun nsi(): Nsi {
     val nsi = Nsi(
       id = id(),
@@ -341,6 +363,32 @@ object Fake {
   fun nsiDto(): NsiDto = nsiMapper.toDto(nsi())
 
   fun newNsi(): NewNsi = nsiMapper.toNew(nsiDto())
+
+  fun validNewNsi() = NewNsi(
+    type = "KSS021",
+    subType = "KSS026",
+    status = "SLI01",
+    statusDate = LocalDateTime.now().minusDays(2),
+    outcome = "COMP",
+    offenderCrn = "X320741",
+    intendedProvider = "C21",
+    eventId = 2500295343,
+    requirementId = 2500083652,
+    referralDate = LocalDate.of(2017, 6, 1),
+    startDate = LocalDate.of(2017, 6, 1),
+    endDate = LocalDate.of(2017, 12, 1),
+    expectedStartDate = LocalDate.of(2017, 6, 1),
+    expectedEndDate = LocalDate.of(2017, 12, 1),
+    length = 1,
+    notes = "bacon and eggs",
+    manager = NewNsiManager(
+      staff = "C00P017",
+      team = "C00T02",
+      provider = "C00",
+    )
+  )
+
+  fun updateNsi(): UpdateNsi = nsiMapper.toUpdate(nsi()).copy(notes = faker.company().bs())
 
   fun user(): User = User(
     id = id(),

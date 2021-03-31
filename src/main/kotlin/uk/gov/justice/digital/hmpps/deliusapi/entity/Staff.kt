@@ -16,4 +16,13 @@ class Staff(
 
   @Column(name = "OFFICER_CODE", columnDefinition = "CHAR(7)")
   var code: String,
+
+  @Column(name = "FORENAME", length = 35, nullable = false)
+  var firstName: String,
+
+  @Column(name = "FORENAME2", length = 35)
+  var middleName: String?,
+
+  @Column(name = "SURNAME", length = 35, nullable = false)
+  var lastName: String,
 )

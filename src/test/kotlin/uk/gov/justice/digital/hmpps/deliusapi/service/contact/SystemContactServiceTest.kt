@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.deliusapi.service.contact
 
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.never
+import com.nhaarman.mockitokotlin2.times
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import org.assertj.core.api.Assertions.assertThat
@@ -186,6 +187,39 @@ class SystemContactServiceTest {
       .hasCommonContactSourcedProperties(contact)
   }
 
+  @Test
+  fun `Successfully safe deleting system contact`() {
+    val linked2 = Fake.contact().apply { type.nationalStandardsContact = false }
+    val linked1 = Fake.contact().apply {
+      linkedContacts.add(linked2)
+      type.nationalStandardsContact = false
+    }
+    linked2.linkedContacts.add(linked1) // function must deal with bad, recursive linked contacts
+    val contact = Fake.contact().apply {
+      linkedContacts.add(linked1)
+      type.nationalStandardsContact = false
+    }
+
+    subject.safeDeleteSystemContact(contact)
+
+    verify(contactRepository, times(1)).delete(contact)
+    verify(contactRepository, times(1)).delete(linked1)
+    verify(contactRepository, times(1)).delete(linked2)
+  }
+
+  @Test
+  fun `Attempting to safe delete system contact but maintains FTC`() {
+    val linked = Fake.contact().apply {
+      type.nationalStandardsContact = true
+    }
+    val contact = Fake.contact().apply {
+      linkedContacts.add(linked)
+      type.nationalStandardsContact = false
+    }
+
+    assertThrows<RuntimeException> { subject.safeDeleteSystemContact(contact) }
+  }
+
   private fun ObjectAssert<Contact>.hasCommonContactSourcedProperties(contact: Contact) = this
     .hasProperty(Contact::offender, contact.offender)
     .hasProperty(Contact::outcome, null)
@@ -252,8 +286,8 @@ class SystemContactServiceTest {
       .hasProperty(Contact::event, event)
       .hasProperty(Contact::requirement, null)
       .hasProperty(Contact::officeLocation, null)
-      .hasProperty(Contact::date, request.timestamp.toLocalDate())
-      .hasProperty(Contact::startTime, request.timestamp.toLocalTime())
+      .hasProperty(Contact::date, request.date)
+      .hasProperty(Contact::startTime, request.startTime)
       .hasProperty(Contact::endTime, null)
       .hasProperty(Contact::alert, false)
       .hasProperty(Contact::sensitive, false)

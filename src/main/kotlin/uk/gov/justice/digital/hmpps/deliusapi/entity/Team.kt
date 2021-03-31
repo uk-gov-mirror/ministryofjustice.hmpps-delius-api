@@ -20,6 +20,9 @@ class Team(
   @Column(name = "CODE", columnDefinition = "CHAR(6)")
   var code: String,
 
+  @Column(name = "DESCRIPTION", length = 50, nullable = false)
+  var description: String,
+
   @ManyToMany
   @JoinTable(
     name = "STAFF_TEAM",

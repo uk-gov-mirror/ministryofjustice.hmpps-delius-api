@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "a9e56e43-86f1-42dd-95d2-51c566ebf7c4",
+		"_postman_id": "64c5795d-0251-40c9-b945-cf6839ea0660",
 		"name": "Delius API",
 		"description": "Delius API Documentation\n\nContact Support:\n Name: HMPPS Digital Studio\n Email: dps-hmpps@digital.justice.gov.uk",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -605,6 +605,83 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Patch an existing NSI",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"should return expected id\", () => {",
+									"    const id = pm.environment.get('NSI-ID');",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.id).to.be.eq(id);",
+									"});",
+									"",
+									"pm.test(\"should return expected status date\", () => {",
+									"    const statusDate = pm.environment.get('nextStatusDate');",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.statusDate).to.be.eq(statusDate);",
+									"});",
+									"",
+									"pm.test(\"should return expected status\", () => {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.be.eq('REFER');",
+									"});",
+									"",
+									"pm.test(\"should return expected notes\", () => {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.notes).to.be.eq('End-to-End Delius API test\\nUpdated note');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\"op\": \"replace\", \"path\": \"/notes\", \"value\": \"Updated note\"},\n    {\"op\": \"replace\", \"path\": \"/status\", \"value\": \"REFER\"},\n    {\"op\": \"replace\", \"path\": \"/statusDate\", \"value\": \"{{nextStatusDate}}\"}\n]",
+							"options": {
+								"raw": {
+									"language": "text"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/nsi/{{NSI-ID}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"nsi",
+								"{{NSI-ID}}"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		}
@@ -656,12 +733,14 @@
 					"  const start = moment();",
 					"  const end = moment().add(7, \"days\").add(1, \"hours\");",
 					"  const startDate = start.format(dateFormat);",
+					"  const nextStatusDate = moment(start).add(1, 'hour').format(dateTimeFormat);",
 					"  const startDateTime = start.format(dateTimeFormat);",
 					"  const startTime = start.format(timeFormat);",
 					"  const endDate = end.format(dateFormat);",
 					"  const endDateTime = end.format(dateTimeFormat);",
 					"  const endTime = end.format(timeFormat);",
 					"  pm.environment.set(\"startDate\", startDate);",
+					"  pm.environment.set(\"nextStatusDate\", nextStatusDate);",
 					"  pm.environment.set(\"endDate\", endDate);",
 					"  pm.environment.set(\"startDateTime\", startDateTime);",
 					"  pm.environment.set(\"endDateTime\", endDateTime);",
@@ -675,9 +754,12 @@
 					"    pm.environment.set(\"eventId\", 2500443138);",
 					"}",
 					"",
-					"const authString = `${pm.environment.get(\"oauth2Client\")}:${pm.environment.get(",
-					"  \"oauth2Secret\"",
-					")}`;",
+					"const client = pm.environment.get(\"oauth2Client\");",
+					"const secret = pm.environment.get(\"oauth2Secret\");",
+					"if (!client || !secret) {",
+					"    throw new Error('Must provide oauth2Client & oauth2Secret');",
+					"}",
+					"const authString = `${client}:${secret}`;",
 					"",
 					"const tokenPostRequest = {",
 					"  url:",

@@ -1,0 +1,48 @@
+info.app:
+  name: Hmpps Delius Api
+  version: 1.0
+
+spring:
+  application:
+    name: hmpps-delius-api
+
+  datasource:
+    url: 'jdbc:h2:mem:generate-api-spec'
+
+  jackson:
+    date-format: "yyyy-MM-dd HH:mm:ss"
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+
+  h2:
+    console:
+      enabled: false
+
+  flyway:
+    enabled: false
+
+server:
+  port: 0 # random port
+  servlet:
+    context-path: /
+  shutdown: immediate
+  error:
+    include-message: always
+
+management:
+  endpoints:
+    web:
+      base-path: /
+      exposure:
+        include: 'info, health'
+
+contacts:
+  allowed-types: ~
+
+features:
+  token-verification: false
+  nsi-status-history: true

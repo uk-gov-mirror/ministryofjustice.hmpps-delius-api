@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.deliusapi.controller.v1
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.fge.jsonpatch.JsonPatch
+import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiResponse
 import io.swagger.annotations.ApiResponses
@@ -25,6 +26,7 @@ import javax.validation.Validator
 import javax.validation.constraints.NotNull
 import javax.validation.constraints.Positive
 
+@Api(tags = ["Contact v1"], description = "Contact API")
 @RestController
 @RequestMapping(value = ["v1/contact"], produces = [MediaType.APPLICATION_JSON_VALUE])
 class ContactController(
@@ -47,11 +49,11 @@ class ContactController(
       )
     ]
   )
-  fun create(@NotNull @Valid @RequestBody body: NewContact): ResponseEntity<ContactDto> {
+  fun createContact(@NotNull @Valid @RequestBody body: NewContact): ResponseEntity<ContactDto> {
     return status(HttpStatus.CREATED).body(service.createContact(body))
   }
 
-  @PatchMapping(path = ["{id}"], consumes = ["application/json-patch+json"])
+  @PatchMapping(path = ["{id}"], consumes = ["application/json-patch+json", MediaType.APPLICATION_JSON_VALUE])
   @ApiOperation(
     value = "Patches an existing contact by id",
     response = ContactDto::class,
@@ -65,7 +67,7 @@ class ContactController(
       )
     ]
   )
-  fun patch(
+  fun patchContact(
     @PathVariable @Positive id: Long,
     @RequestBody patch: JsonPatch
   ): ContactDto {

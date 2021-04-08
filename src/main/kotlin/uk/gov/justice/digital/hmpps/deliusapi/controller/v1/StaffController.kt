@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.deliusapi.controller.v1
 
+import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiResponse
 import io.swagger.annotations.ApiResponses
@@ -16,6 +17,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.service.staff.StaffService
 import javax.validation.Valid
 import javax.validation.constraints.NotNull
 
+@Api(tags = ["Staff v1"], description = "Staff API")
 @RestController
 @RequestMapping(value = ["v1/staff"], produces = [MediaType.APPLICATION_JSON_VALUE])
 class StaffController(private val service: StaffService) {
@@ -33,7 +35,7 @@ class StaffController(private val service: StaffService) {
       )
     ]
   )
-  fun create(@NotNull @Valid @RequestBody body: NewStaff): ResponseEntity<StaffDto> {
+  fun createStaff(@NotNull @Valid @RequestBody body: NewStaff): ResponseEntity<StaffDto> {
     return ResponseEntity.status(HttpStatus.CREATED).body(service.createStaff(body))
   }
 }

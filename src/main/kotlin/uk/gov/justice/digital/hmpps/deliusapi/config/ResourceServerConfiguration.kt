@@ -22,7 +22,7 @@ class ResourceServerConfiguration(
         it.antMatchers(
           "/info",
           "/health/**",
-          "/v2/api-docs",
+          // "/v2/api-docs", no longer works
           "/v3/api-docs",
           "/swagger-ui/**",
           "/swagger-resources",

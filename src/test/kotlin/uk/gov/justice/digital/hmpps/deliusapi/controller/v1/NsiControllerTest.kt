@@ -40,7 +40,7 @@ class NsiControllerTest {
 
     whenever(service.createNsi(request)).thenReturn(dto)
 
-    val observed = subject.create(request).body
+    val observed = subject.createNsi(request).body
     Assertions.assertThat(observed).isSameAs(dto)
   }
 
@@ -56,7 +56,7 @@ class NsiControllerTest {
     whenever(validator.validate<UpdateNsi>(ArgumentMatchers.any())).thenReturn(emptySet())
     whenever(service.updateNsi(ArgumentMatchers.eq(id), capture(updateCaptor))).thenReturn(dto)
 
-    val observed = subject.patch(id, patch)
+    val observed = subject.patchNsi(id, patch)
     Assertions.assertThat(observed).isSameAs(dto)
     Assertions.assertThat(updateCaptor.value)
       .usingRecursiveComparison()
@@ -75,6 +75,6 @@ class NsiControllerTest {
     val patch = JsonPatch(listOf(op))
     whenever(service.getUpdateNsi(id)).thenReturn(existing)
 
-    assertThrows<BadRequestException>("Cannot update the referral date") { subject.patch(id, patch) }
+    assertThrows<BadRequestException>("Cannot update the referral date") { subject.patchNsi(id, patch) }
   }
 }

@@ -1,0 +1,77 @@
+spring:
+  main:
+    web-application-type: none
+
+  datasource:
+    url: 'jdbc:h2:file:./dev;MODE=Oracle;AUTO_SERVER=TRUE;AUTO_SERVER_PORT=9092'
+    username: sa
+    password: password
+
+  flyway:
+    enabled: false
+
+  jpa.properties.hibernate.show_sql: true
+
+server:
+  shutdown: immediate
+
+logging.level.org.hibernate:
+  SQL: debug
+
+features:
+  token-verification: false
+
+# TODO provide this configuration per environment somehow
+e2e:
+  url: "https://delius-api.test.probation.service.justice.gov.uk"
+  databaseAssert: false
+  oauth:
+    url: "https://sign-in-dev.hmpps.service.justice.gov.uk/auth"
+    clientId: "SOME-CLIENT-ID"
+    clientSecret: "SOME-CLIENT-SECRET"
+  offenderCrn: X009923
+  provider: CRS
+  team: CRSUAT
+  staff: CRSUATU
+  contacts:
+    nsiOnly:
+      type: CRS01
+    nsi:
+      type: CRS01
+      eventId: 2500443138
+    updatable:
+      type: CHVS
+      outcome: ATTC
+      eventId: 2500443138
+    event:
+      type: COTH
+      eventId: 2500443138
+    requirement:
+      type: COTH
+      eventId: 2500443138
+      requirementId: 2500199144
+    enforcement:
+      type: CHVS
+      eventId: 2500443138
+      outcome: AFTA
+      enforcement: ROM
+    appointment:
+      type: CRSAPT
+      eventId: 2500443138
+      requirementId: 2500199144
+      officeLocation: CRSSHEF
+  nsis:
+    active:
+      type: CRS01
+      status: INPROG
+      eventId: 2500443138
+      requirementId: 2500199144
+    terminated:
+      type: CRS01
+      status: INPROG
+      outcome: CRS01
+      eventId: 2500443138
+      requirementId: 2500199144
+    refer:
+      type: CRS01
+      status: REFER

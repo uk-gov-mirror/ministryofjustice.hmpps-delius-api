@@ -15,3 +15,5 @@ fun Team.getUnallocatedStaff(): Staff {
   return staff.find { it.staff.code == key }?.staff
     ?: throw RuntimeException("Team '$code' does not have an unallocated staff member")
 }
+
+fun teamCodeOrUnallocated(code: String) = if (code.endsWith(UNALLOCATED_TEAM_PROVIDER_CODE_SUFFIX)) null else code

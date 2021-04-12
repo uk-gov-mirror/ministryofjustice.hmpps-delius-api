@@ -69,3 +69,7 @@ ecr.repo
 
 # H2 Database Files
 *.db
+
+# Generated open api spec
+.openapi-generator/
+src/generated/

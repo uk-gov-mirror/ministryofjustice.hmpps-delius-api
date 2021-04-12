@@ -17,3 +17,5 @@ fun Staff.getDisplayName(): String {
 
   return listOfNotNull(firstName, middleName, lastName).joinToString(" ")
 }
+
+fun staffCodeOrUnallocated(code: String) = if (code.endsWith(UNALLOCATED_STAFF_CODE_SUFFIX)) null else code

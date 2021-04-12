@@ -51,7 +51,7 @@ class ContactValidationService(
       YesNoBoth.Y -> {
         if (request.outcome == null) {
           if (request.date.isBefore(LocalDate.now())) {
-            throw BadRequestException("Contact type '${type.code}' requires an outcome type")
+            throw BadRequestException("Contact type '${type.code}' requires an outcome type as the contact date is in the past '${request.date}'")
           } else null
         } else get()
       }

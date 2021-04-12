@@ -96,7 +96,7 @@ jobs:
   validate:
     executor: hmpps/java
     environment:
-      _JAVA_OPTIONS: -Xmx1024m -XX:ParallelGCThreads=2 -XX:ConcGCThreads=2 -XX:ParallelGCThreads=2 -Djava.util.concurrent.ForkJoinPool.common.parallelism=2 -Dorg.gradle.daemon=false
+      _JAVA_OPTIONS: -Xms512m -Xmx1G -Dorg.gradle.daemon=false
     steps:
       - checkout
       - restore_cache:
@@ -104,7 +104,11 @@ jobs:
             - gradle-{{ checksum "build.gradle.kts" }}
             - gradle-
       - run:
+          name: gradle check
           command: ./gradlew check
+      - run:
+          name: Compile e2e tests # TODO get the e2e tests running against h2 here
+          command: ./gradlew e2eClasses
       - save_cache:
           paths:
             - ~/.gradle

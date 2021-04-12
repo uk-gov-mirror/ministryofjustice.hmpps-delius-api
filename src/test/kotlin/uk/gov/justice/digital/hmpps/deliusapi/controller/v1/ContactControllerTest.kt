@@ -39,7 +39,7 @@ class ContactControllerTest {
 
     whenever(service.createContact(request)).thenReturn(contact)
 
-    val observed = subject.create(request).body
+    val observed = subject.createContact(request).body
     assertThat(observed).isSameAs(contact)
   }
 
@@ -55,7 +55,7 @@ class ContactControllerTest {
     whenever(validator.validate<UpdateContact>(any())).thenReturn(emptySet())
     whenever(service.updateContact(eq(id), capture(updateCaptor))).thenReturn(dto)
 
-    val observed = subject.patch(id, patch)
+    val observed = subject.patchContact(id, patch)
     assertThat(observed).isSameAs(dto)
     assertThat(updateCaptor.value)
       .usingRecursiveComparison()

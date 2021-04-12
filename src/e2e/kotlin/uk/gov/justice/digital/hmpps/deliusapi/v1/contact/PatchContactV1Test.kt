@@ -2,7 +2,6 @@
 package uk.gov.justice.digital.hmpps.deliusapi.v1.contact
 
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import uk.gov.justice.digital.hmpps.deliusapi.EndToEndTest
@@ -18,7 +17,6 @@ import uk.gov.justice.digital.hmpps.deliusapi.util.assertThatException
 import uk.gov.justice.digital.hmpps.deliusapi.util.extractingObject
 import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
 
-@Disabled("TODO patch tests will not work until the API accepts application/json")
 class PatchContactV1Test : EndToEndTest() {
   private lateinit var contact: ContactDto
   private lateinit var response: ContactDto

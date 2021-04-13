@@ -14,7 +14,6 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.ContactDto
-import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.NewContact
 import uk.gov.justice.digital.hmpps.deliusapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.deliusapi.integration.Operation
 import uk.gov.justice.digital.hmpps.deliusapi.integration.UpdateCase
@@ -180,14 +179,6 @@ class PatchContactTest @Autowired constructor(
     val updated = contactRepository.findByIdOrNull(id)
     val observed = ContactMapper.INSTANCE.toDto(updated!!)
     expected.toList().fold(assertThat(observed)) { it, (k, v) -> it.hasProperty(k, v) }
-  }
-
-  private fun havingExistingContact(request: NewContact = Fake.validNewContact()): ContactDto {
-    return webTestClient.whenCreatingContact(request)
-      .expectStatus().isCreated
-      .expectBody(ContactDto::class.java)
-      .returnResult()
-      .responseBody
   }
 
   private fun WebTestClient.whenPatchingContact(id: Long, vararg operations: Operation) =

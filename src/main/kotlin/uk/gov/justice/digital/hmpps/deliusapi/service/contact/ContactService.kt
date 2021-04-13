@@ -22,14 +22,16 @@ import uk.gov.justice.digital.hmpps.deliusapi.repository.ProviderRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.extensions.findByIdOrNotFound
 import uk.gov.justice.digital.hmpps.deliusapi.repository.findByCrnOrBadRequest
 import uk.gov.justice.digital.hmpps.deliusapi.security.ProviderRequestAuthority
-import uk.gov.justice.digital.hmpps.deliusapi.security.ProviderResponseAuthority
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditContext
 import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditableInteraction
+import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.flattenLinkedContacts
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getEventOrBadRequest
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getRequirementOrBadRequest
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getStaffOrBadRequest
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.getTeamOrBadRequest
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.updateNotes
+import uk.gov.justice.digital.hmpps.deliusapi.service.security.SecurityUserContext
+import java.time.LocalDate
 
 @Service
 class ContactService(
@@ -43,6 +45,7 @@ class ContactService(
   private val systemContactService: SystemContactService,
   private val contactBreachService: ContactBreachService,
   private val contactEnforcementService: ContactEnforcementService,
+  private val securityUserContext: SecurityUserContext,
 ) {
   fun getUpdateContact(id: Long): UpdateContact = mapper.toUpdate(getContact(id))
 
@@ -178,8 +181,37 @@ class ContactService(
     return mapper.toDto(entity)
   }
 
-  @ProviderResponseAuthority
-  private fun getContact(id: Long) = contactRepository.findByIdOrNotFound(id)
+  @Transactional
+  @Auditable(AuditableInteraction.DELETE_CONTACT, AuditableInteraction.DELETE_PREVIOUS_CONTACT)
+  fun deleteContact(id: Long) {
+    val contact = getContact(id)
+
+    if (contact.type.editable != true) {
+      throw BadRequestException("Contact with id '$id' cannot be deleted, contact type '${contact.type.code}' is not editable")
+    }
+
+    // TODO [RBAC] determine role by appointment type
+
+    val auditType = if (contact.date.isBefore(LocalDate.now())) AuditableInteraction.DELETE_PREVIOUS_CONTACT
+    else AuditableInteraction.DELETE_CONTACT
+    val audit = AuditContext.get(auditType)
+    audit.contactId = contact.id
+
+    val linked = contact.flattenLinkedContacts()
+    val toDelete = listOf(contact, *linked.toTypedArray())
+    contactRepository.deleteAll(toDelete)
+
+    for (deleted in toDelete) {
+      contactBreachService.updateBreachOnUpdateContact(deleted)
+    }
+    contactEnforcementService.updateFailureToComply(contact)
+  }
+
+  private fun getContact(id: Long): Contact {
+    val contact = contactRepository.findByIdOrNotFound(id)
+    securityUserContext.assertProviderAuthority(contact.provider!!.code)
+    return contact
+  }
 
   private fun getProviderTeamStaff(request: CreateOrUpdateContact): Triple<Provider, Team, Staff> {
     val provider = providerRepository.findByCodeAndSelectableIsTrue(request.provider)

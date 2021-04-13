@@ -117,6 +117,7 @@ class UpdateContactTest : ContactServiceTestBase() {
 
     havingDependentEntities()
     havingContact()
+    val originalProviderCode = contact.provider!!.code
     havingProvider()
     havingOutcomeType()
     havingEnforcement()
@@ -163,6 +164,8 @@ class UpdateContactTest : ContactServiceTestBase() {
 
     // should update ftc
     verify(contactEnforcementService, times(1)).updateFailureToComply(entityCaptor.value)
+
+    shouldAssertProviderAuthority(originalProviderCode)
   }
 
   private fun havingContact(having: Boolean = true, editable: Boolean = true) {

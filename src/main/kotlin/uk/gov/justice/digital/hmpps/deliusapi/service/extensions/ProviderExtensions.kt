@@ -11,11 +11,11 @@ const val INACTIVE_TEAM_CODE_SUFFIX = "IAV"
 const val INACTIVE_STAFF_CODE_SUFFIX = "U"
 
 fun Provider.getTeamOrBadRequest(teamCode: String): Team =
-  teams?.find { it.code == teamCode }
+  teams.find { it.code == teamCode }
     ?: throw BadRequestException("Team with code '$teamCode' does not exist for provider '$code'")
 
 fun Provider.getUnallocatedTeam(): Team {
   val key = code + UNALLOCATED_TEAM_PROVIDER_CODE_SUFFIX
-  return teams?.find { it.code == key }
+  return teams.find { it.code == key }
     ?: throw RuntimeException("Provider '$code' does not have an unallocated team")
 }

@@ -6,7 +6,7 @@ spring:
 
 e2e:
   url: "http://localhost:8080"
-  databaseAssert: false
+  databaseAssert: true
   oauth:
     url: "http://localhost:9090/auth"
     clientId: "community-api-client"

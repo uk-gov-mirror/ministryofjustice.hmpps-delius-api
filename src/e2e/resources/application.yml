@@ -18,3 +18,4 @@ logging.level.org.hibernate:
 
 features:
   token-verification: false
+  nsi-status-history: true

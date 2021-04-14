@@ -60,6 +60,18 @@ class NsiService(
     nsiSystemContactService.updateCommencedContact(entity, request)
     nsiSystemContactService.updateTerminationContact(entity, newOutcome, request)
 
+    val newNotes = listOfNotNull(entity.notes, request.notes).joinToString("\n")
+
+    if (features.nsiStatusHistory && newStatus.code != entity.status?.code) {
+      val statusHistory = NsiStatusHistory(
+        nsi = entity,
+        status = newStatus,
+        date = request.statusDate,
+        notes = newNotes,
+      )
+      entity.statuses.add(statusHistory)
+    }
+
     entity.apply {
       startDate = request.startDate
       endDate = request.endDate
@@ -70,7 +82,7 @@ class NsiService(
       status = newStatus
       statusDate = request.statusDate
       outcome = newOutcome
-      notes = listOfNotNull(entity.notes, request.notes).joinToString("\n")
+      notes = newNotes
     }
 
     nsiManagerService.updateNsiManager(entity, request.manager)

@@ -2,10 +2,7 @@ package uk.gov.justice.digital.hmpps.deliusapi.v1.nsi
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.deliusapi.EndToEndTest
 import uk.gov.justice.digital.hmpps.deliusapi.client.model.NewNsi
 import uk.gov.justice.digital.hmpps.deliusapi.client.model.NewNsiManager
 import uk.gov.justice.digital.hmpps.deliusapi.client.model.NsiDto
@@ -13,8 +10,6 @@ import uk.gov.justice.digital.hmpps.deliusapi.client.model.NsiManagerDto
 import uk.gov.justice.digital.hmpps.deliusapi.client.safely
 import uk.gov.justice.digital.hmpps.deliusapi.config.NsiTestsConfiguration
 import uk.gov.justice.digital.hmpps.deliusapi.config.newNsi
-import uk.gov.justice.digital.hmpps.deliusapi.entity.Nsi
-import uk.gov.justice.digital.hmpps.deliusapi.repository.NsiRepository
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.staffCodeOrUnallocated
 import uk.gov.justice.digital.hmpps.deliusapi.service.extensions.teamCodeOrUnallocated
 import uk.gov.justice.digital.hmpps.deliusapi.util.extractingObject
@@ -22,12 +17,9 @@ import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-class CreateNsiV1Test @Autowired constructor(
-  private val repository: NsiRepository,
-) : EndToEndTest() {
+class CreateNsiV1Test : NsiEndToEndTest() {
   private lateinit var request: NewNsi
   private lateinit var response: NsiDto
-  private lateinit var created: Nsi
 
   @Test
   @Transactional
@@ -35,7 +27,8 @@ class CreateNsiV1Test @Autowired constructor(
     request = configuration.newNsi(NsiTestsConfiguration::active)
     whenCreatingNsi()
     shouldReturnExpectedNsi()
-    shouldSaveNsi()
+    shouldCreateNsi()
+    shouldSaveLatestStatusHistory(request.status!!)
   }
 
   @Test
@@ -51,7 +44,8 @@ class CreateNsiV1Test @Autowired constructor(
     )
     whenCreatingNsi()
     shouldReturnExpectedNsi()
-    shouldSaveNsi()
+    shouldCreateNsi()
+    shouldSaveLatestStatusHistory(request.status!!)
   }
 
   private fun whenCreatingNsi() {
@@ -83,39 +77,32 @@ class CreateNsiV1Test @Autowired constructor(
       .hasProperty(NsiManagerDto::staff, staffCodeOrUnallocated(request.manager?.staff!!))
   }
 
-  private fun shouldSaveNsi() {
-    if (!databaseAssertEnabled()) {
-      return
-    }
-
-    created = repository.findByIdOrNull(response.id)
-      ?: throw RuntimeException("NSI with id = '${response.id}' does not exist in the database")
-
+  private fun shouldCreateNsi() = shouldUpdateNsi(response.id) {
     val observed = NewNsi(
-      offenderCrn = created.offender!!.crn,
-      type = created.type.code,
-      subType = created.subType?.code,
-      outcome = created.outcome?.code,
-      intendedProvider = created.intendedProvider!!.code,
+      offenderCrn = it.offender!!.crn,
+      type = it.type.code,
+      subType = it.subType?.code,
+      outcome = it.outcome?.code,
+      intendedProvider = it.intendedProvider!!.code,
       manager = NewNsiManager(
-        provider = created.manager!!.provider!!.code,
-        team = created.manager!!.team!!.code,
-        staff = created.manager!!.staff!!.code,
+        provider = it.manager!!.provider!!.code,
+        team = it.manager!!.team!!.code,
+        staff = it.manager!!.staff!!.code,
       ),
-      eventId = created.event?.id,
-      requirementId = created.requirement?.id,
-      notes = created.notes,
-      status = created.status?.code,
-      length = created.length,
-      statusDate = created.statusDate,
-      referralDate = created.referralDate,
-      startDate = created.startDate,
-      expectedStartDate = created.expectedStartDate,
-      expectedEndDate = created.expectedEndDate,
+      eventId = it.event?.id,
+      requirementId = it.requirement?.id,
+      notes = it.notes,
+      status = it.status?.code,
+      length = it.length,
+      statusDate = it.statusDate,
+      referralDate = it.referralDate,
+      startDate = it.startDate,
+      expectedStartDate = it.expectedStartDate,
+      expectedEndDate = it.expectedEndDate,
     )
 
     assertThat(observed)
-      .describedAs("nsi with id '${created.id}' should be saved")
+      .describedAs("nsi with id '${it.id}' should be saved")
       .usingRecursiveComparison()
       .ignoringCollectionOrder()
       .ignoringFields("endDate") // TODO determine why this field is always null on insert into test... triggers?

@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.deliusapi.service.contact
 
+import com.nhaarman.mockitokotlin2.times
+import com.nhaarman.mockitokotlin2.verify
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.InjectMocks
 import org.mockito.Mock
@@ -23,6 +25,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.repository.ContactTypeRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.NsiRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.OffenderRepository
 import uk.gov.justice.digital.hmpps.deliusapi.repository.ProviderRepository
+import uk.gov.justice.digital.hmpps.deliusapi.service.security.SecurityUserContext
 import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 
 @ExtendWith(MockitoExtension::class)
@@ -38,6 +41,7 @@ abstract class ContactServiceTestBase {
   @Mock protected lateinit var systemContactService: SystemContactService
   @Mock protected lateinit var contactBreachService: ContactBreachService
   @Mock protected lateinit var contactEnforcementService: ContactEnforcementService
+  @Mock protected lateinit var securityUserContext: SecurityUserContext
   @InjectMocks protected lateinit var subject: ContactService
 
   protected lateinit var type: ContactType
@@ -85,4 +89,7 @@ abstract class ContactServiceTestBase {
 
     nsi = Fake.nsi()
   }
+
+  protected fun shouldAssertProviderAuthority(code: String) =
+    verify(securityUserContext, times(1)).assertProviderAuthority(code)
 }

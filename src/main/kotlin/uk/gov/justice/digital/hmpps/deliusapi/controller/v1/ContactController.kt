@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.http.ResponseEntity.status
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -53,7 +54,7 @@ class ContactController(
     return status(HttpStatus.CREATED).body(service.createContact(body))
   }
 
-  @PatchMapping(path = ["{id}"], consumes = ["application/json-patch+json", MediaType.APPLICATION_JSON_VALUE])
+  @PatchMapping("{id}", consumes = ["application/json-patch+json", MediaType.APPLICATION_JSON_VALUE])
   @ApiOperation(
     value = "Patches an existing contact by id",
     response = ContactDto::class,
@@ -75,5 +76,22 @@ class ContactController(
     val patchedUpdate = objectMapper.applyPatch("contact", patch, update)
     validator.validOrThrow(patchedUpdate)
     return service.updateContact(id, patchedUpdate)
+  }
+
+  @DeleteMapping("{id}")
+  @ApiOperation("Deletes an existing contact by id")
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        code = 204,
+        message = "The contact was successfully deleted.",
+      )
+    ]
+  )
+  fun deleteContact(@PathVariable @Positive id: Long): ResponseEntity<Unit> {
+    service.deleteContact(id)
+
+    // TODO we are affected here by https://github.com/springfox/springfox/issues/3557
+    return ResponseEntity.noContent().build()
   }
 }

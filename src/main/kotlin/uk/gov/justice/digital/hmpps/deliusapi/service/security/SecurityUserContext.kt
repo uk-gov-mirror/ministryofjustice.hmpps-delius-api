@@ -1,8 +1,10 @@
 package uk.gov.justice.digital.hmpps.deliusapi.service.security
 
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.deliusapi.config.AuthAwareAuthenticationToken
+import uk.gov.justice.digital.hmpps.deliusapi.config.Authorities
 
 @Component
 class SecurityUserContext {
@@ -13,4 +15,11 @@ class SecurityUserContext {
     }
 
   fun getCurrentDeliusUserId() = authentication.userId
+
+  fun assertProviderAuthority(provider: String) {
+    val providerAuthority = Authorities.PROVIDER + provider
+    if (!authentication.authorities.any { it.authority == providerAuthority }) {
+      throw AccessDeniedException("No access to provider with code '$provider'")
+    }
+  }
 }

@@ -8,5 +8,6 @@ import java.time.LocalDate
 
 @Service
 class DeliusSecurityService(private val userRepository: UserRepository) {
-  fun getUser(username: String): User = userRepository.findByActiveUserByName(username, LocalDate.now()) ?: throw AccessDeniedException("No active user with name '$username'")
+  fun getUser(username: String): User = userRepository.findActiveUserByName(username, LocalDate.now())
+    ?: throw AccessDeniedException("No active user with name '$username'")
 }

@@ -15,7 +15,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.service.audit.AuditableInteraction
 
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class Auditable(val interaction: AuditableInteraction)
+annotation class Auditable(vararg val interactions: AuditableInteraction)
 
 /**
  * Regarding the ordering:
@@ -36,7 +36,11 @@ class AuditableAspect(private val auditService: AuditService) {
   }
 
   @Before(JOIN_POINT)
-  fun beforeAudit(auditable: Auditable) = AuditContext.reset(auditable.interaction)
+  fun beforeAudit(auditable: Auditable) {
+    for (interaction in auditable.interactions) {
+      AuditContext.reset(interaction)
+    }
+  }
 
   @AfterReturning(JOIN_POINT)
   fun auditSuccess(auditable: Auditable) = audit(auditable, true)
@@ -50,16 +54,22 @@ class AuditableAspect(private val auditService: AuditService) {
   }
 
   private fun audit(auditable: Auditable, success: Boolean) {
-    val context = AuditContext.get(auditable.interaction)
-    if (context == AuditContext()) {
-      val message = "Cannot audit {} '${auditable.interaction}' interaction with empty context"
+    val contexts = auditable.interactions
+      .associateWith(AuditContext::get)
+      .filter { it.value != AuditContext() }
+
+    if (contexts.isEmpty()) {
+      val interactionsString = auditable.interactions.joinToString(", ") { "'$it'" }
+      val message = "Cannot audit {} $interactionsString interaction(s) with empty context"
       if (success) {
         throw RuntimeException(message.replace("{}", "successful"))
       } else {
         log.warn(message, "failed")
       }
     } else {
-      auditService.createAuditedInteraction(auditable.interaction, success, context)
+      for ((interaction, context) in contexts) {
+        auditService.createAuditedInteraction(interaction, success, context)
+      }
     }
   }
 }

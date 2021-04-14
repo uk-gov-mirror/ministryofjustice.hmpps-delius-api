@@ -7,6 +7,8 @@ import com.github.fge.jackson.jsonpointer.JsonPointer
 import com.github.fge.jsonpatch.JsonPatch
 import com.github.fge.jsonpatch.ReplaceOperation
 import com.nhaarman.mockitokotlin2.capture
+import com.nhaarman.mockitokotlin2.times
+import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -60,5 +62,14 @@ class ContactControllerTest {
     assertThat(updateCaptor.value)
       .usingRecursiveComparison()
       .isEqualTo(existing.copy(outcome = "next-outcome"))
+  }
+
+  @Test
+  fun `Deleting contact`() {
+    val id = Fake.faker.number().randomNumber()
+
+    subject.deleteContact(id)
+
+    verify(service, times(1)).deleteContact(id)
   }
 }

@@ -125,6 +125,8 @@ class SystemContactService(
   }
 
   fun safeDeleteSystemContact(contact: Contact) {
+    // TODO this currently works fine as we only expect to delete review contacts, which are unlikely to affect FTC.
+    // If we do expect to delete system contacts that affect FTC then this will need to be moved to avoid a cyclic dependency graph.
     for (toDelete in listOf(contact, *contact.flattenLinkedContacts().toTypedArray())) {
       if (toDelete.maintainsFailureToComply() != MaintainFailureToComplyType.NONE) {
         throw RuntimeException("Cannot delete contact with id '${toDelete.id}' as it affects FTC")

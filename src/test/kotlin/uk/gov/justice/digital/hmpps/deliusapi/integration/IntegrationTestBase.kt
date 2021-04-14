@@ -15,9 +15,11 @@ import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.deliusapi.config.wiremock.TokenVerificationExtension
+import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.ContactDto
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.contact.NewContact
 import uk.gov.justice.digital.hmpps.deliusapi.dto.v1.nsi.NewNsi
 import uk.gov.justice.digital.hmpps.deliusapi.repository.AuditedInteractionRepository
+import uk.gov.justice.digital.hmpps.deliusapi.util.Fake
 import java.lang.RuntimeException
 
 const val DEFAULT_INTEGRATION_TEST_USER_NAME = "NationalUser"
@@ -107,6 +109,26 @@ abstract class IntegrationTestBase {
       databaseUsername = databaseUsername
     )
     return this.header("Authorization", "Bearer $token")
+  }
+
+  protected fun WebTestClient.RequestHeadersSpec<*>.havingSimpleAuthentication(): WebTestClient.RequestHeadersSpec<*> {
+    val token = jwtAuthHelper.createJwt(
+      userName,
+      scope = emptyList(),
+      roles = emptyList(),
+      expired = false,
+      authSource = "delius",
+      databaseUsername = null
+    )
+    return this.header("Authorization", "Bearer $token")
+  }
+
+  protected fun havingExistingContact(request: NewContact = Fake.validNewContact()): ContactDto {
+    return webTestClient.whenCreatingContact(request)
+      .expectStatus().isCreated
+      .expectBody(ContactDto::class.java)
+      .returnResult()
+      .responseBody
   }
 
   protected fun <T> WebTestClient.BodyContentSpec.shouldCreateEntityById(repository: CrudRepository<T, Long>, assertion: (entity: T) -> Unit): WebTestClient.BodyContentSpec =

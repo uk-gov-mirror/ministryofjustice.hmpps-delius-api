@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.CONFLICT
 import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
+import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.http.HttpStatus.UNAUTHORIZED
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadJsonPatchException
 import uk.gov.justice.digital.hmpps.deliusapi.exception.BadRequestException
 import uk.gov.justice.digital.hmpps.deliusapi.exception.ConflictException
+import uk.gov.justice.digital.hmpps.deliusapi.exception.NotFoundException
 import javax.validation.ValidationException
 
 @RestControllerAdvice
@@ -106,6 +108,17 @@ class HmppsDeliusApiExceptionHandler {
     log.debug("Unauthorized", e)
     return ErrorResponse(
       status = UNAUTHORIZED,
+      userMessage = e.message,
+      developerMessage = e.message
+    )
+  }
+
+  @ResponseStatus(NOT_FOUND)
+  @ExceptionHandler(NotFoundException::class)
+  fun handleNotFound(e: NotFoundException): ErrorResponse {
+    log.debug("Not found", e)
+    return ErrorResponse(
+      status = NOT_FOUND,
       userMessage = e.message,
       developerMessage = e.message
     )

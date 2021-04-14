@@ -80,18 +80,7 @@ class ContactController(
 
   @DeleteMapping("{id}")
   @ApiOperation("Deletes an existing contact by id")
-  @ApiResponses(
-    value = [
-      ApiResponse(
-        code = 204,
-        message = "The contact was successfully deleted.",
-      )
-    ]
-  )
-  fun deleteContact(@PathVariable @Positive id: Long): ResponseEntity<Unit> {
+  fun deleteContact(@PathVariable @Positive id: Long) {
     service.deleteContact(id)
-
-    // TODO we are affected here by https://github.com/springfox/springfox/issues/3557
-    return ResponseEntity.noContent().build()
   }
 }

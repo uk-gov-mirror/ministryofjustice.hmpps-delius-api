@@ -1,8 +1,10 @@
 package uk.gov.justice.digital.hmpps.deliusapi.v1.contact
 
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.deliusapi.EndToEndTest
 import uk.gov.justice.digital.hmpps.deliusapi.client.model.ContactDto
 import uk.gov.justice.digital.hmpps.deliusapi.client.model.NewContact
@@ -23,6 +25,7 @@ class CreateContactV1Test @Autowired constructor(
   private lateinit var created: Contact
 
   @Test
+  @Transactional
   fun `Creating contact`() {
     request = configuration.newContact(ContactTestsConfiguration::updatable)
     whenCreatingContact()
@@ -30,6 +33,7 @@ class CreateContactV1Test @Autowired constructor(
   }
 
   @Test
+  @Transactional
   fun `Creating contact against nsi & event`() {
     val nsi = havingExistingNsi(NsiTestsConfiguration::active)
     request = configuration.newContact(ContactTestsConfiguration::nsi).copy(
@@ -40,6 +44,7 @@ class CreateContactV1Test @Autowired constructor(
   }
 
   @Test
+  @Transactional
   fun `Creating contact against nsi only`() {
     val nsi = havingExistingNsi(NsiTestsConfiguration::active)
     request = configuration.newContact(ContactTestsConfiguration::nsiOnly).copy(
@@ -50,6 +55,7 @@ class CreateContactV1Test @Autowired constructor(
   }
 
   @Test
+  @Transactional
   fun `Creating contact against event`() {
     request = configuration.newContact(ContactTestsConfiguration::event)
     whenCreatingContact()
@@ -57,6 +63,7 @@ class CreateContactV1Test @Autowired constructor(
   }
 
   @Test
+  @Transactional
   fun `Creating contact against requirement`() {
     request = configuration.newContact(ContactTestsConfiguration::requirement)
     whenCreatingContact()
@@ -64,6 +71,7 @@ class CreateContactV1Test @Autowired constructor(
   }
 
   @Test
+  @Transactional
   fun `Creating contact with enforcement`() {
     request = configuration.newContact(ContactTestsConfiguration::enforcement)
     whenCreatingContact()
@@ -71,6 +79,7 @@ class CreateContactV1Test @Autowired constructor(
   }
 
   @Test
+  @Transactional
   fun `Creating appointment contact`() {
     request = configuration.newContact(ContactTestsConfiguration::appointment)
     whenCreatingContact()
@@ -89,6 +98,32 @@ class CreateContactV1Test @Autowired constructor(
     created = repository.findByIdOrNull(response.id)
       ?: throw RuntimeException("Contact with id = '${response.id}' does not exist in the database")
 
-    TODO("implement assertions against saved contact")
+    val observed = NewContact(
+      date = created.date,
+      offenderCrn = created.offender.crn,
+      provider = created.provider!!.code,
+      staff = created.staff!!.code,
+      team = created.team!!.code,
+      officeLocation = created.officeLocation?.code,
+      startTime = created.startTime.toString(),
+      endTime = created.endTime.toString(),
+      type = created.type.code,
+      alert = created.alert,
+      sensitive = created.sensitive,
+      description = created.description,
+      outcome = created.outcome?.code,
+      enforcement = created.enforcement?.action?.code,
+      eventId = created.event?.id,
+      requirementId = created.requirement?.id,
+      nsiId = created.nsi?.id,
+      notes = created.notes,
+    )
+
+    assertThat(observed)
+      .describedAs("contact with id '${created.id}' should be saved")
+      .usingRecursiveComparison()
+      .ignoringCollectionOrder()
+      .ignoringFields("alert") // TODO determine why this field is always null on insert into test... triggers?
+      .isEqualTo(request)
   }
 }

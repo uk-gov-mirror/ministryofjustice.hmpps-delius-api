@@ -13,4 +13,5 @@ open class NsiTestConfiguration(
   open val eventId: Long?,
   open val requirementId: Long?,
   open val outcome: String?,
+  open val length: Long?,
 )

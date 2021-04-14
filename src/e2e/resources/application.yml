@@ -1,0 +1,20 @@
+spring:
+  main:
+    web-application-type: none
+
+  datasource:
+    url: 'jdbc:h2:mem:dev;MODE=Oracle' # dummy for if database assert is disabled
+
+  flyway:
+    enabled: false
+
+  jpa.properties.hibernate.show_sql: true
+
+server:
+  shutdown: immediate
+
+logging.level.org.hibernate:
+  SQL: debug
+
+features:
+  token-verification: false

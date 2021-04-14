@@ -6,7 +6,7 @@ phases:
       java: corretto11
   build:
     commands:
-      - ./gradlew e2e
+      - SPRING_PROFILES_ACTIVE=test ./gradlew e2e
 
 reports:
   TestReport:

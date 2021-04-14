@@ -9,7 +9,6 @@ import uk.gov.justice.digital.hmpps.deliusapi.client.model.ContactDto
 import uk.gov.justice.digital.hmpps.deliusapi.client.safely
 import uk.gov.justice.digital.hmpps.deliusapi.config.ContactTestsConfiguration
 import uk.gov.justice.digital.hmpps.deliusapi.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.deliusapi.config.NsiTestsConfiguration
 import uk.gov.justice.digital.hmpps.deliusapi.util.assertThatException
 import uk.gov.justice.digital.hmpps.deliusapi.util.extractingObject
 import uk.gov.justice.digital.hmpps.deliusapi.util.hasProperty
@@ -19,10 +18,7 @@ class DeleteContactV1Test : EndToEndTest() {
 
   @Test
   fun `Attempting to delete non-editable contact`() {
-    val nsi = havingExistingNsi(NsiTestsConfiguration::active)
-    contact = havingExistingContact(ContactTestsConfiguration::nsiOnly) {
-      it.copy(nsiId = nsi.id)
-    }
+    contact = havingExistingContact(ContactTestsConfiguration::notUpdatable)
     val exception = assertThrows<ApiException> { whenDeletingContact() }
     assertThatException(exception)
       .hasProperty(ApiException::statusCode, 400)

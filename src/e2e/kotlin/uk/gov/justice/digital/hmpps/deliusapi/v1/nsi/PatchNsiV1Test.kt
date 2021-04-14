@@ -18,7 +18,7 @@ class PatchNsiV1Test : EndToEndTest() {
   fun `Patching nsi status`() {
     nsi = havingExistingNsi(NsiTestsConfiguration::active)
     val refer = configuration.newNsi(NsiTestsConfiguration::refer).copy(
-      statusDate = nsi.statusDate
+      statusDate = nsi.statusDate.plusSeconds(1)
     )
     whenPatchingNsi(
       Operation("replace", "/status", refer.status),

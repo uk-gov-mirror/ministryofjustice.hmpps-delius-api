@@ -22,7 +22,7 @@ class DeleteContactTest @Autowired constructor(
     val contact = havingExistingContact()
     webTestClient
       .whenDeletingContact(contact.id)
-      .expectStatus().isNoContent
+      .expectStatus().isOk
 
     val deleted = repository.findByIdOrNull(contact.id)
     assertThat(deleted).isEqualTo(null)

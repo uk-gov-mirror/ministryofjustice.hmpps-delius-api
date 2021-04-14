@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.client.model.NewNsi
 import uk.gov.justice.digital.hmpps.deliusapi.client.model.NsiDto
 import uk.gov.justice.digital.hmpps.deliusapi.client.safely
 import uk.gov.justice.digital.hmpps.deliusapi.config.ContactSelector
+import uk.gov.justice.digital.hmpps.deliusapi.config.EndToEndTestActiveProfilesResolver
 import uk.gov.justice.digital.hmpps.deliusapi.config.EndToEndTestConfiguration
 import uk.gov.justice.digital.hmpps.deliusapi.config.NsiSelector
 import uk.gov.justice.digital.hmpps.deliusapi.config.newContact
@@ -29,7 +30,7 @@ import java.time.LocalDateTime
 typealias CopyFn<T> = (x: T) -> T
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@ActiveProfiles("e2e")
+@ActiveProfiles(resolver = EndToEndTestActiveProfilesResolver::class)
 abstract class EndToEndTest {
   protected val logger = LoggerFactory.getLogger(EndToEndTest::class.java)
 
@@ -44,8 +45,8 @@ abstract class EndToEndTest {
     ApiClient.accessToken = getToken()
 
     // API should be healthy
-    assertDoesNotThrow {
-      instrumentationApi.getHealth(null)
+    assertDoesNotThrow("api should be up") {
+      instrumentationApi.safely { it.getHealth(null) }
     }
   }
 

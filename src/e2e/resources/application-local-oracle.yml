@@ -1,0 +1,64 @@
+spring:
+  datasource:
+    url: 'jdbc:oracle:thin:@//localhost:1521/XEPDB1'
+    username: delius_app_schema
+    password: NDelius1
+
+e2e:
+  url: "http://localhost:8080"
+  databaseAssert: false
+  oauth:
+    url: "http://localhost:9090/auth"
+    clientId: "community-api-client"
+    clientSecret: "community-api-client"
+  offenderCrn: X012482
+  provider: N07
+  team: N07T01
+  staff: N07P002
+  contacts:
+    nsiOnly:
+      type: C073
+    nsi:
+      type: C073
+      eventId: 2500024029
+    notUpdatable:
+      type: ERGD
+    updatable:
+      type: CHVS
+      outcome: ATTC
+      eventId: 2500024029
+    event:
+      type: C073
+      eventId: 2500024029
+    requirement:
+      type: C073
+      eventId: 2500024029
+      requirementId: 2500024510
+    enforcement:
+      type: CHVS
+      eventId: 2500024029
+      outcome: AFTA
+      enforcement: ROM
+    appointment:
+      type: CRSAPT
+      eventId: 2500024029
+      requirementId: 2500024510
+      officeLocation: LDN_BCS
+  nsis:
+    active:
+      type: ROL
+      subType: ROL01
+      status: ROL01
+      eventId: 2500024029
+      requirementId: 2500024510
+    terminated:
+      type: ROL
+      subType: ROL02
+      status: ROL01
+      outcome: ROL01
+      eventId: 2500024029
+      requirementId: 2500024510
+    refer:
+      type: ROL
+      subType: ROL03
+      status: ROL01 # TODO add the REFER status to the local oracle DB

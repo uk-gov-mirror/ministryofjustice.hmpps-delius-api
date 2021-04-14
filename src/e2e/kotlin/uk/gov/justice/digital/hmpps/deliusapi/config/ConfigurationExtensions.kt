@@ -27,7 +27,7 @@ fun EndToEndTestConfiguration.newContact(select: ContactSelector): NewContact {
     startTime = "12:00",
     endTime = "13:00",
     sensitive = false,
-    alert = false,
+    alert = null,
     notes = "Test contact from Delius API",
     description = "Test contact from Delius API",
   )
@@ -52,7 +52,8 @@ fun EndToEndTestConfiguration.newNsi(select: NsiSelector): NewNsi {
     requirementId = nsi.requirementId,
     notes = "Delius API e2e tests",
     status = nsi.status,
-    statusDate = LocalDateTime.now(),
+    length = nsi.length,
+    statusDate = LocalDateTime.now().minusHours(1).withNano(0),
     referralDate = LocalDate.now(),
     startDate = LocalDate.now(),
     expectedStartDate = LocalDate.now(),

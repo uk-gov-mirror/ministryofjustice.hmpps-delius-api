@@ -7,10 +7,11 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import uk.gov.justice.digital.hmpps.deliusapi.client.api.OperationHandlerApi
 import uk.gov.justice.digital.hmpps.deliusapi.client.safely
+import uk.gov.justice.digital.hmpps.deliusapi.config.EndToEndTestActiveProfilesResolver
 import uk.gov.justice.digital.hmpps.deliusapi.config.EndToEndTestConfiguration
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@ActiveProfiles("e2e")
+@ActiveProfiles(resolver = EndToEndTestActiveProfilesResolver::class)
 class InstrumentationTest @Autowired constructor(
   configuration: EndToEndTestConfiguration
 ) {

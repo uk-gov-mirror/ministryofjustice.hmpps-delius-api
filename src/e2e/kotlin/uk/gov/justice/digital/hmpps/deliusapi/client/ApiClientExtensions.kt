@@ -20,7 +20,7 @@ fun <Api : ApiClient, T> Api.safely(act: (api: Api) -> T): T {
       is ServerError<*> -> response.body?.toString()
       else -> null
     }
-    val error = if (bodyContent == null) null
+    val error = if (bodyContent == null || bodyContent.isBlank()) null
     else Serializer.moshi.adapter(ErrorResponse::class.java).fromJson(bodyContent)
 
     throw ApiException(e.statusCode, error, e)
@@ -28,4 +28,4 @@ fun <Api : ApiClient, T> Api.safely(act: (api: Api) -> T): T {
 }
 
 class ApiException(val statusCode: Int, val error: ErrorResponse?, cause: Exception? = null) :
-  RuntimeException("request failed with code $statusCode $error", cause)
+  RuntimeException("request failed with code $statusCode ${error ?: "[but no body]"}", cause)

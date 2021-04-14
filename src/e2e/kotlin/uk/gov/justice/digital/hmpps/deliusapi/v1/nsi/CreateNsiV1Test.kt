@@ -4,8 +4,10 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.deliusapi.EndToEndTest
 import uk.gov.justice.digital.hmpps.deliusapi.client.model.NewNsi
+import uk.gov.justice.digital.hmpps.deliusapi.client.model.NewNsiManager
 import uk.gov.justice.digital.hmpps.deliusapi.client.model.NsiDto
 import uk.gov.justice.digital.hmpps.deliusapi.client.model.NsiManagerDto
 import uk.gov.justice.digital.hmpps.deliusapi.client.safely
@@ -28,6 +30,7 @@ class CreateNsiV1Test @Autowired constructor(
   private lateinit var created: Nsi
 
   @Test
+  @Transactional
   fun `Creating active nsi`() {
     request = configuration.newNsi(NsiTestsConfiguration::active)
     whenCreatingNsi()
@@ -36,6 +39,7 @@ class CreateNsiV1Test @Autowired constructor(
   }
 
   @Test
+  @Transactional
   fun `Creating terminated nsi`() {
     request = configuration.newNsi(NsiTestsConfiguration::terminated).copy(
       expectedStartDate = LocalDate.of(2021, 1, 4),
@@ -87,6 +91,34 @@ class CreateNsiV1Test @Autowired constructor(
     created = repository.findByIdOrNull(response.id)
       ?: throw RuntimeException("NSI with id = '${response.id}' does not exist in the database")
 
-    TODO("implement assertions against saved nsi")
+    val observed = NewNsi(
+      offenderCrn = created.offender!!.crn,
+      type = created.type.code,
+      subType = created.subType?.code,
+      outcome = created.outcome?.code,
+      intendedProvider = created.intendedProvider!!.code,
+      manager = NewNsiManager(
+        provider = created.manager!!.provider!!.code,
+        team = created.manager!!.team!!.code,
+        staff = created.manager!!.staff!!.code,
+      ),
+      eventId = created.event?.id,
+      requirementId = created.requirement?.id,
+      notes = created.notes,
+      status = created.status?.code,
+      length = created.length,
+      statusDate = created.statusDate,
+      referralDate = created.referralDate,
+      startDate = created.startDate,
+      expectedStartDate = created.expectedStartDate,
+      expectedEndDate = created.expectedEndDate,
+    )
+
+    assertThat(observed)
+      .describedAs("nsi with id '${created.id}' should be saved")
+      .usingRecursiveComparison()
+      .ignoringCollectionOrder()
+      .ignoringFields("endDate") // TODO determine why this field is always null on insert into test... triggers?
+      .isEqualTo(request)
   }
 }

@@ -1,34 +1,16 @@
 spring:
-  main:
-    web-application-type: none
-
   datasource:
-    url: 'jdbc:h2:file:./dev;MODE=Oracle;AUTO_SERVER=TRUE;AUTO_SERVER_PORT=9092'
-    username: sa
-    password: password
+    url: 'jdbc:oracle:thin:@//localhost:1522/TSTNDA_TAF' # for connecting through ssh tunnel
+    username: delius_api_pool
+    password: some-database-password
 
-  flyway:
-    enabled: false
-
-  jpa.properties.hibernate.show_sql: true
-
-server:
-  shutdown: immediate
-
-logging.level.org.hibernate:
-  SQL: debug
-
-features:
-  token-verification: false
-
-# TODO provide this configuration per environment somehow
 e2e:
   url: "https://delius-api.test.probation.service.justice.gov.uk"
-  databaseAssert: false
+  databaseAssert: true
   oauth:
     url: "https://sign-in-dev.hmpps.service.justice.gov.uk/auth"
-    clientId: "SOME-CLIENT-ID"
-    clientSecret: "SOME-CLIENT-SECRET"
+    clientId: some-client-id
+    clientSecret: some-client-secret
   offenderCrn: X009923
   provider: CRS
   team: CRSUAT
@@ -39,6 +21,8 @@ e2e:
     nsi:
       type: CRS01
       eventId: 2500443138
+    notUpdatable:
+      type: ERGD
     updatable:
       type: CHVS
       outcome: ATTC

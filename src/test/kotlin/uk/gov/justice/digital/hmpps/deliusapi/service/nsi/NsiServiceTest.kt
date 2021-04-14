@@ -349,6 +349,7 @@ class UpdateNsiTest : NsiServiceTest() {
 
   @Test
   fun `Successfully updating nsi`() {
+    havingNsiStatusHistoryFeatureFlag()
     havingNsi()
     havingNewStatus()
     havingNewOutcome()
@@ -364,10 +365,26 @@ class UpdateNsiTest : NsiServiceTest() {
     shouldAssertSupportedTypeLevel()
     shouldReturnMapped()
     shouldUpdateNsi()
+    shouldUpdateNsiStatusHistory()
+  }
+
+  @Test
+  fun `Successfully updating nsi with status history feature disabled`() {
+    havingNsiStatusHistoryFeatureFlag(false)
+    havingNsi()
+    havingNewStatus()
+    havingNewOutcome()
+    havingSaveNsi()
+    havingMappedNsi()
+
+    whenUpdatingNsi()
+
+    assertThat(nsi.statuses).isEmpty()
   }
 
   @Test
   fun `Successfully updating nsi without requirement`() {
+    havingNsiStatusHistoryFeatureFlag()
     havingNsi()
     nsi.requirement = null
     havingNewStatus()
@@ -384,6 +401,7 @@ class UpdateNsiTest : NsiServiceTest() {
     shouldAssertSupportedTypeLevel()
     shouldReturnMapped()
     shouldUpdateNsi()
+    shouldUpdateNsiStatusHistory()
   }
 
   private fun havingNsi(having: Boolean = true) {
@@ -439,4 +457,11 @@ class UpdateNsiTest : NsiServiceTest() {
       .hasProperty(Nsi::statusDate, request.statusDate)
       .hasProperty(Nsi::outcome, newOutcome)
       .hasProperty(Nsi::notes, originalNotes + "\n" + request.notes)
+
+  private fun shouldUpdateNsiStatusHistory() {
+    val description = nsi.statuses.joinToString(", ") { s -> s.status!!.code }
+    assertThat(nsi.statuses)
+      .describedAs("should have new status: $description")
+      .anyMatch { it.status!!.code == newStatus.code }
+  }
 }

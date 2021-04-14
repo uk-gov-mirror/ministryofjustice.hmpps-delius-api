@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.deliusapi.client.safely
 import uk.gov.justice.digital.hmpps.deliusapi.config.ContactSelector
 import uk.gov.justice.digital.hmpps.deliusapi.config.EndToEndTestActiveProfilesResolver
 import uk.gov.justice.digital.hmpps.deliusapi.config.EndToEndTestConfiguration
+import uk.gov.justice.digital.hmpps.deliusapi.config.FeatureFlags
 import uk.gov.justice.digital.hmpps.deliusapi.config.NsiSelector
 import uk.gov.justice.digital.hmpps.deliusapi.config.newContact
 import uk.gov.justice.digital.hmpps.deliusapi.config.newNsi
@@ -35,6 +36,7 @@ abstract class EndToEndTest {
   protected val logger = LoggerFactory.getLogger(EndToEndTest::class.java)
 
   @Autowired protected lateinit var configuration: EndToEndTestConfiguration
+  @Autowired protected lateinit var features: FeatureFlags
 
   protected val contactV1 by lazy { ContactV1Api(configuration.url) }
   protected val nsiV1 by lazy { NSIV1Api(configuration.url) }

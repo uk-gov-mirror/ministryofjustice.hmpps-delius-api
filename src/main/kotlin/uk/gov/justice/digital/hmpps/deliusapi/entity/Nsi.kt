@@ -120,11 +120,11 @@ class Nsi(
   @LastModifiedBy
   var lastUpdatedUserId: Long = 0,
 
-  @OneToMany(cascade = [CascadeType.PERSIST], mappedBy = "nsi")
+  @OneToMany(cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH], mappedBy = "nsi")
   @Where(clause = "ACTIVE_FLAG = 1")
   var managers: MutableList<NsiManager> = ArrayList(),
 
-  @OneToMany(cascade = [CascadeType.PERSIST], mappedBy = "nsi")
+  @OneToMany(cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH], mappedBy = "nsi")
   var statuses: MutableList<NsiStatusHistory> = ArrayList(),
 ) {
   var manager: NsiManager?

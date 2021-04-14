@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.deliusapi.integration.v1.nsi
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -174,6 +175,33 @@ class PatchNsiTest @Autowired constructor(
       .whenPatchingNsi(id, operation)
       .expectStatus().isBadRequest
       .expectBody().shouldReturnValidationError(name)
+  }
+
+  @Test
+  @Transactional
+  fun `Successfully patching nsi status`() {
+    val nsi = havingExistingNsi()
+
+    val statusDate = LocalDateTime.now().minusDays(1).withNano(0)
+    webTestClient
+      .whenPatchingNsi(
+        nsi.id,
+        Operation("replace", "/status", "REFER"),
+        Operation("replace", "/statusDate", statusDate)
+      )
+      .expectStatus().isOk
+
+    val updated = nsiRepository.findByIdOrNull(nsi.id)
+      ?: throw RuntimeException("NSI with id '${nsi.id}' does not exist")
+
+    assertThat(updated.status!!.code).isEqualTo("REFER")
+    assertThat(updated.statusDate).isEqualTo(statusDate)
+
+    val description = updated.statuses.joinToString(", ") { s -> "[${s.id}] ${s.date} ${s.status!!.code}" }
+    assertThat(updated.statuses)
+      .hasSize(2)
+      .describedAs("should have original status: $description").anyMatch { it.status!!.code == nsi.status }
+      .describedAs("should have new status: $description").anyMatch { it.status!!.code == "REFER" }
   }
 
   private fun havingExistingNsi(request: NewNsi = Fake.validNewNsi()): NsiDto {

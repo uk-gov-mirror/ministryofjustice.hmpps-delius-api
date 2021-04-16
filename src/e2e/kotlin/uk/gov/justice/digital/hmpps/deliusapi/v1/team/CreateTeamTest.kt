@@ -53,11 +53,7 @@ class CreateTeamTest @Autowired constructor(
     assertThat(response.startDate).isEqualTo(LocalDate.now())
   }
 
-  private fun shouldSaveTeam() {
-    if (!databaseAssertEnabled()) {
-      return
-    }
-
+  private fun shouldSaveTeam() = withDatabase {
     created = repository.findByCodeAndProviderCode(response.code, response.provider)
       ?: throw RuntimeException("Team with code = '${response.code}' does not exist in the database")
 
@@ -67,7 +63,7 @@ class CreateTeamTest @Autowired constructor(
       .hasFieldOrPropertyWithValue("provider.code", request.provider)
       .hasFieldOrPropertyWithValue("teamType.code", request.type)
       .hasProperty(Team::description, request.description)
-      .hasProperty(Team::privateTeam, true)
+      .hasProperty(Team::privateTeam, created.provider.privateTrust)
       .hasProperty(Team::startDate, LocalDate.now())
       .hasProperty(Team::unpaidWorkTeam, request.unpaidWorkTeam)
       .hasNoNullFieldsOrPropertiesExcept("endDate")
@@ -78,9 +74,7 @@ class CreateTeamTest @Autowired constructor(
       .anyMatch { it.staff.code == created.code + "U" }
   }
 
-  private fun removeInsertedRows() {
-    if (databaseAssertEnabled()) {
-      repository.delete(created)
-    }
+  private fun removeInsertedRows() = withDatabase {
+    repository.delete(created)
   }
 }

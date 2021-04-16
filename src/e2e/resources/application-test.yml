@@ -44,6 +44,16 @@ e2e:
       eventId: 2500443138
       requirementId: 2500199144
       officeLocation: CRSSHEF
+    breachStart:
+      type: AIBR
+      eventId: 2500443138
+    ftc:
+      type: C084
+      outcome: AFTC
+      enforcement: ROM
+      eventId: 2500452238
+      requirementId: 2500206720
+      officeLocation: CRSSHEF
   nsis:
     active:
       type: CRS01

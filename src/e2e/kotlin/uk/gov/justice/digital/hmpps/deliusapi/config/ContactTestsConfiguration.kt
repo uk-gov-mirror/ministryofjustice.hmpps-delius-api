@@ -9,6 +9,8 @@ open class ContactTestsConfiguration(
   open val requirement: ContactTestConfiguration,
   open val enforcement: ContactTestConfiguration,
   open val appointment: ContactTestConfiguration,
+  open val breachStart: ContactTestConfiguration,
+  open val ftc: ContactTestConfiguration,
 )
 
 open class ContactTestConfiguration(

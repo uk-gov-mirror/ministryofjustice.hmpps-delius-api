@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.web.reactive.function.client.WebClient
 import uk.gov.justice.digital.hmpps.deliusapi.client.api.ContactV1Api
 import uk.gov.justice.digital.hmpps.deliusapi.client.api.NSIV1Api
@@ -39,6 +41,9 @@ abstract class EndToEndTest {
 
   @Autowired protected lateinit var configuration: EndToEndTestConfiguration
   @Autowired protected lateinit var features: FeatureFlags
+  @Autowired private lateinit var transactionManager: PlatformTransactionManager
+
+  private val transactionTemplate by lazy { TransactionTemplate(transactionManager) }
 
   protected val contactV1 by lazy { ContactV1Api(configuration.url) }
   protected val nsiV1 by lazy { NSIV1Api(configuration.url) }
@@ -56,12 +61,11 @@ abstract class EndToEndTest {
     }
   }
 
-  protected fun databaseAssertEnabled(): Boolean {
-    if (configuration.databaseAssert) {
-      return true
+  protected fun <T> withDatabase(assert: () -> T): T {
+    if (!configuration.databaseAssert) {
+      logger.warn("Skipping database assertions")
     }
-    logger.warn("Skipping database assertions")
-    return false
+    return transactionTemplate.execute { assert() }
   }
 
   protected fun havingExistingNsi(select: NsiSelector, copy: CopyFn<NewNsi>? = null): NsiDto {

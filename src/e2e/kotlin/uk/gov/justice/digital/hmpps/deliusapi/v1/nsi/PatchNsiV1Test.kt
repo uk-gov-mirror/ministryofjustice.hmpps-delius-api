@@ -35,8 +35,6 @@ class PatchNsiV1Test : NsiEndToEndTest() {
       assertThat(it.status!!.code).isEqualTo(refer.status)
       assertThat(it.statusDate).isEqualTo(refer.statusDate)
     }
-
-    shouldSaveLatestStatusHistory(refer.status!!)
   }
 
   private fun whenPatchingNsi(vararg operations: Operation) {

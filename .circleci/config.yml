@@ -107,7 +107,7 @@ jobs:
           name: gradle check
           command: ./gradlew check
       - run:
-          name: Compile e2e tests # TODO get the e2e tests running against h2 here
+          name: Compile e2e tests # TODO get the e2e tests running against local-oracle here
           command: ./gradlew e2eClasses
       - save_cache:
           paths:

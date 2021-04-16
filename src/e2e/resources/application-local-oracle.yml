@@ -44,6 +44,16 @@ e2e:
       eventId: 2500024029
       requirementId: 2500024510
       officeLocation: LDN_BCS
+    breachStart:
+      type: AIBR
+      eventId: 2500024029
+    ftc:
+      type: C084
+      outcome: AFTC
+      enforcement: ROM
+      eventId: 2500024029
+      requirementId: 2500025506
+      officeLocation: LDN_BCS
   nsis:
     active:
       type: ROL

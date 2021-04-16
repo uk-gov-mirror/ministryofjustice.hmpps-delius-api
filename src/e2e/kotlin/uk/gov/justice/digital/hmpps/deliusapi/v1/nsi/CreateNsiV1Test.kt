@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.deliusapi.v1.nsi
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.deliusapi.client.model.NewNsi
 import uk.gov.justice.digital.hmpps.deliusapi.client.model.NewNsiManager
 import uk.gov.justice.digital.hmpps.deliusapi.client.model.NsiDto
@@ -22,17 +21,14 @@ class CreateNsiV1Test : NsiEndToEndTest() {
   private lateinit var response: NsiDto
 
   @Test
-  @Transactional
   fun `Creating active nsi`() {
     request = configuration.newNsi(NsiTestsConfiguration::active)
     whenCreatingNsi()
     shouldReturnExpectedNsi()
     shouldCreateNsi()
-    shouldSaveLatestStatusHistory(request.status!!)
   }
 
   @Test
-  @Transactional
   fun `Creating terminated nsi`() {
     request = configuration.newNsi(NsiTestsConfiguration::terminated).copy(
       expectedStartDate = LocalDate.of(2021, 1, 4),
@@ -45,7 +41,6 @@ class CreateNsiV1Test : NsiEndToEndTest() {
     whenCreatingNsi()
     shouldReturnExpectedNsi()
     shouldCreateNsi()
-    shouldSaveLatestStatusHistory(request.status!!)
   }
 
   private fun whenCreatingNsi() {

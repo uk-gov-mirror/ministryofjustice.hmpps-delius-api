@@ -5,9 +5,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.annotation.Commit
-import org.springframework.test.context.junit.jupiter.DisabledIf
-import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.deliusapi.EndToEndTest
 import uk.gov.justice.digital.hmpps.deliusapi.client.model.NewStaff
 import uk.gov.justice.digital.hmpps.deliusapi.client.model.StaffDto
@@ -29,12 +26,6 @@ class CreateStaffTest @Autowired constructor(
   private lateinit var created: Staff
 
   @Test
-  @Transactional
-  @Commit
-  @DisabledIf(
-    expression = "#{'\${spring.profiles.active}' == 'local-h2'}",
-    reason = "H2 doesn't have the getNextStaffReference function"
-  )
   fun `Creating staff with team`() {
     request = configuration.newStaff(StaffTestsConfiguration::withTeam)
     whenCreatingStaff()
@@ -60,11 +51,7 @@ class CreateStaffTest @Autowired constructor(
     assertThat(response.startDate).isEqualTo(LocalDate.now())
   }
 
-  private fun shouldSaveStaff() {
-    if (!databaseAssertEnabled()) {
-      return
-    }
-
+  private fun shouldSaveStaff() = withDatabase {
     created = repository.findByCode(response.code)
       ?: throw RuntimeException("Staff with code = '${response.code}' does not exist in the database")
 
@@ -86,9 +73,7 @@ class CreateStaffTest @Autowired constructor(
       .hasFieldOrPropertyWithValue("code", request.provider)
   }
 
-  private fun removeInsertedRows() {
-    if (databaseAssertEnabled()) {
-      repository.delete(created)
-    }
+  private fun removeInsertedRows() = withDatabase {
+    repository.delete(created)
   }
 }
